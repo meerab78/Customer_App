@@ -1,5 +1,6 @@
 
-import 'package:customer_app/feautures/screens/home/home_screenn.dart';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -7,7 +8,10 @@ import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
+import '../../home/main_navigation_screen.dart';
 import '../Forgot Password/forgot_password.dart';
+import '../signup/signup_screen.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -53,7 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => const HomeScreenn(),
+          builder: (_) => const MainNavigationScreen(
+            initialIndex: 0,
+          ),
         ),
       );
     } else {
@@ -232,19 +238,14 @@ class _LoginScreenState extends State<LoginScreen> {
                           alignment: Alignment.centerRight,
                           child: TextButton(
                             onPressed: () {
-// Forgot password screen will be added.
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const ForgotPasswordScreen(),
+                                ),
+                              );
                             },
-                            child:TextButton(
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const ForgotPasswordScreen(),
-                                  ),
-                                );
-                              },
-                              child: const Text('Forgot Password?'),
-                            ),
+                            child: const Text('Forgot Password?'),
                           ),
                         ),
 
@@ -262,19 +263,28 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 14),
 
                         RichText(
-                          text: const TextSpan(
+                          text: TextSpan(
                             text: "Don't have an account? ",
-                            style: TextStyle(
+                            style: const TextStyle(
                               color: AppColors.greyText,
                               fontSize: 12,
                             ),
                             children: [
                               TextSpan(
                                 text: 'Create Account',
-                                style: TextStyle(
+                                style: const TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w700,
                                 ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const SignupScreen(),
+                                      ),
+                                    );
+                                  },
                               ),
                             ],
                           ),

@@ -53,7 +53,7 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 // Login
-  Future<bool> login({
+  Future login({
     required String restaurantId,
     required String email,
     required String orderResourceId,
@@ -62,6 +62,7 @@ class AuthProvider extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
     try {
       final response = await _authService.login(
         restaurantId: restaurantId,
@@ -70,13 +71,38 @@ class AuthProvider extends ChangeNotifier {
         orderResourceId: orderResourceId,
         password: password,
       );
-      final token = response['Data']?['token'];
+
+      final data = response['Data'];
+
+      if (data == null) {
+        throw Exception('User data not received');
+      }
+
+      final token = data['token'];
+
       if (token == null) {
         throw Exception('Token not received');
       }
-      await _sharedPrefService.saveToken(token.toString());
+
+      // Save token
+      await _sharedPrefService.saveToken(
+        token.toString(),
+      );
+
+      // Save user data
+      await _sharedPrefService.saveUserData(
+        userId: data['id'],
+        customerId: data['customer_id'],
+        name: data['name'].toString().trim(),
+        email: data['email'],
+        phone: data['cell_num'],
+        restaurantId: data['restaurant_id'],
+        restaurantName: data['restaurant_name'],
+      );
+
       _isLoading = false;
       notifyListeners();
+
       return true;
     } catch (e) {
       _isLoading = false;
