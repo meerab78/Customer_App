@@ -23,7 +23,7 @@ class LocationScreen extends StatelessWidget{
             CircleAvatar(
               radius:38,
               backgroundColor:AppColors.primary.withOpacity(.1),
-              child:const Icon(
+              child: Icon(
                 Icons.delivery_dining,
                 color:AppColors.primary,
                 size:38,

@@ -1,53 +1,4 @@
-// import 'package:flutter/material.dart';
-// import '../../core/theme/app_colors.dart';
-//
-// class MenuCategoryCard extends StatelessWidget {
-//   final String title;
-//   final bool selected;
-//   final VoidCallback onTap;
-//
-//   const MenuCategoryCard({
-//     super.key,
-//     required this.title,
-//     required this.selected,
-//     required this.onTap,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return InkWell(
-//       borderRadius: BorderRadius.circular(25),
-//       onTap: onTap,
-//       child: AnimatedContainer(
-//         duration: const Duration(milliseconds: 250),
-//         margin: const EdgeInsets.only(right: 10),
-//         padding: const EdgeInsets.symmetric(
-//           horizontal: 20,
-//           vertical: 10,
-//         ),
-//         decoration: BoxDecoration(
-//           color: selected
-//               ? AppColors.primary
-//               : Colors.white,
-//           borderRadius: BorderRadius.circular(25),
-//           border: Border.all(
-//             color: AppColors.primary,
-//             width: 1.2,
-//           ),
-//         ),
-//         child: Text(
-//           title,
-//           style: TextStyle(
-//             fontWeight: FontWeight.w600,
-//             color: selected
-//                 ? Colors.white
-//                 : AppColors.primary,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
-// }
+
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 
@@ -91,13 +42,13 @@ class MenuCategoryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
 
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
 
-        width: 82,
-        height: 95,
+        width: 105,
+        height: 112,
 
         margin: const EdgeInsets.only(right: 12),
 
@@ -111,7 +62,7 @@ class MenuCategoryCard extends StatelessWidget {
               ? AppColors.primary
               : Colors.white,
 
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(20),
 
           border: Border.all(
             color: selected
@@ -123,10 +74,10 @@ class MenuCategoryCard extends StatelessWidget {
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(
-                selected ? 0.12 : 0.06,
+                selected ? 0.14 : 0.06,
               ),
-              blurRadius: selected ? 10 : 6,
-              offset: const Offset(0, 3),
+              blurRadius: selected ? 12 : 7,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
@@ -134,11 +85,12 @@ class MenuCategoryCard extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+// Category Icon
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
 
-            // Category Icon
-            Container(
-              width: 42,
-              height: 42,
+              width: 46,
+              height: 46,
 
               decoration: BoxDecoration(
                 color: selected
@@ -150,28 +102,31 @@ class MenuCategoryCard extends StatelessWidget {
 
               child: Icon(
                 _getCategoryIcon(title),
-                size: 24,
+                size: 25,
                 color: selected
                     ? Colors.white
                     : AppColors.primary,
               ),
             ),
 
-            const SizedBox(height: 7),
+            const SizedBox(height: 8),
 
-            // Category Name
-            Text(
-              title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: selected
-                    ? Colors.white
-                    : Colors.black87,
+// Category Name
+            SizedBox(
+              width: 88,
+              child: Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  height: 1.2,
+                  fontWeight: FontWeight.w600,
+                  color: selected
+                      ? Colors.white
+                      : Colors.black87,
+                ),
               ),
             ),
           ],
@@ -180,3 +135,4 @@ class MenuCategoryCard extends StatelessWidget {
     );
   }
 }
+

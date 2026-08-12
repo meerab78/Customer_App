@@ -14,6 +14,7 @@ class BranchScreen extends StatefulWidget {
 }
 
 class _BranchScreenState extends State<BranchScreen> {
+  bool _isSelectingBranch = false;
   @override
   void initState() {
     super.initState();
@@ -51,7 +52,7 @@ class _BranchScreenState extends State<BranchScreen> {
           padding: const EdgeInsets.all(18),
           children: [
             const SizedBox(height: 5),
-            const Text(
+             Text(
               "Pickup Branch",
               style: TextStyle(
                 fontSize: 28,
@@ -61,7 +62,7 @@ class _BranchScreenState extends State<BranchScreen> {
             ),
 
             const SizedBox(height: 6),
-            const Text(
+            Text(
               "Choose your preferred restaurant branch for pickup.",
               style: TextStyle(
                 color: AppColors.greyText,
@@ -77,6 +78,10 @@ class _BranchScreenState extends State<BranchScreen> {
                   provider.recommendedBranch!,
                 ),
                 onTap: () async {
+                  if (_isSelectingBranch) return;
+                  setState(() {
+                    _isSelectingBranch = true;
+                  });
                   await provider.selectBranch(
                     provider.recommendedBranch!,
                   );
@@ -108,6 +113,10 @@ class _BranchScreenState extends State<BranchScreen> {
                     branch,
                   ),
                   onTap: () async {
+                    if (_isSelectingBranch) return;
+                    setState(() {
+                      _isSelectingBranch = true;
+                    });
                     await provider.selectBranch(branch);
                     if (!mounted) return;
                     Navigator.pop(context);

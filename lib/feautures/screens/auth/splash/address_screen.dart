@@ -4,6 +4,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/provider/address_provider.dart';
 import '../../home/home_screenn.dart';
+import '../../home/main_navigation_screen.dart';
 
 class AddressScreen extends StatefulWidget {
   const AddressScreen({super.key});
@@ -191,7 +192,7 @@ class _AddressScreenState extends State<AddressScreen> {
                           Navigator.pushReplacement(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const HomeScreenn(),
+                              builder: (_) => const MainNavigationScreen(),
                             ),
                           );
                         },

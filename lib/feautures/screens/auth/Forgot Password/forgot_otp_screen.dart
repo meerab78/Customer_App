@@ -80,7 +80,7 @@ class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
             children: [
               const SizedBox(height: 35),
 
-              const Icon(
+              Icon(
                 Icons.mark_email_read_outlined,
                 size: 75,
                 color: AppColors.primary,
@@ -88,7 +88,7 @@ class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
 
               const SizedBox(height: 20),
 
-              const Text(
+              Text(
                 'Enter OTP',
                 style: TextStyle(
                   fontSize: 26,
@@ -102,7 +102,7 @@ class _ForgotOtpScreenState extends State<ForgotOtpScreen> {
               Text(
                 'Enter the OTP sent to ${widget.email}',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   color: AppColors.greyText,
                 ),
               ),

@@ -100,7 +100,7 @@ class _ResetPasswordScreenState
             children: [
               const SizedBox(height: 35),
 
-              const Icon(
+               Icon(
                 Icons.lock_reset_rounded,
                 size: 75,
                 color: AppColors.primary,
@@ -108,7 +108,7 @@ class _ResetPasswordScreenState
 
               const SizedBox(height: 20),
 
-              const Text(
+              Text(
                 'Create New Password',
                 style: TextStyle(
                   fontSize: 25,
@@ -119,7 +119,7 @@ class _ResetPasswordScreenState
 
               const SizedBox(height: 10),
 
-              const Text(
+              Text(
                 'Enter your new password below',
                 textAlign: TextAlign.center,
                 style: TextStyle(

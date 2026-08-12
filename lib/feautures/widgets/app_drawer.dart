@@ -13,7 +13,7 @@ class AppDrawer extends StatelessWidget {
             CircleAvatar(
               radius: 40,
               backgroundColor: AppColors.primary.withOpacity(.1),
-              child: const Icon(
+              child:  Icon(
                 Icons.restaurant,
                 color: AppColors.primary,
                 size: 38,

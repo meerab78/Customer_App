@@ -56,7 +56,7 @@ class BranchCard extends StatelessWidget {
                       color: AppColors.primary.withOpacity(.10),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
@@ -64,8 +64,8 @@ class BranchCard extends StatelessWidget {
                           size: 14,
                           color: AppColors.primary,
                         ),
-                        SizedBox(width: 4),
-                        Text(
+                        const SizedBox(width: 4),
+                         Text(
                           "Recommended",
                           style: TextStyle(
                             fontSize: 11,
@@ -88,7 +88,7 @@ class BranchCard extends StatelessWidget {
                       radius: 20,
                       backgroundColor:
                       AppColors.primary.withOpacity(.10),
-                      child: const Icon(
+                      child:  Icon(
                         Icons.storefront_rounded,
                         size: 20,
                         color: AppColors.primary,
@@ -133,7 +133,7 @@ class BranchCard extends StatelessWidget {
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    const Icon(
+                                     Icon(
                                       Icons.near_me_rounded,
                                       size: 13,
                                       color: AppColors.primary,
@@ -225,7 +225,7 @@ class BranchCard extends StatelessWidget {
                         branch.address ?? "",
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontSize: 13,
                           color: AppColors.greyText,
                           height: 1.3,

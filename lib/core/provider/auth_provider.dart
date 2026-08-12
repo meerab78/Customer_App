@@ -295,6 +295,12 @@ class AuthProvider extends ChangeNotifier {
       return false;
     }
   }
+  Future<String?> getSavedUserEmail() async {
+    return await _sharedPrefService.getEmail();
+  }
+  Future<int?> getSavedRestaurantId() async {
+    return await _sharedPrefService.getRestaurantId();
+  }
 
 // Clear error message
   void clearError() {

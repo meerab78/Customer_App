@@ -93,7 +93,7 @@ class _OtpScreenState extends State<OtpScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
+                Icon(
                   Icons.mark_email_read_outlined,
                   size: 70,
                   color: AppColors.primary,
@@ -101,7 +101,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                 const SizedBox(height: 20),
 
-                const Text(
+                 Text(
                   'Enter OTP',
                   style: TextStyle(
                     fontSize: 26,
@@ -112,7 +112,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                 const SizedBox(height: 8),
 
-                const Text(
+                 Text(
                   'Enter the OTP sent to your email',
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -146,7 +146,7 @@ class _OtpScreenState extends State<OtpScreen> {
 
                 TextButton(
                   onPressed: _resendOtp,
-                  child: const Text(
+                  child:  Text(
                     'Resend OTP',
                     style: TextStyle(
                       color: AppColors.primary,

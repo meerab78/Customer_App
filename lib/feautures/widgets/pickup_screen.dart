@@ -24,7 +24,7 @@ class PickupScreen extends StatelessWidget{
             CircleAvatar(
               radius:38,
               backgroundColor:AppColors.primary.withOpacity(.1),
-              child:const Icon(
+              child: Icon(
                 Icons.storefront,
                 color:AppColors.primary,
                 size:38,

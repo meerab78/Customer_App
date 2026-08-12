@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../home/home_screenn.dart';
+import '../../home/main_navigation_screen.dart';
 import 'address_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -29,7 +30,7 @@ class _SplashScreenState extends State<SplashScreen> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const HomeScreenn(),
+          builder: (_) => const MainNavigationScreen(),
         ),
       );
     } else {

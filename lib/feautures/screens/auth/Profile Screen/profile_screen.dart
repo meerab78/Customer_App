@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/profile_option_tile.dart';
 
 import '../../home/main_navigation_screen.dart';
+import '../Change Password/change_password_screen.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -153,7 +154,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Profile',
                 style: TextStyle(
                   fontSize: 30,
@@ -177,7 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             color: AppColors.primary.withOpacity(.12),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.person_rounded,
                             size: 55,
                             color: AppColors.primary,
@@ -215,7 +216,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     Text(
                       _name.isEmpty ? 'User' : _name,
-                      style: const TextStyle(
+                      style:  TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
                         color: AppColors.text,
@@ -226,7 +227,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     Text(
                       _email,
-                      style: const TextStyle(
+                      style:  TextStyle(
                         fontSize: 13,
                         color: AppColors.greyText,
                       ),
@@ -237,7 +238,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 30),
 
-              const Text(
+               Text(
                 'Account',
                 style: TextStyle(
                   fontSize: 17,
@@ -252,10 +253,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Change Password',
                 icon: Icons.lock_outline_rounded,
                 onTap: () {
-                  // Change password screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ChangePasswordScreen(),
+                    ),
+                  );
                 },
               ),
-
               const SizedBox(height: 12),
 
               ProfileOptionTile(

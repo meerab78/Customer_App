@@ -37,13 +37,13 @@ class ProfileOptionTile extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style:  TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
             color: AppColors.text,
           ),
         ),
-        trailing: const Icon(
+        trailing:  Icon(
           Icons.arrow_forward_ios_rounded,
           size: 16,
           color: AppColors.greyText,

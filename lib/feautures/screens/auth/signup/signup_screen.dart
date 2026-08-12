@@ -1,4 +1,5 @@
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -6,6 +7,7 @@ import '../../../../core/provider/auth_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
+import '../Login/login_screen.dart';
 import '../OTP/otp_screen.dart';
 
 class SignupScreen extends StatefulWidget {
@@ -99,9 +101,9 @@ class _SignupScreenState extends State<SignupScreen> {
                 Container(
                   height: 245,
                   width: double.infinity,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.primary,
-                    borderRadius: BorderRadius.only(
+                    borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(50),
                       bottomRight: Radius.circular(50),
                     ),
@@ -127,19 +129,19 @@ class _SignupScreenState extends State<SignupScreen> {
                           children: [
                             Align(
                               alignment: Alignment.centerLeft,
-                              child: IconButton(
-                                onPressed: () => Navigator.pop(context),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
-                                icon: const Icon(
-                                  Icons.arrow_back_rounded,
-                                  color: Colors.white,
-                                  size: 27,
-                                ),
-                              ),
+                              // child: IconButton(
+                              //   onPressed: () => Navigator.pop(context),
+                              //   padding: EdgeInsets.zero,
+                              //   constraints: const BoxConstraints(),
+                              //   icon: const Icon(
+                              //     Icons.arrow_back_rounded,
+                              //     color: Colors.white,
+                              //     size: 27,
+                              //   ),
+                              // ),
                             ),
 
-                            const SizedBox(height: 10),
+                            const SizedBox(height: 30),
 
                             Container(
                               height: 64,
@@ -148,7 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                                 color: Colors.white,
                                 borderRadius: BorderRadius.circular(21),
                               ),
-                              child: const Icon(
+                              child:  Icon(
                                 Icons.restaurant_rounded,
                                 color: AppColors.primary,
                                 size: 35,
@@ -201,7 +203,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                     child: Column(
                       children: [
-                        const Align(
+                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             "Let's get started",
@@ -215,7 +217,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                         const SizedBox(height: 3),
 
-                        const Align(
+                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Enter your details to create your account',
@@ -333,7 +335,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         const SizedBox(height: 10),
 
                         RichText(
-                          text: const TextSpan(
+                          text: TextSpan(
                             text: 'Already have an account? ',
                             style: TextStyle(
                               color: AppColors.greyText,
@@ -346,6 +348,10 @@ class _SignupScreenState extends State<SignupScreen> {
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w700,
                                 ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    Navigator.pop(context);
+                                  },
                               ),
                             ],
                           ),
@@ -353,7 +359,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                         const SizedBox(height: 4),
 
-                        const Text(
+                         Text(
                           'By creating an account, you agree to our Terms & Conditions',
                           textAlign: TextAlign.center,
                           style: TextStyle(

@@ -4,6 +4,8 @@ class SharedPrefService {
   static const String tokenKey = "token";
   static const String deviceIdKey = "device_id";
 
+  // static const String orderTypeShownKey = "order_type_shown";
+
   static const String addressKey = "address1";
   static const String latitudeKey = "latitude";
   static const String longitudeKey = "longitude";

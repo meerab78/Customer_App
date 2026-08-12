@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-
+import 'package:date_picker_plus/date_picker_plus.dart';
 import '../../../../core/services/share_prefernces.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../widgets/custom_button.dart';
 import '../../../widgets/custom_text_field.dart';
+import 'package:easy_date_timeline/easy_date_timeline.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String name;
@@ -30,34 +31,94 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   void initState() {
     super.initState();
-
     _nameController = TextEditingController(
       text: widget.name,
     );
-
     _selectedGender = widget.gender;
     _dateOfBirth = widget.dateOfBirth;
   }
-
   @override
   void dispose() {
     _nameController.dispose();
     super.dispose();
   }
 
+  // Future<void> _selectDate() async {
+  //   final date = await showDatePickerDialog(
+  //     context: context,
+  //     minDate: DateTime(1950),
+  //     maxDate: DateTime.now(),
+  //     currentDate: DateTime(2000),
+  //   );
+  //   if (date == null) return;
+  //   setState(() {
+  //     _dateOfBirth =
+  //     '${date.day}/${date.month}/${date.year}';
+  //   });
+  // }
   Future<void> _selectDate() async {
-    final date = await showDatePicker(
+    DateTime? selectedDate;
+
+    await showModalBottomSheet(
       context: context,
-      initialDate: DateTime(2000),
-      firstDate: DateTime(1950),
-      lastDate: DateTime.now(),
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Select Date of Birth',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                EasyDateTimeLinePicker(
+                  firstDate: DateTime(1950),
+                  lastDate: DateTime.now(),
+                  focusedDate: DateTime(2000),
+                  onDateChange: (date) {
+                    selectedDate = date;
+                  },
+                ),
+
+                const SizedBox(height: 20),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (selectedDate == null) return;
+
+                      Navigator.pop(context);
+                    },
+                    child: const Text('Select Date'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
 
-    if (date == null) return;
+    if (selectedDate == null) return;
 
     setState(() {
       _dateOfBirth =
-      '${date.day}/${date.month}/${date.year}';
+      '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}';
     });
   }
 
@@ -111,7 +172,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+             Text(
               'Basic Details',
               style: TextStyle(
                 fontSize: 18,
@@ -228,7 +289,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: AppColors.greyText,
                     ),
@@ -238,7 +299,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
                   Text(
                     value,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.text,
@@ -248,7 +309,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               ),
             ),
 
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 16,
               color: AppColors.greyText,
@@ -279,7 +340,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Widget _genderOption(String gender) {
     return ListTile(
-      leading: const Icon(
+      leading:  Icon(
         Icons.person_outline_rounded,
         color: AppColors.primary,
       ),

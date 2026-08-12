@@ -76,7 +76,7 @@ class _ForgotPasswordScreenState
             children: [
               const SizedBox(height: 35),
 
-              const Icon(
+              Icon(
                 Icons.lock_reset_rounded,
                 size: 75,
                 color: AppColors.primary,
@@ -84,7 +84,7 @@ class _ForgotPasswordScreenState
 
               const SizedBox(height: 20),
 
-              const Text(
+              Text(
                 'Forgot Password?',
                 style: TextStyle(
                   fontSize: 26,
@@ -95,7 +95,7 @@ class _ForgotPasswordScreenState
 
               const SizedBox(height: 10),
 
-              const Text(
+              Text(
                 'Enter your email and we will send you an OTP',
                 textAlign: TextAlign.center,
                 style: TextStyle(

@@ -52,7 +52,7 @@ class BranchSelectorCard extends StatelessWidget {
                 color: AppColors.primary.withOpacity(.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child:  Icon(
                 Icons.location_on,
                 color: AppColors.primary,
                 size: 25,
@@ -68,7 +68,7 @@ class BranchSelectorCard extends StatelessWidget {
                     branch?.name ?? "Select Branch",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style:  TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.text,
@@ -80,7 +80,7 @@ class BranchSelectorCard extends StatelessWidget {
                         "Choose your restaurant",
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style:  TextStyle(
                       fontSize: 12,
                       color: AppColors.greyText,
                     ),
@@ -95,7 +95,7 @@ class BranchSelectorCard extends StatelessWidget {
                 color: AppColors.primary.withOpacity(.08),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child:  Icon(
                 Icons.arrow_forward_ios,
                 size: 13,
                 color: AppColors.primary,

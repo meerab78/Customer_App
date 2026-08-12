@@ -85,9 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 Container(
                   height: 245,
                   width: double.infinity,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.primary,
-                    borderRadius: BorderRadius.only(
+                    borderRadius: const BorderRadius.only(
                       bottomLeft: Radius.circular(50),
                       bottomRight: Radius.circular(50),
                     ),
@@ -98,16 +98,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         Align(
                           alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(
-                              Icons.arrow_back_rounded,
-                              color: Colors.white,
-                            ),
-                          ),
+                          // child: IconButton(
+                          //   onPressed: () => Navigator.pop(context),
+                          //   icon: const Icon(
+                          //     Icons.arrow_back_rounded,
+                          //     color: Colors.white,
+                          //   ),
+                          // ),
                         ),
 
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 30),
 
                         Container(
                           height: 64,
@@ -116,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(21),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.restaurant_rounded,
                             color: AppColors.primary,
                             size: 35,
@@ -166,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Column(
                       children: [
-                        const Align(
+                         Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Login to your account',
@@ -180,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                         const SizedBox(height: 4),
 
-                        const Align(
+                        Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Enter your email and password',
@@ -265,14 +265,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         RichText(
                           text: TextSpan(
                             text: "Don't have an account? ",
-                            style: const TextStyle(
+                            style:  TextStyle(
                               color: AppColors.greyText,
                               fontSize: 12,
                             ),
                             children: [
                               TextSpan(
                                 text: 'Create Account',
-                                style: const TextStyle(
+                                style:  TextStyle(
                                   color: AppColors.primary,
                                   fontWeight: FontWeight.w700,
                                 ),
