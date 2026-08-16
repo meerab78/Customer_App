@@ -109,6 +109,29 @@ class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color black = Color(0xFF000000);
   static const Color transparent = Colors.transparent;
+  static const Color black87 = Colors.black87;
+  static const Color black26 = Colors.black26;
+  static const Color black12 = Colors.black12;
+  static const Color white70 = Colors.white70;
+
+  // Grey scale (shared UI neutrals)
+  static Color get grey => Colors.grey;
+  static Color get grey100 => Colors.grey.shade100;
+  static Color get grey200 => Colors.grey.shade200;
+  static Color get grey300 => Colors.grey.shade300;
+  static Color get grey400 => Colors.grey.shade400;
+  static Color get grey500 => Colors.grey.shade500;
+  static Color get grey600 => Colors.grey.shade600;
+  static Color get grey700 => Colors.grey.shade700;
+  static Color get grey800 => Colors.grey.shade800;
+  static Color get grey900 => Colors.grey.shade900;
+
+  // Soft card / list shadows used across the app
+  static Color get softShadow04 => black.withOpacity(0.04);
+  static Color get softShadow05 => black.withOpacity(0.05);
+  static Color get softShadow06 => black.withOpacity(0.06);
+  static Color get softShadow07 => black.withOpacity(0.07);
+  static Color get softShadow08 => black.withOpacity(0.08);
 
   // ===========================================================================
   // 4. BORDERS, DIVIDERS & SHADOWS
@@ -181,6 +204,12 @@ class AppColors {
   // Status Colors
   static const Color success = Color(0xFF2E7D32);
   static const Color error = Color(0xFFD32F2F);
+  static const Color red = Colors.red; // Material red (pins / alerts)
+  static Color get openStatus => Colors.green;
+  static Color get openStatusBg => Colors.green.shade50;
+  static Color get closedStatus => Colors.orange;
+  static Color get closedStatusBg => Colors.orange.shade50;
+  static Color get warning => Colors.orange;
 
   // System UI Overlay
   static SystemUiOverlayStyle get systemOverlayStyle =>
@@ -234,6 +263,13 @@ class AppColors {
 
   // Miscellaneous
   static Color get splashScreenBgColor => tertiary;
+
+  // Splash / onboarding atmosphere (matches existing splash look)
+  static const Color splashGradientStart = Color(0xFFFFF8EE);
+  static const Color splashGradientEnd = Color(0xFFF3E5D3);
+  static Color get splashTitleColor => Colors.brown.shade800;
+  static Color get splashSubtitleColor => Colors.brown.shade600;
+  static Color get splashAccentColor => Colors.brown;
 
   static Color get shimmerBaseColor =>
       ThemeService.instance.isDarkMode ? Colors.grey[800]! : Colors.grey[300]!;
