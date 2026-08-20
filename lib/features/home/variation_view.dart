@@ -1,5 +1,9 @@
+
+
 import 'package:flutter/material.dart';
+
 import 'model/menu_model.dart';
+import 'widget/variation_selector.dart';
 
 class VariationView extends StatefulWidget {
   final Menu food;
@@ -16,15 +20,10 @@ class VariationView extends StatefulWidget {
 class _VariationViewState extends State<VariationView> {
   MenuVariation? selectedVariation;
 
-  // ChoiceGroup ID -> selected choices
+// ChoiceGroup ID -> selected choices
   final Map<int, List<MenuVariation>> selectedChoices = {};
 
-  @override
-  void initState() {
-    super.initState();
-  }
-
-  // Direct choice groups + selected variation ke choice groups
+// Direct choices + selected variation ke choices
   List<ChoiceGroup> get choiceGroups {
     final groups = <ChoiceGroup>[];
 
@@ -37,43 +36,35 @@ class _VariationViewState extends State<VariationView> {
     return groups;
   }
 
-  // Final price
+// Final selected price
   double get selectedPrice {
-    // Agar variation hai to variation price,
-    // warna normal food price.
-    double total;
+    double total =
+        double.tryParse(widget.food.price ?? '0') ?? 0;
 
+    // Variation price ADD hogi
     if (selectedVariation != null) {
-      total =
-          double.tryParse(selectedVariation!.price ?? '0') ??
-              0;
-    } else {
-      total =
-          double.tryParse(widget.food.price ?? '0') ??
-              0;
+      total +=
+          double.tryParse(selectedVariation!.price ?? '0') ?? 0;
     }
 
-    // Selected choices ki prices add karo
+    // Choices ki prices ADD hongi
     for (final choices in selectedChoices.values) {
       for (final choice in choices) {
         total +=
             double.tryParse(choice.price ?? '0') ?? 0;
       }
     }
-
     return total;
   }
 
-  // Check whether all required selections are complete
+// Check only REQUIRED selections
   bool get isSelectionValid {
-    // Agar main variations available hain
-    // to user ko ek variation select karna hoga.
     if (widget.food.menuVariations.isNotEmpty &&
         selectedVariation == null) {
       return false;
     }
 
-    // Har choice group ka min/max check
+// Choice groups ki min/max validation
     for (final group in choiceGroups) {
       final groupId = group.id;
 
@@ -85,12 +76,12 @@ class _VariationViewState extends State<VariationView> {
       final minChoices = group.minChoices ?? 0;
       final maxChoices = group.maxChoices ?? 0;
 
-      // Minimum complete nahi
+// Required choices complete nahi
       if (selectedCount < minChoices) {
         return false;
       }
 
-      // Maximum exceed
+// Maximum exceed
       if (maxChoices > 0 &&
           selectedCount > maxChoices) {
         return false;
@@ -98,6 +89,16 @@ class _VariationViewState extends State<VariationView> {
     }
 
     return true;
+  }
+
+  void _selectVariation(MenuVariation variation) {
+    setState(() {
+      selectedVariation = variation;
+
+// Variation change hone par
+// purani variation-specific choices remove.
+      selectedChoices.clear();
+    });
   }
 
   void _toggleChoice(
@@ -137,6 +138,7 @@ class _VariationViewState extends State<VariationView> {
   }
 
   void _addToCart() {
+
     if (!isSelectionValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -148,23 +150,24 @@ class _VariationViewState extends State<VariationView> {
 
       return;
     }
-
-    // Selected variation ke andar selected choices
-    final selectedGroups = choiceGroups.map((group) {
-      final selected =
-          selectedChoices[group.id] ?? [];
+    final selectedGroups = choiceGroups
+        .where(
+          (group) =>
+      selectedChoices[group.id]?.isNotEmpty ?? false,
+    )
+        .map((group) {
+      final selected = selectedChoices[group.id] ?? [];
 
       return group.copyWith(
         choices: selected,
       );
-    }).toList();
+    })
+        .toList();
 
-    // Agar main variation selected hai
+// Agar main variation selected hai
     if (selectedVariation != null) {
       final variation =
       selectedVariation!.copyWith(
-        // IMPORTANT:
-        // yahan final price save ho rahi hai
         price: selectedPrice.toString(),
         choiceGroups: selectedGroups,
       );
@@ -177,7 +180,7 @@ class _VariationViewState extends State<VariationView> {
       return;
     }
 
-    // Agar sirf choice groups hain
+// Sirf choice groups hain, main variation nahi
     final variation = MenuVariation(
       id: null,
       name: widget.food.name,
@@ -207,144 +210,18 @@ class _VariationViewState extends State<VariationView> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
-
-                  // =========================
-                  // MAIN VARIATIONS
-                  // =========================
-                  if (widget.food.menuVariations.isNotEmpty) ...[
-                    const Text(
-                      'Select Size',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    ...widget.food.menuVariations.map(
-                          (variation) {
-                        return RadioListTile<MenuVariation>(
-                          value: variation,
-                          groupValue: selectedVariation,
-
-                          title: Text(
-                            variation.name ?? '',
-                          ),
-
-                          subtitle: Text(
-                            'Rs ${variation.price ?? '0'}',
-                          ),
-
-                          onChanged: (value) {
-                            setState(() {
-                              selectedVariation = value;
-
-                              // Variation change hui,
-                              // purani choices remove.
-                              selectedChoices.clear();
-                            });
-                          },
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-                  ],
-                  // CHOICE GROUPS
-                  ...choiceGroups.map(
-                        (group) {
-                      final groupId = group.id;
-
-                      final selected =
-                      groupId == null
-                          ? <MenuVariation>[]
-                          : selectedChoices[groupId] ??
-                          [];
-
-                      final minChoices =
-                          group.minChoices ?? 0;
-
-                      final maxChoices =
-                          group.maxChoices ?? 0;
-
-                      return Column(
-                        crossAxisAlignment:
-                        CrossAxisAlignment.start,
-                        children: [
-
-                          Text(
-                            group.name ??
-                                'Select Option',
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight:
-                              FontWeight.bold,
-                            ),
-                          ),
-
-                          const SizedBox(height: 4),
-
-                          Text(
-                            maxChoices > 0
-                                ? 'Select $minChoices-$maxChoices'
-                                : 'Select at least $minChoices',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color:
-                              Colors.grey.shade600,
-                            ),
-                          ),
-
-                          const SizedBox(height: 8),
-
-                          ...group.choices.map(
-                                (choice) {
-                              final isSelected =
-                              selected.any(
-                                    (item) =>
-                                item.id ==
-                                    choice.id,
-                              );
-
-                              return CheckboxListTile(
-                                value: isSelected,
-
-                                title: Text(
-                                  choice.name ?? '',
-                                ),
-
-                                subtitle: Text(
-                                  'Rs ${choice.price ?? '0'}',
-                                ),
-
-                                onChanged: (_) {
-                                  _toggleChoice(
-                                    group,
-                                    choice,
-                                  );
-                                },
-                              );
-                            },
-                          ),
-
-                          const SizedBox(height: 15),
-                        ],
-                      );
-                    },
-                  ),
-                ],
+              child: VariationSelector(
+                variations: widget.food.menuVariations,
+                choiceGroups: choiceGroups,
+                selectedVariation: selectedVariation,
+                selectedChoices: selectedChoices,
+                onVariationSelected: _selectVariation,
+                onChoiceSelected: _toggleChoice,
               ),
             ),
           ),
 
-
-          // ADD TO CART
-
+// ADD TO CART
           SafeArea(
             top: false,
             child: Padding(
@@ -362,11 +239,10 @@ class _VariationViewState extends State<VariationView> {
                   isSelectionValid
                       ? _addToCart
                       : null,
-
                   child: Text(
                     isSelectionValid
                         ? 'Add to Cart - Rs ${selectedPrice.toStringAsFixed(0)}'
-                        : 'Complete Selection',
+                        : 'Complete Required Selection',
                   ),
                 ),
               ),
@@ -377,3 +253,4 @@ class _VariationViewState extends State<VariationView> {
     );
   }
 }
+

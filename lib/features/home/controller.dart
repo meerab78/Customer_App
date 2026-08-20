@@ -1,12 +1,8 @@
 ﻿
-import 'package:customer_app/features/home/variation_view.dart';
 import 'package:customer_app/features/home/widget/food_detail_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:provider/provider.dart';
-import '../cart/controller.dart';
-
 import 'model/branch_model.dart';
 import 'model/menu_model.dart';
 import 'repository.dart';
@@ -72,17 +68,19 @@ class HomeController extends ChangeNotifier {
     }
     notifyListeners();
   }
-  Future<void> getMenu() async {
-    if(selectedBranch == null) return;
-    try{
-      menuModel =
-      await _menuRepository.getMenu(
-          selectedBranch!.id.toString()
-      );
-      notifyListeners();
-    }catch(e){
-      print(e);
+  Future<void> getMenu(String branchId) async {
+    menuModel = await _menuRepository.getMenu(branchId);
+
+    // TEMPORARY PRICE CHECK
+    if (menuModel?.data != null) {
+      for (final category
+      in menuModel!.data!.restaurantBranchMenu) {
+        for (final food in category.menu) {
+        }
+      }
     }
+
+    notifyListeners();
   }
   Future<void> loadSavedLocation() async {
     final prefs = await SharedPreferences.getInstance();
@@ -97,7 +95,9 @@ class HomeController extends ChangeNotifier {
       await loadSavedLocation();
       await getBranches();
       await findNearestBranch();
-      await getMenu();
+      if (selectedBranch != null) {
+        await getMenu(selectedBranch!.id.toString());
+      }
     } catch (e) {
       print(e);
     }
@@ -119,7 +119,7 @@ class HomeController extends ChangeNotifier {
   Future<void> selectBranch(Branch branch) async {
     selectedBranch = branch;
     notifyListeners();
-    await getMenu();
+    await getMenu(selectedBranch!.id.toString());
   }
   void onMenuItemTap(
       BuildContext context,

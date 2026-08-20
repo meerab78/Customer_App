@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
+import 'checkout_view.dart';
 import 'controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
@@ -76,7 +78,7 @@ class CartView extends StatelessWidget {
                 ),
               ),
 
-              _checkoutSection(total),
+              _checkoutSection(context, total),
             ],
           );
         },
@@ -84,7 +86,10 @@ class CartView extends StatelessWidget {
     );
   }
 
-  Widget _checkoutSection(double total) {
+  Widget _checkoutSection(
+      BuildContext context,
+      double total,
+      ) {
     return Container(
       padding: const EdgeInsets.fromLTRB(
         20,
@@ -128,9 +133,14 @@ class CartView extends StatelessWidget {
             height: 54,
             child: ElevatedButton(
               onPressed: () {
-                // Checkout later
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CheckoutView(),
+                  ),
+                );
               },
-              style: ElevatedButton.styleFrom(
+          style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.white,
                 elevation: 0,

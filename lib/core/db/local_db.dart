@@ -19,7 +19,7 @@ class LocalDb {
 
     return await openDatabase(
       path,
-      version: 3,
+      version: 5,
 
       onCreate: (db, version) async {
         await db.execute('''
@@ -35,12 +35,17 @@ class LocalDb {
 
             quantity INTEGER,
 
-            menu_variation TEXT
+            menu_variation TEXT,
+            choices TEXT,
+
+            deal_details TEXT
           )
         ''');
       },
 
       onUpgrade: (db, oldVersion, newVersion) async {
+
+        // VERSION 3
         if (oldVersion < 3) {
           await db.execute('''
             ALTER TABLE cartitems
@@ -60,6 +65,22 @@ class LocalDb {
           await db.execute('''
             ALTER TABLE cartitems
             ADD COLUMN menu_variation TEXT
+          ''');
+        }
+
+        // VERSION 4
+        if (oldVersion < 4) {
+          await db.execute('''
+            ALTER TABLE cartitems
+            ADD COLUMN choices TEXT
+          ''');
+        }
+
+        // VERSION 5
+        if (oldVersion < 5) {
+          await db.execute('''
+            ALTER TABLE cartitems
+            ADD COLUMN deal_details TEXT
           ''');
         }
       },

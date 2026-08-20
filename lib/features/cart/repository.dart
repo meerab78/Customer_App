@@ -1,22 +1,26 @@
-﻿import '../../core/db/local_db.dart';
+﻿
+import 'package:flutter/cupertino.dart';
+
+import '../../core/db/local_db.dart';
 
 class CartRepository {
   final LocalDb _localDb = LocalDb();
-  // ADD TO CART
 
-  Future<void> addToCart(
+  // ADD TO CART
+  Future<int> addToCart(
       Map<String, dynamic> cartItem,
       ) async {
     final db = await _localDb.database;
 
-    await db.insert(
+    debugPrint('DATABASE INSERT DATA: $cartItem');
+
+    return await db.insert(
       'cartitems',
       cartItem,
     );
   }
+
   // GET CART ITEMS
-
-
   Future<List<Map<String, dynamic>>> getCartItems() async {
     final db = await _localDb.database;
 
@@ -24,6 +28,7 @@ class CartRepository {
       'cartitems',
     );
   }
+
   // UPDATE CART ITEM
   Future<void> updateCartItem(
       int id,
@@ -38,20 +43,20 @@ class CartRepository {
       whereArgs: [id],
     );
   }
+
   // DELETE CART ITEM
-
-
   Future<void> deleteCartItem(
-      int menuId,
+      int id,
       ) async {
     final db = await _localDb.database;
 
     await db.delete(
       'cartitems',
-      where: 'menu_id = ?',
-      whereArgs: [menuId],
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
+
   // CLEAR CART
   Future<void> clearCart() async {
     final db = await _localDb.database;
@@ -60,9 +65,10 @@ class CartRepository {
       'cartitems',
     );
   }
+
   // UPDATE QUANTITY
   Future<void> updateQuantity(
-      int menuId,
+      int id,
       int quantity,
       ) async {
     final db = await _localDb.database;
@@ -72,8 +78,8 @@ class CartRepository {
       {
         'quantity': quantity,
       },
-      where: 'menu_id = ?',
-      whereArgs: [menuId],
+      where: 'id = ?',
+      whereArgs: [id],
     );
   }
 }

@@ -74,26 +74,17 @@ class _DealDetailViewState extends State<DealDetailView> {
 
   double get totalDealPrice {
     double total = 0;
-
     for (final item in dealItems) {
       final itemPrice =
-          double.tryParse(
-            item.price ?? '0',
-          ) ??
-              0;
-
-      final quantity =
-          item.quantity ?? 1;
-
+          double.tryParse(item.price ?? '0') ?? 0;
+      final quantity = item.quantity ?? 1;
       total += itemPrice * quantity;
     }
-
     return total;
   }
 // ADD DEAL TO CART
 
   Future<void> _addDealToCart() async {
-// Safety check
     if (!isDealComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -106,16 +97,25 @@ class _DealDetailViewState extends State<DealDetailView> {
       return;
     }
 
+    final finalPrice = totalDealPrice;
+    // UPDATED DEAL
     final updatedDeal = widget.food.copyWith(
+      isDeal: true,
+
+      price: finalPrice.toString(),
+      takeAwayPrice: finalPrice.toString(),
+      deliveryPrice: finalPrice.toString(),
+
+      // Deal ki customization yahan rahegi
       dealMenuDetails: dealItems,
 
-// Save final deal price
-      price: totalDealPrice.toString(),
-    );
+      // Deal ke liye variation nahi hoga
+      menuVariation: null,
 
-    await context
-        .read<CartController>()
-        .addToCart(
+      // Deal ke direct choices bhi nahi
+      choiceGroup: [],
+    );
+    await context.read<CartController>().addToCart(
       updatedDeal,
       1,
     );
@@ -127,8 +127,7 @@ class _DealDetailViewState extends State<DealDetailView> {
         content: Text(
           '${widget.food.name ?? 'Deal'} added to cart ✓',
         ),
-        duration:
-        const Duration(seconds: 2),
+        duration: const Duration(seconds: 2),
       ),
     );
   }

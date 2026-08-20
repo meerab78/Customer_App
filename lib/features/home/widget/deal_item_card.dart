@@ -22,51 +22,52 @@ class DealItemCard extends StatefulWidget {
 
 class _DealItemCardState extends State<DealItemCard> {
   bool isExpanded = false;
-
   MenuVariation? selectedVariation;
-
+  double? _originalBasePrice;
   final Map<int, List<MenuVariation>> selectedChoices = {};
-// CUSTOMIZATION AVAILABLE?
+  @override
+  void initState() {
+    super.initState();
 
-
-  bool get hasCustomization {
-    return widget.item.menuVariations.isNotEmpty ||
-        widget.item.choiceGroup.isNotEmpty;
+    _originalBasePrice =
+        double.tryParse(
+          widget.item.price ?? '0',
+        ) ??
+            0;
   }
-// CHOICE GROUPS
-  List<ChoiceGroup> get choiceGroups {
-    final groups = <ChoiceGroup>[];
+  @override
+  void didUpdateWidget(
+      covariant DealItemCard oldWidget,
+      ) {
+    super.didUpdateWidget(oldWidget);
 
-    groups.addAll(widget.item.choiceGroup);
-
-    if (selectedVariation != null) {
-      groups.addAll(
-        selectedVariation!.choiceGroups,
-      );
-    }
-
-    return groups;
-  }
-
-
-// FINAL PRICE
-  double get finalPrice {
-    double total;
-
-    if (selectedVariation != null) {
-      total =
-          double.tryParse(
-            selectedVariation!.price ?? '0',
-          ) ??
-              0;
-    } else {
-      total =
+    if (oldWidget.item.id != widget.item.id) {
+      _originalBasePrice =
           double.tryParse(
             widget.item.price ?? '0',
           ) ??
               0;
+
+      selectedVariation = null;
+      selectedChoices.clear();
+    }
+  }
+  double get basePrice {
+    return _originalBasePrice ?? 0;
+  }
+  double get finalPrice {
+    double total = basePrice;
+
+    // Main variation ki EXTRA price
+    if (selectedVariation != null) {
+      total +=
+          double.tryParse(
+            selectedVariation!.price ?? '0',
+          ) ??
+              0;
     }
 
+    // Selected choices ki EXTRA prices
     for (final choices in selectedChoices.values) {
       for (final choice in choices) {
         total +=
@@ -78,6 +79,22 @@ class _DealItemCardState extends State<DealItemCard> {
     }
 
     return total;
+  }
+// CUSTOMIZATION AVAILABLE?
+  bool get hasCustomization {
+    return widget.item.menuVariations.isNotEmpty ||
+        widget.item.choiceGroup.isNotEmpty;
+  }
+// CHOICE GROUPS
+  List<ChoiceGroup> get choiceGroups {
+    final groups = <ChoiceGroup>[];
+    groups.addAll(widget.item.choiceGroup);
+    if (selectedVariation != null) {
+      groups.addAll(
+        selectedVariation!.choiceGroups,
+      );
+    }
+    return groups;
   }
 // VALIDATION
   bool get isValid {
@@ -180,68 +197,34 @@ class _DealItemCardState extends State<DealItemCard> {
   }
 
 // BUILD UPDATED ITEM
-
   Menu _buildUpdatedItem() {
-    final groups = choiceGroups.map(
-          (group) {
-        final selected =
-            selectedChoices[group.id] ?? [];
+    final groups = choiceGroups.map((group) {
+      final selected = selectedChoices[group.id] ?? [];
 
-        return group.copyWith(
-          choices: selected,
-        );
-      },
-    ).toList();
+      return group.copyWith(
+        choices: selected,
+      );
+    }).toList();
 
     MenuVariation? finalVariation;
 
-// Main variation selected
     if (selectedVariation != null) {
-      finalVariation =
-          selectedVariation!.copyWith(
-            price: finalPrice.toString(),
-            takeAwayPrice:
-            selectedVariation!.takeAwayPrice,
-            deliveryPrice:
-            selectedVariation!.deliveryPrice,
-            choiceGroups: groups,
-          );
-    }
-
-// Only choice groups
-    else if (groups.isNotEmpty) {
-      finalVariation = MenuVariation(
-        id: null,
-        name: widget.item.name,
+      finalVariation = selectedVariation!.copyWith(
         price: finalPrice.toString(),
-        takeAwayPrice:
-        widget.item.takeAwayPrice,
-        deliveryPrice:
-        widget.item.deliveryPrice,
+        takeAwayPrice: selectedVariation!.takeAwayPrice,
+        deliveryPrice: selectedVariation!.deliveryPrice,
         choiceGroups: groups,
       );
     }
-
     return widget.item.copyWith(
-// IMPORTANT:
-// Customized final price
       price: finalPrice.toString(),
-
-      takeAwayPrice:
-      selectedVariation?.takeAwayPrice ??
-          widget.item.takeAwayPrice,
-
-      deliveryPrice:
-      selectedVariation?.deliveryPrice ??
-          widget.item.deliveryPrice,
-
-// Selected variation + choices
       menuVariation: finalVariation,
+      // IMPORTANT:
+      // Deal item ke selected direct choices bhi preserve honge
+      choiceGroup: groups,
     );
   }
-
 // IMAGE
-
   Widget _image() {
     final url = widget.item.imageUrl ?? '';
 

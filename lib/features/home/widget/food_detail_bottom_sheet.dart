@@ -121,8 +121,19 @@ void showFoodDetailBottomSheet(
                             20,
                             18,
                           ),
-                          child: FoodDetailContent(
-                            food: food,
+                          child:  FoodDetailContent(
+                            food: selectedVariation != null
+                                ? food.copyWith(
+                              menuVariation: selectedVariation,
+                              price: selectedVariation!.price,
+                              takeAwayPrice:
+                              selectedVariation!.takeAwayPrice ??
+                                  food.takeAwayPrice,
+                              deliveryPrice:
+                              selectedVariation!.deliveryPrice ??
+                                  food.deliveryPrice,
+                            )
+                                : food,
                             quantity: quantity,
                             total: total,
                             isAddEnabled:
@@ -138,18 +149,31 @@ void showFoodDetailBottomSheet(
 
                               if (selectedVariation != null) {
                                 selectedFood = food.copyWith(
-                                  price:
-                                  selectedVariation!.price,
+                                  price: selectedVariation!.price,
+
                                   takeAwayPrice:
-                                  selectedVariation!
-                                      .takeAwayPrice,
+                                  selectedVariation!.takeAwayPrice ??
+                                      food.takeAwayPrice,
+
                                   deliveryPrice:
-                                  selectedVariation!
-                                      .deliveryPrice,
-                                  menuVariation:
-                                  selectedVariation,
+                                  selectedVariation!.deliveryPrice ??
+                                      food.deliveryPrice,
+
+                                  menuVariation: selectedVariation,
+
+                                  // IMPORTANT:
+                                  // selected variation ke selected choices bhi preserve
+                                  choiceGroup: selectedVariation!.choiceGroups,
                                 );
                               }
+
+                              debugPrint('========== BOTTOM SHEET FINAL FOOD ==========');
+                              debugPrint('NAME: ${selectedFood.name}');
+                              debugPrint('VARIATION ID: ${selectedFood.menuVariation?.id}');
+                              debugPrint('VARIATION NAME: ${selectedFood.menuVariation?.name}');
+                              debugPrint('VARIATION PRICE: ${selectedFood.menuVariation?.price}');
+                              debugPrint('CHOICES: ${selectedFood.menuVariation?.choiceGroups}');
+                              debugPrint('==============================================');
 
                               await sheetContext
                                   .read<CartController>()
@@ -190,7 +214,6 @@ void showFoodDetailBottomSheet(
                                         ),
                                   ),
                                 );
-
                                 if (variation != null &&
                                     sheetContext.mounted) {
                                   setState(() {

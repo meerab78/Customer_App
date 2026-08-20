@@ -1,8 +1,11 @@
 ﻿
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' show read;
+import 'package:provider/provider.dart' show ReadContext;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
+import '../../cart/controller.dart';
 import '../branch_view.dart';
 import 'delivery_pickup_card.dart';
 void showOrderTypeBottomSheet(BuildContext context) {
@@ -57,6 +60,7 @@ void showOrderTypeBottomSheet(BuildContext context) {
                 title: "Delivery",
                 subtitle: "Deliver food to your address",
                 onTap: () {
+                  context.read<CartController>().changeOrderType('Delivery');
                   Navigator.pop(context);
                 },
               ),
@@ -66,6 +70,7 @@ void showOrderTypeBottomSheet(BuildContext context) {
                 title: "Pickup",
                 subtitle: "Collect from restaurant branch",
                 onTap: () {
+                  context.read<CartController>().changeOrderType('Takeaway');
                   Navigator.pop(context);
                   Navigator.push(
                     context,

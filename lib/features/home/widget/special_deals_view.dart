@@ -64,6 +64,7 @@ class SpecialDealsView extends StatelessWidget {
       ),
     );
 
+
     if (variation == null || !context.mounted) {
       return;
     }
