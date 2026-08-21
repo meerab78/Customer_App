@@ -1,7 +1,7 @@
 ﻿
 import 'package:flutter/cupertino.dart';
 
-import '../../core/db/local_db.dart';
+import '../../core/db/sqflite/local_db.dart';
 
 class CartRepository {
   final LocalDb _localDb = LocalDb();

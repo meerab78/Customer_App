@@ -34,6 +34,74 @@ class _DealItemCardState extends State<DealItemCard> {
           widget.item.price ?? '0',
         ) ??
             0;
+
+    _initializeExistingSelection();
+  }
+
+// EXISTING SELECTION LOAD KARO
+  void _initializeExistingSelection() {
+    // EXISTING SELECTED VARIATION
+    if (widget.item.menuVariation != null) {
+      final existingVariation = widget.item.menuVariation!;
+
+      for (final variation in widget.item.menuVariations) {
+        if (variation.id == existingVariation.id) {
+          selectedVariation = variation;
+          break;
+        }
+      }
+
+      // Fallback
+      selectedVariation ??= existingVariation;
+
+      // Original base price se variation aur choices ki price nikal dein
+      // (kyunke widget.item.price total ho sakta hai)
+      final variationExtra =
+          double.tryParse(existingVariation.price ?? '0') ?? 0;
+
+      double choicesExtra = 0;
+      for (final group in existingVariation.choiceGroups) {
+        for (final choice in group.choices) {
+          choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+        }
+      }
+
+      _originalBasePrice =
+          (_originalBasePrice ?? 0) - variationExtra - choicesExtra;
+    }
+
+    // DIRECT CHOICES
+    _initializeChoices(widget.item.choiceGroup);
+
+    // VARIATION KE CHOICES
+    if (widget.item.menuVariation != null) {
+      _initializeChoices(widget.item.menuVariation!.choiceGroups);
+    }
+  }
+
+// CHOICES LOAD KARNE KA HELPER
+  void _initializeChoices(List<ChoiceGroup> groups) {
+    for (final group in groups) {
+      final groupId = group.id;
+      if (groupId == null) continue;
+
+      final existingChoices = group.choices;
+      if (existingChoices.isEmpty) continue;
+
+      final current = List<MenuVariation>.from(
+        selectedChoices[groupId] ?? [],
+      );
+
+      for (final choice in existingChoices) {
+        final alreadyExists =
+        current.any((item) => item.id == choice.id);
+        if (!alreadyExists) {
+          current.add(choice);
+        }
+      }
+
+      selectedChoices[groupId] = current;
+    }
   }
   @override
   void didUpdateWidget(
@@ -50,6 +118,7 @@ class _DealItemCardState extends State<DealItemCard> {
 
       selectedVariation = null;
       selectedChoices.clear();
+      _initializeExistingSelection();
     }
   }
   double get basePrice {

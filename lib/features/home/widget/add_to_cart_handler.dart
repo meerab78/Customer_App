@@ -114,10 +114,11 @@ Future<void> _openVariationView(
   }
 
   final selectedFood = food.copyWith(
-    price: variation.price,
+    // price: variation.price,
     takeAwayPrice: variation.takeAwayPrice,
     deliveryPrice: variation.deliveryPrice,
     menuVariation: variation,
+    choiceGroup: variation.choiceGroups,
   );
 
   await context.read<CartController>().addToCart(

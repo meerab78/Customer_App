@@ -28,15 +28,23 @@ void showFoodDetailBottomSheet(
     builder: (sheetContext) {
       return StatefulBuilder(
         builder: (sheetContext, setState) {
-          final double selectedPrice = selectedVariation != null
-              ? double.tryParse(
-            selectedVariation!.price ?? '0',
-          ) ??
-              0
-              : double.tryParse(food.price ?? '0') ?? 0;
+          final double basePrice = double.tryParse(food.price ?? '0') ?? 0;
 
+          final double variationExtra = selectedVariation != null
+              ? double.tryParse(selectedVariation!.price ?? '0') ?? 0
+              : 0;
+
+          double choicesExtra = 0;
+          if (selectedVariation != null) {
+            for (final group in selectedVariation!.choiceGroups) {
+              for (final choice in group.choices) {
+                choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+              }
+            }
+          }
+
+          final double selectedPrice = basePrice + variationExtra + choicesExtra;
           final double total = selectedPrice * quantity;
-
           return Stack(
             children: [
               BackdropFilter(
@@ -125,7 +133,6 @@ void showFoodDetailBottomSheet(
                             food: selectedVariation != null
                                 ? food.copyWith(
                               menuVariation: selectedVariation,
-                              price: selectedVariation!.price,
                               takeAwayPrice:
                               selectedVariation!.takeAwayPrice ??
                                   food.takeAwayPrice,
@@ -149,8 +156,6 @@ void showFoodDetailBottomSheet(
 
                               if (selectedVariation != null) {
                                 selectedFood = food.copyWith(
-                                  price: selectedVariation!.price,
-
                                   takeAwayPrice:
                                   selectedVariation!.takeAwayPrice ??
                                       food.takeAwayPrice,

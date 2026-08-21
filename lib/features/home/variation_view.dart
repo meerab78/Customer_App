@@ -1,5 +1,4 @@
 
-
 import 'package:flutter/material.dart';
 
 import 'model/menu_model.dart';
@@ -7,10 +6,13 @@ import 'widget/variation_selector.dart';
 
 class VariationView extends StatefulWidget {
   final Menu food;
+  final bool isEditMode;
+
 
   const VariationView({
     super.key,
     required this.food,
+    this.isEditMode = false,
   });
 
   @override
@@ -20,68 +22,200 @@ class VariationView extends StatefulWidget {
 class _VariationViewState extends State<VariationView> {
   MenuVariation? selectedVariation;
 
-// ChoiceGroup ID -> selected choices
+  // ChoiceGroup ID -> selected choices
   final Map<int, List<MenuVariation>> selectedChoices = {};
 
-// Direct choices + selected variation ke choices
+  @override
+  void initState() {
+    super.initState();
+    // Existing selections SIRF edit mode mein load hongi.
+    if (widget.isEditMode) {
+      _initializeExistingSelection();
+    }
+  }
+  // INITIALIZE EXISTING SELECTION
+
+  void _initializeExistingSelection() {
+    // FIND EXISTING SELECTED VARIATION
+    if (widget.food.menuVariation != null) {
+      final existingVariation =
+      widget.food.menuVariation!;
+
+      for (final variation
+      in widget.food.menuVariations) {
+        if (variation.id == existingVariation.id) {
+          selectedVariation = variation;
+          break;
+        }
+      }
+
+      // Fallback
+      selectedVariation ??= existingVariation;
+    }
+    // DIRECT SELECTED CHOICES
+
+
+    _initializeChoices(
+      widget.food.choiceGroup,
+    );
+    // EXISTING SELECTED VARIATION CHOICES
+    if (widget.food.menuVariation != null) {
+      _initializeChoices(
+        widget.food.menuVariation!.choiceGroups,
+      );
+    }
+  }
+
+  // INITIALIZE CHOICES
+  void _initializeChoices(
+      List<ChoiceGroup> groups,
+      ) {
+    for (final group in groups) {
+      final groupId = group.id;
+
+      if (groupId == null) {
+        continue;
+      }
+
+      // Existing selected choices
+      final existingChoices = group.choices;
+
+      if (existingChoices.isEmpty) {
+        continue;
+      }
+
+      final current =
+      List<MenuVariation>.from(
+        selectedChoices[groupId] ?? [],
+      );
+
+      for (final choice in existingChoices) {
+        final alreadyExists = current.any(
+              (item) => item.id == choice.id,
+        );
+
+        if (!alreadyExists) {
+          current.add(choice);
+        }
+      }
+
+      selectedChoices[groupId] = current;
+    }
+  }
+  // CHOICE GROUPS
   List<ChoiceGroup> get choiceGroups {
     final groups = <ChoiceGroup>[];
 
+    // DIRECT CHOICE GROUPS
+    // ==========================================================
+
     groups.addAll(widget.food.choiceGroup);
 
+    // ==========================================================
+    // CURRENT SELECTED VARIATION KE AVAILABLE GROUPS
+    // ==========================================================
+
     if (selectedVariation != null) {
-      groups.addAll(selectedVariation!.choiceGroups);
-    }
+      for (final variation in widget.food.menuVariations) {
+        if (variation.id != selectedVariation!.id) {
+          continue;
+        }
+        for (final variationGroup
+        in variation.choiceGroups) {
+          final existingIndex = groups.indexWhere(
+                (group) => group.id == variationGroup.id,
+          );
 
-    return groups;
-  }
-
-// Final selected price
-  double get selectedPrice {
-    double total =
-        double.tryParse(widget.food.price ?? '0') ?? 0;
-
-    // Variation price ADD hogi
-    if (selectedVariation != null) {
-      total +=
-          double.tryParse(selectedVariation!.price ?? '0') ?? 0;
-    }
-
-    // Choices ki prices ADD hongi
-    for (final choices in selectedChoices.values) {
-      for (final choice in choices) {
-        total +=
-            double.tryParse(choice.price ?? '0') ?? 0;
+          if (existingIndex == -1) {
+            groups.add(variationGroup);
+          }
+        }
       }
     }
+    return groups;
+  }
+  // FINAL PRICE
+  double get selectedPrice {
+    final basePrice =
+        double.tryParse(widget.food.price ?? '0') ?? 0;
+
+    double variationPrice = 0;
+
+    if (selectedVariation != null) {
+      variationPrice =
+          double.tryParse(
+            selectedVariation!.price ?? '0',
+          ) ??
+              0;
+    }
+
+    double choicesPrice = 0;
+
+    for (final choices in selectedChoices.values) {
+      for (final choice in choices) {
+        choicesPrice +=
+            double.tryParse(
+              choice.price ?? '0',
+            ) ??
+                0;
+      }
+    }
+
+    final total =
+        basePrice +
+            variationPrice +
+            choicesPrice;
+
+    debugPrint(
+      '========== VARIATION VIEW PRICE ==========',
+    );
+    debugPrint('Food: ${widget.food.name}');
+    debugPrint('Food Base Price: $basePrice');
+    debugPrint(
+      'Selected Variation: ${selectedVariation?.name}',
+    );
+    debugPrint(
+      'Selected Variation Price: $variationPrice',
+    );
+    debugPrint('Choices Price: $choicesPrice');
+    debugPrint('TOTAL: $total');
+    debugPrint(
+      '==========================================',
+    );
     return total;
   }
+  // VALIDATION
 
-// Check only REQUIRED selections
   bool get isSelectionValid {
+    // Main variation required
     if (widget.food.menuVariations.isNotEmpty &&
         selectedVariation == null) {
       return false;
     }
 
-// Choice groups ki min/max validation
+    // Choice groups validation
     for (final group in choiceGroups) {
       final groupId = group.id;
 
-      if (groupId == null) continue;
+      if (groupId == null) {
+        continue;
+      }
 
       final selectedCount =
           selectedChoices[groupId]?.length ?? 0;
 
-      final minChoices = group.minChoices ?? 0;
-      final maxChoices = group.maxChoices ?? 0;
+      final minChoices =
+          group.minChoices ?? 0;
 
-// Required choices complete nahi
+      final maxChoices =
+          group.maxChoices ?? 0;
+
+      // Required
       if (selectedCount < minChoices) {
         return false;
       }
 
-// Maximum exceed
+      // Maximum
       if (maxChoices > 0 &&
           selectedCount > maxChoices) {
         return false;
@@ -90,16 +224,27 @@ class _VariationViewState extends State<VariationView> {
 
     return true;
   }
-
-  void _selectVariation(MenuVariation variation) {
+  // SELECT MAIN VARIATION
+  void _selectVariation(
+      MenuVariation variation,
+      ) {
     setState(() {
       selectedVariation = variation;
 
-// Variation change hone par
-// purani variation-specific choices remove.
-      selectedChoices.clear();
+      // Direct choices ko preserve karo.
+      final directGroupIds = widget.food.choiceGroup
+          .map((group) => group.id)
+          .whereType<int>()
+          .toSet();
+
+      selectedChoices.removeWhere(
+            (groupId, choices) =>
+        !directGroupIds.contains(groupId),
+      );
     });
   }
+
+  // SELECT / UNSELECT CHOICE
 
   void _toggleChoice(
       ChoiceGroup group,
@@ -107,9 +252,12 @@ class _VariationViewState extends State<VariationView> {
       ) {
     final groupId = group.id;
 
-    if (groupId == null) return;
+    if (groupId == null) {
+      return;
+    }
 
-    final selected = List<MenuVariation>.from(
+    final selected =
+    List<MenuVariation>.from(
       selectedChoices[groupId] ?? [],
     );
 
@@ -122,7 +270,8 @@ class _VariationViewState extends State<VariationView> {
             (item) => item.id == choice.id,
       );
     } else {
-      final maxChoices = group.maxChoices ?? 0;
+      final maxChoices =
+          group.maxChoices ?? 0;
 
       if (maxChoices > 0 &&
           selected.length >= maxChoices) {
@@ -137,8 +286,11 @@ class _VariationViewState extends State<VariationView> {
     });
   }
 
-  void _addToCart() {
+  // ============================================================
+  // ADD / UPDATE
+  // ============================================================
 
+  void _addToCart() {
     if (!isSelectionValid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -150,13 +302,19 @@ class _VariationViewState extends State<VariationView> {
 
       return;
     }
+
+    // ----------------------------------------------------------
+    // BUILD SELECTED GROUPS
+    // ----------------------------------------------------------
+
     final selectedGroups = choiceGroups
         .where(
           (group) =>
       selectedChoices[group.id]?.isNotEmpty ?? false,
     )
         .map((group) {
-      final selected = selectedChoices[group.id] ?? [];
+      final selected =
+          selectedChoices[group.id] ?? [];
 
       return group.copyWith(
         choices: selected,
@@ -164,29 +322,29 @@ class _VariationViewState extends State<VariationView> {
     })
         .toList();
 
-// Agar main variation selected hai
+    // MAIN VARIATION SELECTED
+
     if (selectedVariation != null) {
       final variation =
       selectedVariation!.copyWith(
-        price: selectedPrice.toString(),
         choiceGroups: selectedGroups,
       );
-
       Navigator.pop(
         context,
         variation,
       );
-
       return;
     }
+    // ONLY CHOICE GROUPS
 
-// Sirf choice groups hain, main variation nahi
     final variation = MenuVariation(
       id: null,
       name: widget.food.name,
-      price: selectedPrice.toString(),
-      takeAwayPrice: widget.food.takeAwayPrice,
-      deliveryPrice: widget.food.deliveryPrice,
+      price: '0',
+      takeAwayPrice:
+      widget.food.takeAwayPrice,
+      deliveryPrice:
+      widget.food.deliveryPrice,
       choiceGroups: selectedGroups,
     );
 
@@ -195,6 +353,10 @@ class _VariationViewState extends State<VariationView> {
       variation,
     );
   }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -210,38 +372,65 @@ class _VariationViewState extends State<VariationView> {
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
+
               child: VariationSelector(
-                variations: widget.food.menuVariations,
-                choiceGroups: choiceGroups,
-                selectedVariation: selectedVariation,
-                selectedChoices: selectedChoices,
-                onVariationSelected: _selectVariation,
-                onChoiceSelected: _toggleChoice,
+                // IMPORTANT:
+                // FULL variations list pass hogi.
+                //
+                // Sirf selected variation nahi.
+                variations:
+                widget.food.menuVariations,
+
+                // Full available choice groups
+                choiceGroups:
+                choiceGroups,
+
+                // Existing selected variation
+                selectedVariation:
+                selectedVariation,
+
+                // Existing selected choices
+                selectedChoices:
+                selectedChoices,
+
+                onVariationSelected:
+                _selectVariation,
+
+                onChoiceSelected:
+                _toggleChoice,
               ),
             ),
           ),
 
-// ADD TO CART
+          // ====================================================
+          // DONE / UPDATE BUTTON
+          // ====================================================
+
           SafeArea(
             top: false,
+
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(
+              padding:
+              const EdgeInsets.fromLTRB(
                 16,
                 8,
                 16,
                 16,
               ),
+
               child: SizedBox(
                 width: double.infinity,
                 height: 52,
+
                 child: ElevatedButton(
                   onPressed:
                   isSelectionValid
                       ? _addToCart
                       : null,
+
                   child: Text(
                     isSelectionValid
-                        ? 'Add to Cart - Rs ${selectedPrice.toStringAsFixed(0)}'
+                        ? 'Done - Rs ${selectedPrice.toStringAsFixed(0)}'
                         : 'Complete Required Selection',
                   ),
                 ),
@@ -253,4 +442,3 @@ class _VariationViewState extends State<VariationView> {
     );
   }
 }
-

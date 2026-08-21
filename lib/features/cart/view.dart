@@ -2,6 +2,9 @@
 import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
+import '../home/deal_detail_view.dart' show DealDetailView;
+import '../home/model/menu_model.dart';
+import '../home/variation_view.dart';
 import 'checkout_view.dart';
 import 'controller.dart';
 import '../../core/theme/app_colors.dart';
@@ -58,26 +61,104 @@ class CartView extends StatelessWidget {
                   itemCount: cart.cartItems.length,
                   itemBuilder: (context, index) {
                     final food = cart.cartItems[index];
-
-                    return CartItemCard(
+                    return  CartItemCard(
                       food: food,
-
                       onDelete: () {
                         cart.removeFromCart(food);
                       },
-
                       onPlus: () {
                         cart.increaseQuantity(food);
                       },
-
                       onMinus: () {
                         cart.decreaseQuantity(food);
+                      },
+                      onTap: () async {
+                        // -----------------------------
+                        // DEAL EDIT
+                        // -----------------------------
+                        if (food.isDeal == true) {
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DealDetailView(
+                                food: food,
+                              ),
+                            ),
+                          );
+
+                          return;
+                        }
+
+                        // -----------------------------
+                        // NORMAL CUSTOMIZATION
+                        // -----------------------------
+                        final hasCustomization =
+                            food.menuVariation != null ||
+                                food.choiceGroup.any(
+                                      (group) =>
+                                  group.choices.isNotEmpty,
+                                );
+
+                        if (!hasCustomization) {
+                          return;
+                        }
+
+                        // ----------------------------------------------------
+                        // ASAL BASE PRICE NIKALEIN
+                        // (food.price abhi total hai: base + variation + choices)
+                        // ----------------------------------------------------
+                        final currentTotal =
+                            double.tryParse(food.price ?? '0') ?? 0;
+
+                        final variationExtra =
+                            double.tryParse(food.menuVariation?.price ?? '0') ?? 0;
+
+                        double choicesExtra = 0;
+                        for (final group in food.menuVariation?.choiceGroups ?? []) {
+                          for (final choice in group.choices) {
+                            choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+                          }
+                        }
+
+                        final originalBasePrice =
+                            currentTotal - variationExtra - choicesExtra;
+
+                        // VariationView ko asal base price ke sath bhejein
+                        final foodForEdit = food.copyWith(
+                          price: originalBasePrice.toString(),
+                        );
+
+                        final updatedVariation =
+                        await Navigator.push<MenuVariation>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VariationView(
+                              food: foodForEdit,
+                              isEditMode: true,
+                            ),
+                          ),
+                        );
+
+                        if (updatedVariation == null) {
+                          return;
+                        }
+
+                        // Updated Menu create karo — base price yahan bhi preserve karein
+                        final updatedFood = food.copyWith(
+                          price: originalBasePrice.toString(),
+                          menuVariation: updatedVariation,
+                          choiceGroup: updatedVariation.choiceGroups,
+                        );
+
+                        await cart.updateCartItem(
+                          food,
+                          updatedFood,
+                        );
                       },
                     );
                   },
                 ),
               ),
-
               _checkoutSection(context, total),
             ],
           );

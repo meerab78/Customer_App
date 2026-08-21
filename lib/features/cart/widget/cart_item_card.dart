@@ -10,7 +10,7 @@ class CartItemCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onPlus;
   final VoidCallback onMinus;
-  final VoidCallback? onEdit;
+  final VoidCallback? onTap;
 
   const CartItemCard({
     super.key,
@@ -18,7 +18,7 @@ class CartItemCard extends StatelessWidget {
     required this.onDelete,
     required this.onPlus,
     required this.onMinus,
-    this.onEdit,
+    this.onTap,
   });
 
   @override
@@ -27,161 +27,117 @@ class CartItemCard extends StatelessWidget {
         double.tryParse(food.price ?? '0') ?? 0;
 
     final quantity = food.quantity ?? 1;
-
-    final hasNormalCustomization =
-        food.menuVariation != null ||
-            food.choiceGroup
-                .any((group) => group.choices.isNotEmpty);
-
-    final hasDealCustomization =
-        food.isDeal == true &&
-            food.dealMenuDetails.isNotEmpty;
-
-    final showEdit =
-        hasNormalCustomization ||
-            hasDealCustomization;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(9),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColors.grey200.withOpacity(.65),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.softShadow04,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(9),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: AppColors.grey200.withOpacity(.65),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // IMAGE
-              _foodImage(),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.softShadow04,
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // IMAGE
+                _foodImage(),
 
-              const SizedBox(width: 10),
+                const SizedBox(width: 10),
 
-              // DETAILS
-              Expanded(
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            food.name ?? 'Food',
-                            maxLines: 2,
-                            overflow:
-                            TextOverflow.ellipsis,
-                            style: getExtraBoldStyle(
-                              fontSize: MyFonts.size15,
-                              color: AppColors.text,
+                // DETAILS
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              food.name ?? 'Food',
+                              maxLines: 2,
+                              overflow:
+                              TextOverflow.ellipsis,
+                              style: getExtraBoldStyle(
+                                fontSize: MyFonts.size15,
+                                color: AppColors.text,
+                              ),
                             ),
                           ),
-                        ),
 
-                        const SizedBox(width: 5),
+                          const SizedBox(width: 5),
 
-                        _deleteButton(),
-                      ],
-                    ),
-
-                    const SizedBox(height: 3),
-
-                    // PRICE
-                    Text(
-                      'Rs ${price.toStringAsFixed(0)}',
-                      style: getExtraBoldStyle(
-                        fontSize: MyFonts.size14,
-                        color: AppColors.primary,
+                          _deleteButton(),
+                        ],
                       ),
-                    ),
 
-                    // NORMAL VARIATION
-                    if (food.menuVariation != null &&
-                        food.menuVariation!.id != null) ...[
-                      const SizedBox(height: 5),
-                      _smallTag(
-                        food.menuVariation!.name ?? '',
-                      ),
-                    ],
+                      const SizedBox(height: 3),
 
-                    // DEAL BADGE
-                    if (food.isDeal == true) ...[
-                      const SizedBox(height: 5),
-                      _dealBadge(),
-                    ],
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          if (food.choiceGroup
-              .any((group) => group.choices.isNotEmpty))
-            _selectedChoices(),
-
-          if (food.isDeal == true &&
-              food.dealMenuDetails.isNotEmpty)
-            _dealDetails(),
-
-          const SizedBox(height: 8),
-
-          Row(
-            mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
-            children: [
-              // VIEW / EDIT
-              if (showEdit)
-                InkWell(
-                  onTap: onEdit,
-                  borderRadius:
-                  BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 3,
-                      vertical: 4,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.edit_outlined,
-                          size: 14,
+                      // PRICE
+                      Text(
+                        'Rs ${price.toStringAsFixed(0)}',
+                        style: getExtraBoldStyle(
+                          fontSize: MyFonts.size14,
                           color: AppColors.primary,
                         ),
-                        const SizedBox(width: 4),
-                        Text(
-                          'View / Edit',
-                          style: getBoldStyle(
-                            fontSize: MyFonts.size11,
-                            color: AppColors.primary,
-                          ),
+                      ),
+
+                      // NORMAL VARIATION
+                      if (food.menuVariation != null &&
+                          food.menuVariation!.id != null) ...[
+                        const SizedBox(height: 5),
+                        _smallTag(
+                          food.menuVariation!.name ?? '',
                         ),
                       ],
-                    ),
-                  ),
-                )
-              else
-                const SizedBox(),
 
-              // QUANTITY
-              _quantitySelector(quantity),
-            ],
-          ),
-        ],
+                      // DEAL BADGE
+                      if (food.isDeal == true) ...[
+                        const SizedBox(height: 5),
+                        _dealBadge(),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            if (food.choiceGroup
+                .any((group) => group.choices.isNotEmpty))
+              _selectedChoices(),
+
+            if (food.isDeal == true &&
+                food.dealMenuDetails.isNotEmpty)
+              _dealDetails(),
+
+            const SizedBox(height: 8),
+
+            Row(
+              mainAxisAlignment:
+              MainAxisAlignment.spaceBetween,
+              children: [
+                // QUANTITY
+                _quantitySelector(quantity),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

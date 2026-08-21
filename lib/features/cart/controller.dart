@@ -131,6 +131,11 @@ class CartController extends ChangeNotifier {
   // LOAD CART
   Future<void> loadCart() async {
     final items = await _cartRepository.getCartItems();
+    debugPrint('========== LOAD CART FROM DB ==========');
+    for (final item in items) {
+      debugPrint('${item['name']} => price: ${item['price']}, takeaway: ${item['takeaway_price']}');
+    }
+    debugPrint('========================================');
 
     cartItems = items.map((item) {
       final dineInPrice =
@@ -460,6 +465,7 @@ class CartController extends ChangeNotifier {
       }
       return;
     }
+
     // NEW ITEM
     final selectedPrice = food.isDeal == true
         ? double.tryParse(food.price ?? '0') ?? 0
@@ -467,8 +473,11 @@ class CartController extends ChangeNotifier {
 
     final newItem = food.copyWith(
       quantity: quantity,
+      price: selectedPrice.toString(),
       menuVariation: food.menuVariation,
-      choiceGroup: food.menuVariation?.choiceGroups ?? food.choiceGroup,
+      choiceGroup:
+      food.menuVariation?.choiceGroups ??
+          food.choiceGroup,
     );
 // SAVE TO DATABASE FIRST
     final cartData = {
@@ -518,9 +527,74 @@ class CartController extends ChangeNotifier {
     cartItems.add(newItem);
     notifyListeners();
   }
+
+  // UPDATE EXISTING CART ITEM
+  Future<void> updateCartItem(
+      Menu oldItem,
+      Menu updatedItem,
+      ) async {
+    final index = cartItems.indexWhere(
+          (item) => _isSameCartItem(item, oldItem),
+    );
+    if (index == -1) return;
+    final databaseId =
+    _cartDatabaseIds[_cartKey(oldItem)];
+    final finalPrice =
+    getSelectedPrice(updatedItem);
+    final newItem = updatedItem.copyWith(
+      quantity: oldItem.quantity ?? 1,
+      price: finalPrice.toString(),
+    );
+    cartItems[index] = newItem;
+    if (databaseId != null) {
+      final cartData = {
+        'menu_id': newItem.id,
+        'name': newItem.name,
+        'price': finalPrice,
+
+        'takeaway_price':
+        double.tryParse(
+          newItem.takeAwayPrice ?? '0',
+        ) ??
+            0,
+        'delivery_price':
+        double.tryParse(
+          newItem.deliveryPrice ?? '0',
+        ) ??
+            0,
+        'quantity':
+        newItem.quantity ?? 1,
+        'menu_variation':
+        newItem.menuVariation == null
+            ? null
+            : jsonEncode({
+          'id':
+          newItem.menuVariation!.id,
+          'name':
+          newItem.menuVariation!.name,
+          'price':
+          newItem.menuVariation!.price,
+        }),
+        'choices':
+        _encodeChoices(newItem),
+        'deal_details':
+        _encodeDeal(newItem),
+      };
+      await _cartRepository.updateCartItem(
+        databaseId,
+        cartData,
+      );
+      // Old key remove
+      _cartDatabaseIds.remove(
+        _cartKey(oldItem),
+      );
+      // New key save
+      _cartDatabaseIds[_cartKey(newItem)] =
+          databaseId;
+    }
+    notifyListeners();
+  }
   // INCREASE QUANTITY
-
-
   Future<void> increaseQuantity(Menu food) async {
     final index = cartItems.indexWhere(
           (item) => _isSameCartItem(item, food),
@@ -606,35 +680,106 @@ class CartController extends ChangeNotifier {
   // GET SELECTED PRICE
 
 
+  // double getSelectedPrice(Menu food) {
+  //
+  //   // Customized item ki final price
+  //   // har order type mein currently use hogi.
+  //   if (food.menuVariation != null &&
+  //       food.menuVariation!.price != null &&
+  //       food.menuVariation!.price!.isNotEmpty) {
+  //     return double.tryParse(
+  //       food.menuVariation!.price!,
+  //     ) ?? 0;
+  //   }
+  //
+  //   if (orderType == 'Delivery') {
+  //     return double.tryParse(
+  //       food.deliveryPrice ?? '0',
+  //     ) ?? 0;
+  //   }
+  //
+  //   if (orderType == 'Takeaway') {
+  //     return double.tryParse(
+  //       food.takeAwayPrice ?? '0',
+  //     ) ?? 0;
+  //   }
+  //
+  //   return double.tryParse(
+  //     food.price ?? '0',
+  //   ) ?? 0;
+  // }
   double getSelectedPrice(Menu food) {
+    // ==========================================================
+    // BASE MENU PRICE
+    // ==========================================================
 
-    // Customized item ki final price
-    // har order type mein currently use hogi.
-    if (food.menuVariation != null &&
-        food.menuVariation!.price != null &&
-        food.menuVariation!.price!.isNotEmpty) {
-      return double.tryParse(
-        food.menuVariation!.price!,
-      ) ?? 0;
+    final basePrice =
+        double.tryParse(
+          food.price ?? '0',
+        ) ??
+            0;
+
+    // ==========================================================
+    // VARIATION EXTRA PRICE
+    // ==========================================================
+
+    double variationPrice = 0;
+
+    if (food.menuVariation != null) {
+      variationPrice =
+          double.tryParse(
+            food.menuVariation!.price ?? '0',
+          ) ??
+              0;
     }
 
-    if (orderType == 'Delivery') {
-      return double.tryParse(
-        food.deliveryPrice ?? '0',
-      ) ?? 0;
+    // ==========================================================
+    // SELECTED CHOICES EXTRA PRICE
+    // ==========================================================
+
+    double choicesPrice = 0;
+
+    final groups = food.choiceGroup;
+
+    for (final group in groups) {
+      for (final choice in group.choices) {
+        choicesPrice +=
+            double.tryParse(
+              choice.price ?? '0',
+            ) ??
+                0;
+      }
     }
 
-    if (orderType == 'Takeaway') {
-      return double.tryParse(
-        food.takeAwayPrice ?? '0',
-      ) ?? 0;
-    }
+    // ==========================================================
+    // FINAL PRICE
+    // ==========================================================
 
-    return double.tryParse(
-      food.price ?? '0',
-    ) ?? 0;
+    final finalPrice =
+        basePrice +
+            variationPrice +
+            choicesPrice;
+
+    debugPrint(
+      '========== PRICE CALCULATION ==========',
+    );
+    debugPrint('Item: ${food.name}');
+    debugPrint('Base Price: $basePrice');
+    debugPrint(
+      'Variation Price: $variationPrice',
+    );
+    debugPrint(
+      'Choices Price: $choicesPrice',
+    );
+    debugPrint(
+      'FINAL PRICE: $finalPrice',
+    );
+    debugPrint(
+      '========================================',
+    );
+
+    return finalPrice;
   }
-
   // CHANGE ORDER TYPE
   Future<void> changeOrderType(String type) async {
     orderType = type;
@@ -674,24 +819,33 @@ class CartController extends ChangeNotifier {
 
       double selectedPrice;
 
-// Agar item customized hai,
-// to uski final customized price use hogi.
+// Base price order type ke hisab sai
+      double baseForType;
+      if (type == 'Delivery') {
+        baseForType = deliveryPrice;
+      } else if (type == 'Takeaway') {
+        baseForType = takeawayPrice;
+      } else {
+        baseForType = dineInPrice;
+      }
+
+// Agar item customized hai, to variation + choices ki extra price add karein
       final menuVariation = food.menuVariation;
 
-      if (menuVariation != null &&
-          menuVariation.price != null &&
-          menuVariation.price!.isNotEmpty) {
-        selectedPrice =
-            double.tryParse(menuVariation.price!) ??
-                dineInPrice;
-      } else {
-        if (type == 'Delivery') {
-          selectedPrice = deliveryPrice;
-        } else if (type == 'Takeaway') {
-          selectedPrice = takeawayPrice;
-        } else {
-          selectedPrice = dineInPrice;
+      if (menuVariation != null) {
+        final variationExtra =
+            double.tryParse(menuVariation.price ?? '0') ?? 0;
+
+        double choicesExtra = 0;
+        for (final group in food.choiceGroup) {   
+          for (final choice in group.choices) {
+            choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+          }
         }
+
+        selectedPrice = baseForType + variationExtra + choicesExtra;
+      } else {
+        selectedPrice = baseForType;
       }
       // ONLY UI PRICE UPDATE
       cartItems[i] = food.copyWith(
