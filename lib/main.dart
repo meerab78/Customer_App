@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'features/auth/address/controller.dart';
+import 'features/auth/address/view.dart';
 import 'features/auth/controller.dart';
 import 'features/auth/splash/view.dart';
+import 'core/db/sqflite/controller.dart';
 import 'features/cart/controller.dart';
 import 'features/home/controller.dart';
 
@@ -39,14 +41,19 @@ class MyApp extends StatelessWidget {
           create: (_) => AuthController(),
         ),
         ChangeNotifierProvider(
-          create: (_) => CartController()..loadCart(),
+          create: (_) => DbController(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => CartController(
+            dbController: context.read<DbController>(),
+          )..loadCart(),
         ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Customer App',
         theme: ThemeData(),
-        home: const SplashView(),
+        home: const AddressView(),
       ),
     );
   }

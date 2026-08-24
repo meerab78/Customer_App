@@ -44,20 +44,6 @@ class _EditProfileScreenState extends State<EditProfileView> {
     _nameController.dispose();
     super.dispose();
   }
-
-  // Future<void> _selectDate() async {
-  //   final date = await showDatePickerDialog(
-  //     context: context,
-  //     minDate: DateTime(1950),
-  //     maxDate: DateTime.now(),
-  //     currentDate: DateTime(2000),
-  //   );
-  //   if (date == null) return;
-  //   setState(() {
-  //     _dateOfBirth =
-  //     '${date.day}/${date.month}/${date.year}';
-  //   });
-  // }
   Future<void> _selectDate() async {
     DateTime? selectedDate;
 

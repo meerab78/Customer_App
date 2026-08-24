@@ -1,9 +1,12 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_paddings.dart';
+import '../../core/theme/fonts_manager.dart';
+import '../../core/theme/textfont_styles.dart';
 import 'model/menu_model.dart';
 import 'widget/variation_selector.dart';
-
 class VariationView extends StatefulWidget {
   final Menu food;
   final bool isEditMode;
@@ -293,9 +296,31 @@ class _VariationViewState extends State<VariationView> {
   void _addToCart() {
     if (!isSelectionValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Please complete the required selections.',
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.logoColor2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          margin: const EdgeInsets.all(16),
+          content: Row(
+            children: [
+              const Icon(
+                Icons.info_outline_rounded,
+                color: AppColors.white,
+                size: 20,
+              ),
+              padding10,
+              Expanded(
+                child: Text(
+                  'Please complete the required selections.',
+                  style: getMediumStyle(
+                    fontSize: MyFonts.size14,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -361,9 +386,53 @@ class _VariationViewState extends State<VariationView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.food.name ?? 'Customize',
+      backgroundColor: AppColors.background,
+
+      // ==========================================================
+      // APP BAR — brand navy, gold-accent back button
+      // ==========================================================
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.appBarColor,
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.softShadow08,
+                blurRadius: 12,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: SafeArea(
+            bottom: false,
+            child: SizedBox(
+              height: 60,
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: AppColors.white,
+                      size: 20,
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      widget.food.name ?? 'Customize',
+                      overflow: TextOverflow.ellipsis,
+                      style: getExtraBoldStyle(
+                        fontSize: MyFonts.size18,
+                        color: AppColors.white,
+                      ),
+                    ),
+                  ),
+                  padding16,
+                ],
+              ),
+            ),
+          ),
         ),
       ),
 
@@ -371,67 +440,251 @@ class _VariationViewState extends State<VariationView> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(
+                16, 16, 16, 24,
+              ),
 
-              child: VariationSelector(
-                // IMPORTANT:
-                // FULL variations list pass hogi.
-                //
-                // Sirf selected variation nahi.
-                variations:
-                widget.food.menuVariations,
+              child: Column(
+                crossAxisAlignment:
+                CrossAxisAlignment.start,
+                children: [
+                  // ------------------------------------------------
+                  // FOOD SUMMARY CARD
+                  // ------------------------------------------------
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius:
+                      BorderRadius.circular(18),
+                      border: Border.all(
+                        color: AppColors.borderColorGrey,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.softShadow05,
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            color: AppColors.tertiary
+                                .withOpacity(0.15),
+                            borderRadius:
+                            BorderRadius.circular(13),
+                          ),
+                          child: Icon(
+                            Icons.restaurant_menu_rounded,
+                            color: AppColors.tertiary,
+                            size: 22,
+                          ),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                widget.food.name ?? '',
+                                style: getExtraBoldStyle(
+                                  fontSize: MyFonts.size16,
+                                  color: AppColors.textColor,
+                                ),
+                              ),
+                              padding4,
+                              Text(
+                                'Make it yours',
+                                style: getRegularStyle(
+                                  fontSize: MyFonts.size12,
+                                  color: AppColors.greyText,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding:
+                          const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.tertiary
+                                .withOpacity(0.12),
+                            borderRadius:
+                            BorderRadius.circular(24),
+                          ),
+                          child: Text(
+                            'Rs ${selectedPrice.toStringAsFixed(0)}',
+                            style: getExtraBoldStyle(
+                              fontSize: MyFonts.size14,
+                              color: AppColors.tertiary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                // Full available choice groups
-                choiceGroups:
-                choiceGroups,
+                  padding20,
 
-                // Existing selected variation
-                selectedVariation:
-                selectedVariation,
+                  // ------------------------------------------------
+                  // Section label
+                  // ------------------------------------------------
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 4, bottom: 10,
+                    ),
+                    child: Text(
+                      'CUSTOMIZE',
+                      style: getExtraBoldStyle(
+                        fontSize: MyFonts.size12,
+                        color: AppColors.greyText,
+                      ).copyWith(letterSpacing: 1.2),
+                    ),
+                  ),
 
-                // Existing selected choices
-                selectedChoices:
-                selectedChoices,
+                  // ------------------------------------------------
+                  // VARIATION SELECTOR (logic untouched)
+                  // ------------------------------------------------
+                  VariationSelector(
+                    // IMPORTANT:
+                    // FULL variations list pass hogi.
+                    //
+                    // Sirf selected variation nahi.
+                    variations:
+                    widget.food.menuVariations,
 
-                onVariationSelected:
-                _selectVariation,
+                    // Full available choice groups
+                    choiceGroups:
+                    choiceGroups,
 
-                onChoiceSelected:
-                _toggleChoice,
+                    // Existing selected variation
+                    selectedVariation:
+                    selectedVariation,
+
+                    // Existing selected choices
+                    selectedChoices:
+                    selectedChoices,
+
+                    onVariationSelected:
+                    _selectVariation,
+
+                    onChoiceSelected:
+                    _toggleChoice,
+                  ),
+
+                  // Extra bottom breathing room so content
+                  // never hides behind the sticky button bar.
+                  padding12,
+                ],
               ),
             ),
           ),
 
           // ====================================================
-          // DONE / UPDATE BUTTON
+          // DONE / UPDATE BUTTON (sticky bottom bar)
           // ====================================================
 
-          SafeArea(
-            top: false,
-
-            child: Padding(
-              padding:
-              const EdgeInsets.fromLTRB(
-                16,
-                8,
-                16,
-                16,
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(22),
+                topRight: Radius.circular(22),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.softShadow07,
+                  blurRadius: 18,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
 
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
+              child: Padding(
+                padding:
+                const EdgeInsets.fromLTRB(
+                  16,
+                  16,
+                  16,
+                  14,
+                ),
 
-                child: ElevatedButton(
-                  onPressed:
-                  isSelectionValid
-                      ? _addToCart
-                      : null,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 54,
 
-                  child: Text(
+                  child: ElevatedButton(
+                    onPressed:
                     isSelectionValid
-                        ? 'Done - Rs ${selectedPrice.toStringAsFixed(0)}'
-                        : 'Complete Required Selection',
+                        ? _addToCart
+                        : null,
+
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: AppColors.btnColor,
+                      disabledBackgroundColor:
+                      AppColors.grey300,
+                      foregroundColor:
+                      AppColors.btnTextColorWhite,
+                      shape: RoundedRectangleBorder(
+                        borderRadius:
+                        BorderRadius.circular(15),
+                      ),
+                    ),
+
+                    child: Row(
+                      mainAxisAlignment:
+                      MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          isSelectionValid
+                              ? (widget.isEditMode
+                              ? 'Update Item'
+                              : 'Add to Cart')
+                              : 'Complete Required Selection',
+                          style: getExtraBoldStyle(
+                            fontSize: MyFonts.size16,
+                            color: isSelectionValid
+                                ? AppColors.btnTextColorWhite
+                                : AppColors.grey500,
+                          ),
+                        ),
+                        if (isSelectionValid) ...[
+                          padding10,
+                          Container(
+                            padding:
+                            const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.white
+                                  .withOpacity(0.2),
+                              borderRadius:
+                              BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Rs ${selectedPrice.toStringAsFixed(0)}',
+                              style: getExtraBoldStyle(
+                                fontSize: MyFonts.size14,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ),

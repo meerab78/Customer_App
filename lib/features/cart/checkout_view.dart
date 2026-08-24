@@ -66,18 +66,18 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                 Row(
                   children: [
-                    Expanded(
-                      child: _orderTypeCard(
-                        title: 'Dine-In',
-                        icon: Icons.restaurant_rounded,
-                        selected: cart.orderType == 'Dine-In',
-                        onTap: () async {
-                          await cart.changeOrderType('Dine-In');
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(width: 10),
+                    // Expanded(
+                    //   child: _orderTypeCard(
+                    //     title: 'Dine-In',
+                    //     icon: Icons.restaurant_rounded,
+                    //     selected: cart.orderType == 'Dine-In',
+                    //     onTap: () async {
+                    //       await cart.changeOrderType('Dine-In');
+                    //     },
+                    //   ),
+                    // ),
+                    //
+                    // const SizedBox(width: 10),
 
                     Expanded(
                       child: _orderTypeCard(
@@ -194,7 +194,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    '${food.name ?? 'Food'} × $quantity',
+                                    '${food.menuName ?? 'Food'} × $quantity',
                                     style: getRegularStyle(
                                       fontSize:
                                       MyFonts.size14,

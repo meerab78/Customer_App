@@ -1,12 +1,11 @@
-﻿
-import 'package:flutter/material.dart';
-import '../../home/model/menu_model.dart';
+﻿import 'package:flutter/material.dart';
+import '../../../core/db/sqflite/model.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
 
 class CartItemCard extends StatelessWidget {
-  final Menu food;
+  final OrderDetails item;
   final VoidCallback onDelete;
   final VoidCallback onPlus;
   final VoidCallback onMinus;
@@ -14,7 +13,7 @@ class CartItemCard extends StatelessWidget {
 
   const CartItemCard({
     super.key,
-    required this.food,
+    required this.item,
     required this.onDelete,
     required this.onPlus,
     required this.onMinus,
@@ -24,9 +23,9 @@ class CartItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final price =
-        double.tryParse(food.price ?? '0') ?? 0;
+        double.tryParse(item.price ?? '0') ?? 0;
 
-    final quantity = food.quantity ?? 1;
+    final quantity = item.quantity ?? 1;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(18),
@@ -70,7 +69,7 @@ class CartItemCard extends StatelessWidget {
                         children: [
                           Expanded(
                             child: Text(
-                              food.name ?? 'Food',
+                              item.menuName ?? 'Food',
                               maxLines: 2,
                               overflow:
                               TextOverflow.ellipsis,
@@ -99,16 +98,16 @@ class CartItemCard extends StatelessWidget {
                       ),
 
                       // NORMAL VARIATION
-                      if (food.menuVariation != null &&
-                          food.menuVariation!.id != null) ...[
+                      if (item.menuVariation != null &&
+                          item.menuVariation!.id != null) ...[
                         const SizedBox(height: 5),
                         _smallTag(
-                          food.menuVariation!.name ?? '',
+                          item.menuVariation!.name ?? '',
                         ),
                       ],
 
                       // DEAL BADGE
-                      if (food.isDeal == true) ...[
+                      if (item.isDeal) ...[
                         const SizedBox(height: 5),
                         _dealBadge(),
                       ],
@@ -118,12 +117,10 @@ class CartItemCard extends StatelessWidget {
               ],
             ),
 
-            if (food.choiceGroup
-                .any((group) => group.choices.isNotEmpty))
+            if (item.orderDetailChoice.isNotEmpty)
               _selectedChoices(),
 
-            if (food.isDeal == true &&
-                food.dealMenuDetails.isNotEmpty)
+            if (item.isDeal && item.dealDetails.isNotEmpty)
               _dealDetails(),
 
             const SizedBox(height: 8),
@@ -148,15 +145,7 @@ class CartItemCard extends StatelessWidget {
       child: SizedBox(
         width: 68,
         height: 68,
-        child: food.imageUrl != null &&
-            food.imageUrl!.isNotEmpty
-            ? Image.network(
-          food.imageUrl!,
-          fit: BoxFit.cover,
-          errorBuilder:
-              (_, __, ___) => _placeholder(),
-        )
-            : _placeholder(),
+        child: _placeholder(),
       ),
     );
   }
@@ -238,11 +227,25 @@ class CartItemCard extends StatelessWidget {
     );
   }
 
+  List<MapEntry<String?, List<OrderDetailChoice>>>
+      _groupedChoices(List<OrderDetailChoice> choices) {
+    final grouped = <String, List<OrderDetailChoice>>{};
+    final groupNames = <String, String?>{};
+
+    for (final choice in choices) {
+      final groupId = choice.choiceGroupId ?? '0';
+      grouped.putIfAbsent(groupId, () => []);
+      grouped[groupId]!.add(choice);
+      groupNames[groupId] = choice.choiceGroupName;
+    }
+
+    return grouped.entries.map((entry) {
+      return MapEntry(groupNames[entry.key], entry.value);
+    }).toList();
+  }
 
   Widget _selectedChoices() {
-    final groups = food.choiceGroup
-        .where((group) => group.choices.isNotEmpty)
-        .toList();
+    final groups = _groupedChoices(item.orderDetailChoice);
 
     if (groups.isEmpty) {
       return const SizedBox();
@@ -286,16 +289,16 @@ class CartItemCard extends StatelessWidget {
           ...groups.expand(
                 (group) => [
               Text(
-                group.name ?? '',
+                group.key ?? '',
                 style: getBoldStyle(
                   fontSize: MyFonts.size10,
                   color: AppColors.text,
                 ),
               ),
 
-              ...group.choices.map(
+              ...group.value.map(
                     (choice) => _choiceRow(
-                  choice.name ?? '',
+                  choice.choiceName ?? '',
                   choice.price,
                 ),
               ),
@@ -345,7 +348,7 @@ class CartItemCard extends StatelessWidget {
 
           const SizedBox(height: 6),
 
-          ...food.dealMenuDetails.map(
+          ...item.dealDetails.map(
                 (dealItem) => _dealItem(dealItem),
           ),
         ],
@@ -353,31 +356,12 @@ class CartItemCard extends StatelessWidget {
     );
   }
 
-
-  Widget _dealItem(Menu dealItem) {
-    final variation =
-        dealItem.menuVariation;
-
-    final variationChoices =
-        variation?.choiceGroups ?? [];
-
-    final directChoices = dealItem.choiceGroup
-        .where(
-          (group) => group.choices.isNotEmpty,
-    )
-        .toList();
+  Widget _dealItem(OrderDetails dealItem) {
+    final variation = dealItem.menuVariation;
+    final groups = _groupedChoices(dealItem.orderDetailChoice);
 
     final hasVariation =
-        variation != null &&
-            variation.id != null;
-
-    final hasVariationChoices =
-    variationChoices.any(
-          (group) => group.choices.isNotEmpty,
-    );
-
-    final hasDirectChoices =
-        directChoices.isNotEmpty;
+        variation != null && variation.id != null;
 
     return Container(
       width: double.infinity,
@@ -410,7 +394,7 @@ class CartItemCard extends StatelessWidget {
 
               Expanded(
                 child: Text(
-                  dealItem.name ?? 'Item',
+                  dealItem.menuName ?? 'Item',
                   maxLines: 1,
                   overflow:
                   TextOverflow.ellipsis,
@@ -431,7 +415,7 @@ class CartItemCard extends StatelessWidget {
               padding:
               const EdgeInsets.only(left: 11),
               child: Text(
-                variation!.name ?? '',
+                variation.name ?? '',
                 style: getMediumStyle(
                   fontSize: MyFonts.size10,
                   color: AppColors.grey500,
@@ -440,8 +424,8 @@ class CartItemCard extends StatelessWidget {
             ),
           ],
 
-          // DIRECT CHOICES
-          if (hasDirectChoices) ...[
+          // CHOICES
+          if (groups.isNotEmpty) ...[
             const SizedBox(height: 3),
 
             Padding(
@@ -450,64 +434,25 @@ class CartItemCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
-                children: directChoices.expand(
+                children: groups.expand(
                       (group) => [
                     Text(
-                      group.name ?? '',
+                      group.key ?? '',
                       style: getBoldStyle(
                         fontSize: MyFonts.size10,
                         color: AppColors.text,
                       ),
                     ),
 
-                    ...group.choices.map(
+                    ...group.value.map(
                           (choice) => _choiceRow(
-                        choice.name ?? '',
+                        choice.choiceName ?? '',
                         choice.price,
                         compact: true,
                       ),
                     ),
                   ],
                 ).toList(),
-              ),
-            ),
-          ],
-
-          // VARIATION CHOICES
-          if (hasVariationChoices) ...[
-            const SizedBox(height: 3),
-
-            Padding(
-              padding:
-              const EdgeInsets.only(left: 11),
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: variationChoices
-                    .where(
-                      (group) =>
-                  group.choices.isNotEmpty,
-                )
-                    .expand(
-                      (group) => [
-                    Text(
-                      group.name ?? '',
-                      style: getBoldStyle(
-                        fontSize: MyFonts.size10,
-                        color: AppColors.text,
-                      ),
-                    ),
-
-                    ...group.choices.map(
-                          (choice) => _choiceRow(
-                        choice.name ?? '',
-                        choice.price,
-                        compact: true,
-                      ),
-                    ),
-                  ],
-                )
-                    .toList(),
               ),
             ),
           ],
@@ -567,6 +512,7 @@ class CartItemCard extends StatelessWidget {
       ),
     );
   }
+
   Widget _quantitySelector(int quantity) {
     return Container(
       height: 34,
@@ -624,11 +570,12 @@ class CartItemCard extends StatelessWidget {
       ),
     );
   }
+
   Widget _placeholder() {
     return Container(
       color: AppColors.grey100,
       child: Icon(
-        food.isDeal == true
+        item.isDeal
             ? Icons.card_giftcard_outlined
             : Icons.fastfood_rounded,
         color: AppColors.primary,

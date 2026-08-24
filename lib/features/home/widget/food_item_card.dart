@@ -1,10 +1,13 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../../core/db/sqflite/model.dart' show OrderDetails;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
+import '../../cart/controller.dart';
 import '../model/menu_model.dart';
 import 'add_to_cart_handler.dart';
-import 'food_detail_bottom_sheet.dart';
 
 class FoodItemCard extends StatelessWidget {
   final Menu food;
@@ -58,31 +61,19 @@ class FoodItemCard extends StatelessWidget {
                   child: _foodImage(),
                 ),
 
-                // Plus button
                 Positioned(
                   right: 8,
                   bottom: 8,
-                  child: Material(
-                    color: AppColors.primary,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: () {
-                        handleAddToCart(
-                          context,
-                          food,
-                        );
-                      },
-                      child: const SizedBox(
-                        width: 32,
-                        height: 32,
-                        child: Icon(
-                          Icons.add,
-                          color: AppColors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
+                  child: Consumer<CartController>(
+                    builder: (context, cart, _) {
+                      final cartItem = cart.simpleCartItem(food);
+
+                      if (cartItem == null) {
+                        return _addButton(context);
+                      }
+
+                      return _quantityButton(context, cart, cartItem);
+                    },
                   ),
                 ),
               ],
@@ -139,6 +130,88 @@ class FoodItemCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _addButton(BuildContext context) {
+    return Material(
+      color: AppColors.primary,
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () {
+          handleAddToCart(
+            context,
+            food,
+          );
+        },
+        child: const SizedBox(
+          width: 32,
+          height: 32,
+          child: Icon(
+            Icons.add,
+            color: AppColors.white,
+            size: 20,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _quantityButton(
+      BuildContext context,
+      CartController cart,
+      OrderDetails cartItem,
+      ) {
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _qtyIcon(
+            Icons.remove,
+            () {
+              cart.decreaseQuantity(cartItem);
+            },
+          ),
+          Text(
+            '${cartItem.quantity ?? 1}',
+            style: getBoldStyle(
+              fontSize: MyFonts.size12,
+              color: AppColors.white,
+            ),
+          ),
+          _qtyIcon(
+            Icons.add,
+            () {
+              cart.increaseQuantity(cartItem);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _qtyIcon(
+      IconData icon,
+      VoidCallback onTap,
+      ) {
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: SizedBox(
+        width: 28,
+        height: 32,
+        child: Icon(
+          icon,
+          color: AppColors.white,
+          size: 16,
         ),
       ),
     );

@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/db/sqflite/model.dart' as db;
 import '../home/deal_detail_view.dart' show DealDetailView;
 import '../home/model/menu_model.dart';
 import '../home/variation_view.dart';
@@ -62,7 +62,7 @@ class CartView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final food = cart.cartItems[index];
                     return  CartItemCard(
-                      food: food,
+                      item: food,
                       onDelete: () {
                         cart.removeFromCart(food);
                       },
@@ -72,89 +72,87 @@ class CartView extends StatelessWidget {
                       onMinus: () {
                         cart.decreaseQuantity(food);
                       },
-                      onTap: () async {
-                        // -----------------------------
-                        // DEAL EDIT
-                        // -----------------------------
-                        if (food.isDeal == true) {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => DealDetailView(
-                                food: food,
-                              ),
-                            ),
-                          );
-
-                          return;
-                        }
-
-                        // -----------------------------
-                        // NORMAL CUSTOMIZATION
-                        // -----------------------------
-                        final hasCustomization =
-                            food.menuVariation != null ||
-                                food.choiceGroup.any(
-                                      (group) =>
-                                  group.choices.isNotEmpty,
-                                );
-
-                        if (!hasCustomization) {
-                          return;
-                        }
-
-                        // ----------------------------------------------------
-                        // ASAL BASE PRICE NIKALEIN
-                        // (food.price abhi total hai: base + variation + choices)
-                        // ----------------------------------------------------
-                        final currentTotal =
-                            double.tryParse(food.price ?? '0') ?? 0;
-
-                        final variationExtra =
-                            double.tryParse(food.menuVariation?.price ?? '0') ?? 0;
-
-                        double choicesExtra = 0;
-                        for (final group in food.menuVariation?.choiceGroups ?? []) {
-                          for (final choice in group.choices) {
-                            choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
-                          }
-                        }
-
-                        final originalBasePrice =
-                            currentTotal - variationExtra - choicesExtra;
-
-                        // VariationView ko asal base price ke sath bhejein
-                        final foodForEdit = food.copyWith(
-                          price: originalBasePrice.toString(),
-                        );
-
-                        final updatedVariation =
-                        await Navigator.push<MenuVariation>(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => VariationView(
-                              food: foodForEdit,
-                              isEditMode: true,
-                            ),
-                          ),
-                        );
-
-                        if (updatedVariation == null) {
-                          return;
-                        }
-
-                        // Updated Menu create karo — base price yahan bhi preserve karein
-                        final updatedFood = food.copyWith(
-                          price: originalBasePrice.toString(),
-                          menuVariation: updatedVariation,
-                          choiceGroup: updatedVariation.choiceGroups,
-                        );
-
-                        await cart.updateCartItem(
-                          food,
-                          updatedFood,
-                        );
-                      },
+                      // onTap: () async {
+                      //   // -----------------------------
+                      //   // DEAL EDIT
+                      //   // -----------------------------
+                      //   if (food.isDeal) {
+                      //     await Navigator.push(
+                      //       context,
+                      //       MaterialPageRoute(
+                      //         builder: (_) => DealDetailView(
+                      //           food: _menuFromOrderDetails(food),
+                      //         ),
+                      //       ),
+                      //     );
+                      //
+                      //     return;
+                      //   }
+                      //
+                      //   // -----------------------------
+                      //   // NORMAL CUSTOMIZATION
+                      //   // -----------------------------
+                      //   final hasCustomization =
+                      //       food.menuVariation != null ||
+                      //           food.orderDetailChoice.isNotEmpty;
+                      //
+                      //   if (!hasCustomization) {
+                      //     return;
+                      //   }
+                      //
+                      //   // ----------------------------------------------------
+                      //   // ASAL BASE PRICE NIKALEIN
+                      //   // (food.price abhi total hai: base + variation + choices)
+                      //   // ----------------------------------------------------
+                      //   final currentTotal =
+                      //       double.tryParse(food.price ?? '0') ?? 0;
+                      //
+                      //   final variationExtra =
+                      //       double.tryParse(food.menuVariation?.price ?? '0') ?? 0;
+                      //
+                      //   double choicesExtra = 0;
+                      //   for (final choice in food.orderDetailChoice) {
+                      //     choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+                      //   }
+                      //
+                      //   final originalBasePrice =
+                      //       currentTotal - variationExtra - choicesExtra;
+                      //
+                      //   // VariationView ko asal base price ke sath bhejein
+                      //   final foodForEdit = _menuFromOrderDetails(food).copyWith(
+                      //     price: originalBasePrice.toString(),
+                      //   );
+                      //
+                      //   final updatedVariation =
+                      //   await Navigator.push<MenuVariation>(
+                      //     context,
+                      //     MaterialPageRoute(
+                      //       builder: (_) => VariationView(
+                      //         food: foodForEdit,
+                      //         isEditMode: true,
+                      //       ),
+                      //     ),
+                      //   );
+                      //
+                      //   if (updatedVariation == null) {
+                      //     return;
+                      //   }
+                      //
+                      //   final updatedItem = food.copyWith(
+                      //     price: originalBasePrice.toString(),
+                      //     menuVariation: db.MenuVariation(
+                      //       id: updatedVariation.id?.toString(),
+                      //       name: updatedVariation.name,
+                      //       price: updatedVariation.price,
+                      //       note: null,
+                      //     ),
+                      //     orderDetailChoice: _choicesFromVariation(
+                      //       updatedVariation,
+                      //     ),
+                      //   );
+                      //
+                      //   await cart.updateCartItem(updatedItem);
+                      // },
                     );
                   },
                 ),
@@ -288,6 +286,91 @@ class CartView extends StatelessWidget {
       ),
     );
   }
+}
+
+Menu _menuFromOrderDetails(db.OrderDetails item) {
+  return Menu(
+    id: int.tryParse(item.menuId ?? ''),
+    menuId: item.menuId,
+    name: item.menuName,
+    price: item.price,
+    takeAwayPrice: item.takeawayPrice,
+    deliveryPrice: item.deliveryPrice,
+    image: null,
+    imageUrl: null,
+    description: null,
+    ingridient: null,
+    isDeal: item.isDeal,
+    menuVariations: [],
+    choiceGroup: _choiceGroupsFromOrderDetails(item.orderDetailChoice),
+    dealMenuDetails: item.dealDetails.map(_menuFromOrderDetails).toList(),
+    quantity: item.quantity,
+    menuVariation: item.menuVariation == null
+        ? null
+        : MenuVariation(
+            id: int.tryParse(item.menuVariation!.id ?? ''),
+            name: item.menuVariation!.name,
+            price: item.menuVariation!.price,
+            takeAwayPrice: null,
+            deliveryPrice: null,
+            choiceGroups: [],
+          ),
+  );
+}
+
+List<ChoiceGroup> _choiceGroupsFromOrderDetails(
+  List<db.OrderDetailChoice> choices,
+) {
+  final grouped = <String, List<db.OrderDetailChoice>>{};
+  final groupNames = <String, String?>{};
+
+  for (final choice in choices) {
+    final groupId = choice.choiceGroupId ?? '0';
+    grouped.putIfAbsent(groupId, () => []);
+    grouped[groupId]!.add(choice);
+    groupNames[groupId] = choice.choiceGroupName;
+  }
+
+  return grouped.entries.map((entry) {
+    return ChoiceGroup(
+      id: int.tryParse(entry.key),
+      name: groupNames[entry.key],
+      minChoices: 0,
+      maxChoices: 0,
+      choices: entry.value.map((choice) {
+        return MenuVariation(
+          id: choice.choiceId,
+          name: choice.choiceName,
+          price: choice.price,
+          takeAwayPrice: null,
+          deliveryPrice: null,
+          choiceGroups: [],
+        );
+      }).toList(),
+    );
+  }).toList();
+}
+
+List<db.OrderDetailChoice> _choicesFromVariation(
+  MenuVariation variation,
+) {
+  final choices = <db.OrderDetailChoice>[];
+
+  for (final group in variation.choiceGroups) {
+    for (final choice in group.choices) {
+      choices.add(
+        db.OrderDetailChoice(
+          choiceId: choice.id,
+          choiceName: choice.name,
+          price: choice.price,
+          choiceGroupId: group.id?.toString(),
+          choiceGroupName: group.name,
+        ),
+      );
+    }
+  }
+
+  return choices;
 }
 
 

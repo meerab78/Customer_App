@@ -1,861 +1,402 @@
-﻿import 'dart:convert' show jsonDecode, jsonEncode;
+﻿import 'dart:convert';
 
 import 'package:flutter/material.dart';
 
-import '../home/model/menu_model.dart';
-import 'repository.dart';
+import '../../core/db/sqflite/controller.dart';
+import '../../core/db/sqflite/model.dart';
+import '../home/model/menu_model.dart' hide MenuVariation;
 
 class CartController extends ChangeNotifier {
-  final CartRepository _cartRepository = CartRepository();
+  final DbController _dbController;
 
-  String orderType = 'Dine-In';
+  String orderType = 'Takeaway';
 
-  List<Menu> cartItems = [];
+  List<OrderDetails> cartItems = [];
 
-  final Map<String, int> _cartDatabaseIds = {};
-
-  CartController() {
+  CartController({
+    DbController? dbController,
+  }) : _dbController = dbController ?? DbController() {
     loadCart();
   }
-  String _cartKey(Menu food) {
-    if (food.isDeal == true) {
-      return '${food.id}_deal_${_encodeDeal(food) ?? ''}';
+
+  String _cartKey(OrderDetails item) {
+    if (item.isDeal) {
+      return '${item.menuId}_deal_${jsonEncode(item.dealDetails.map((e) => e.toJson()).toList())}';
     }
-    return '${food.id}_${food.menuVariation?.id ?? 0}_${_encodeChoices(food)}';
+
+    return '${item.menuId}_${item.menuVariation?.id ?? 0}_${jsonEncode(item.orderDetailChoice.map((e) => e.toJson()).toList())}';
   }
 
-  bool _isSameCartItem(Menu a, Menu b) {
+  bool _isSameCartItem(OrderDetails a, OrderDetails b) {
     // DEAL
-    if (a.isDeal == true || b.isDeal == true) {
-      return a.id == b.id &&
+    if (a.isDeal || b.isDeal) {
+      return a.menuId == b.menuId &&
           a.isDeal == b.isDeal &&
-          a.price == b.price &&
-          _encodeDeal(a) == _encodeDeal(b);
+          _cartKey(a) == _cartKey(b);
     }
+
     // NORMAL ITEM
-    return a.id == b.id &&
+    return a.menuId == b.menuId &&
         a.menuVariation?.id == b.menuVariation?.id &&
-        a.price == b.price &&
-        _encodeChoices(a) == _encodeChoices(b);
+        _cartKey(a) == _cartKey(b);
   }
 
-  String _encodeChoices(Menu food) {
-    final selectedGroups =
-        food.menuVariation?.choiceGroups ?? [];
+  OrderDetails _toOrderDetails(Menu food) {
+    final isDeal = food.isDeal == true;
 
-    final selectedChoices = <Map<String, dynamic>>[];
+    return OrderDetails(
+      menuId: food.id?.toString() ?? food.menuId,
+      menuName: food.name,
+      price: food.price,
+      takeawayPrice: food.takeAwayPrice,
+      deliveryPrice: food.deliveryPrice,
+      quantity: food.quantity ?? 1,
+      menuVariation: isDeal || food.menuVariation == null
+          ? null
+          : MenuVariation(
+              id: food.menuVariation!.id?.toString(),
+              name: food.menuVariation!.name,
+              price: food.menuVariation!.price,
+              note: null,
+            ),
+      orderDetailChoice: isDeal ? [] : _choicesFromMenu(food),
+      dealDetails: isDeal ? _dealDetailsFromMenu(food) : [],
+    );
+  }
 
-    for (final group in selectedGroups) {
+  List<OrderDetailChoice> _choicesFromMenu(Menu food) {
+    final groups = food.menuVariation?.choiceGroups.isNotEmpty == true
+        ? food.menuVariation!.choiceGroups
+        : food.choiceGroup;
+
+    final choices = <OrderDetailChoice>[];
+
+    for (final group in groups) {
       for (final choice in group.choices) {
-        selectedChoices.add({
-          'id': choice.id,
-          'name': choice.name,
-          'price': choice.price,
-          'choice_group_id': group.id,
-          'choice_group_name': group.name,
-        });
+        choices.add(
+          OrderDetailChoice(
+            choiceId: choice.id,
+            choiceName: choice.name,
+            price: choice.price,
+            choiceGroupId: group.id?.toString(),
+            choiceGroupName: group.name,
+          ),
+        );
       }
     }
 
-    return jsonEncode(selectedChoices);
+    return choices;
   }
 
-  String? _encodeDeal(Menu food) {
-    if (food.isDeal != true || food.dealMenuDetails.isEmpty) {
-      return null;
+  List<OrderDetails> _dealDetailsFromMenu(Menu food) {
+    return food.dealMenuDetails.map((item) {
+      return OrderDetails(
+        menuId: item.menuId ?? item.id?.toString(),
+        menuName: item.name,
+        price: item.price,
+        takeawayPrice: item.takeAwayPrice,
+        deliveryPrice: item.deliveryPrice,
+        quantity: item.quantity,
+        menuVariation: item.menuVariation == null
+            ? null
+            : MenuVariation(
+                id: item.menuVariation!.id?.toString(),
+                name: item.menuVariation!.name,
+                price: item.menuVariation!.price,
+                note: null,
+              ),
+        orderDetailChoice: _choicesFromDealItem(item),
+        dealDetails: [],
+      );
+    }).toList();
+  }
+
+  List<OrderDetailChoice> _choicesFromDealItem(Menu item) {
+    final choices = <OrderDetailChoice>[];
+
+    void addFromGroups(List<ChoiceGroup> groups) {
+      for (final group in groups) {
+        for (final choice in group.choices) {
+          choices.add(
+            OrderDetailChoice(
+              choiceId: choice.id,
+              choiceName: choice.name,
+              price: choice.price,
+              choiceGroupId: group.id?.toString(),
+              choiceGroupName: group.name,
+            ),
+          );
+        }
+      }
     }
 
-    final dealItems = food.dealMenuDetails.map((item) {
-      return {
-        'id': item.id,
-        'menu_id': item.menuId,
-        'name': item.name,
-        'price': item.price,
-        'takeaway_price': item.takeAwayPrice,
-        'delivery_price': item.deliveryPrice,
-        'quantity': item.quantity,
+    addFromGroups(item.choiceGroup);
+    addFromGroups(item.menuVariation?.choiceGroups ?? []);
 
-        // Direct choice groups
-        'choice_groups': item.choiceGroup.map((group) {
-          return {
-            'id': group.id,
-            'name': group.name,
-            'min_choices': group.minChoices,
-            'max_choices': group.maxChoices,
-            'choices': group.choices.map((choice) {
-              return {
-                'id': choice.id,
-                'name': choice.name,
-                'price': choice.price,
-              };
-            }).toList(),
-          };
-        }).toList(),
-
-        // Selected variation
-        'menu_variation': item.menuVariation == null
-            ? null
-            : {
-          'id': item.menuVariation!.id,
-          'name': item.menuVariation!.name,
-          'price': item.menuVariation!.price,
-          'takeaway_price':
-          item.menuVariation!.takeAwayPrice,
-          'delivery_price':
-          item.menuVariation!.deliveryPrice,
-
-          // Variation ke selected choices
-          'choice_groups':
-          item.menuVariation!.choiceGroups.map((group) {
-            return {
-              'id': group.id,
-              'name': group.name,
-              'min_choices': group.minChoices,
-              'max_choices': group.maxChoices,
-              'choices': group.choices.map((choice) {
-                return {
-                  'id': choice.id,
-                  'name': choice.name,
-                  'price': choice.price,
-                };
-              }).toList(),
-            };
-          }).toList(),
-        },
-      };
-    }).toList();
-
-    return jsonEncode(dealItems);
+    return choices;
   }
 
-  // LOAD CART
+  // LOAD CART FROM DATABASE
   Future<void> loadCart() async {
-    final items = await _cartRepository.getCartItems();
+    cartItems = await _dbController.getCart();
+
     debugPrint('========== LOAD CART FROM DB ==========');
-    for (final item in items) {
-      debugPrint('${item['name']} => price: ${item['price']}, takeaway: ${item['takeaway_price']}');
+    for (final item in cartItems) {
+      debugPrint(
+        '${item.menuName} => price: ${item.price}, takeaway: ${item.takeawayPrice}',
+      );
     }
     debugPrint('========================================');
 
-    cartItems = items.map((item) {
-      final dineInPrice =
-          double.tryParse(item['price']?.toString() ?? '0') ?? 0;
-
-      final takeawayPrice =
-          double.tryParse(
-            item['takeaway_price']?.toString() ?? '0',
-          ) ??
-              0;
-
-      final deliveryPrice =
-          double.tryParse(
-            item['delivery_price']?.toString() ?? '0',
-          ) ??
-              0;
-
-      final selectedChoices = _parseChoices(item['choices']);
-
-      final selectedVariation = _parseMenuVariation(
-        item['menu_variation'],
-      );
-      final dealItems = _parseDeal(item['deal_details']);
-      final menu = Menu(
-        id: item['menu_id'],
-        menuId: item['menu_id']?.toString(),
-        name: item['name'],
-        price: dineInPrice.toString(),
-        takeAwayPrice: takeawayPrice.toString(),
-        deliveryPrice: deliveryPrice.toString(),
-        image: null,
-        imageUrl: null,
-        description: null,
-        ingridient: null,
-        isDeal: dealItems.isNotEmpty,
-        menuVariations: [],
-        choiceGroup: selectedChoices,
-        dealMenuDetails: dealItems,
-        quantity: item['quantity'],
-        menuVariation: selectedVariation,
-      );
-      final databaseId = item['id'];
-      if (databaseId != null) {
-        _cartDatabaseIds[_cartKey(menu)] = databaseId;
-      }
-
-
-      return menu;
-    }).toList();
-
+    _applyOrderTypePrices();
     notifyListeners();
   }
-
-  List<ChoiceGroup> _parseChoices(dynamic value) {
-    if (value == null || value.toString().isEmpty) {
-      return [];
-    }
-
-    try {
-      final List<dynamic> data =
-      jsonDecode(value.toString());
-
-      final Map<int, List<MenuVariation>> groupedChoices = {};
-      final Map<int, String?> groupNames = {};
-
-      for (final item in data) {
-        final groupId = item['choice_group_id'];
-
-        if (groupId == null) continue;
-
-        // Group name save/read karo
-        groupNames[groupId] =
-            item['choice_group_name']?.toString();
-
-        final choice = MenuVariation(
-          id: item['id'],
-          name: item['name'],
-          price: item['price']?.toString(),
-          takeAwayPrice: null,
-          deliveryPrice: null,
-          choiceGroups: [],
-        );
-
-        groupedChoices.putIfAbsent(
-          groupId,
-              () => [],
-        );
-
-        groupedChoices[groupId]!.add(choice);
-      }
-
-      return groupedChoices.entries.map((entry) {
-        return ChoiceGroup(
-          id: entry.key,
-          name: groupNames[entry.key],
-          minChoices: 0,
-          maxChoices: 0,
-          choices: entry.value,
-        );
-      }).toList();
-    } catch (e) {
-      debugPrint(
-        'Error parsing choices: $e',
-      );
-
-      return [];
-    }
-  }
-
-  MenuVariation? _parseMenuVariation(dynamic value) {
-    if (value == null || value.toString().isEmpty) {
-      return null;
-    }
-
-    try {
-      final data = jsonDecode(value.toString());
-
-      return MenuVariation(
-        id: data['id'],
-        name: data['name'],
-        price: data['price']?.toString(),
-        takeAwayPrice: null,
-        deliveryPrice: null,
-        choiceGroups: [],
-      );
-    } catch (e) {
-      debugPrint(
-        'Error parsing menu variation: $e',
-      );
-
-      return null;
-    }
-  }
-  List<Menu> _parseDeal(dynamic value) {
-    if (value == null || value.toString().isEmpty) {
-      return [];
-    }
-
-    try {
-      final List<dynamic> data =
-      jsonDecode(value.toString());
-
-      return data.map<Menu>((item) {
-        // -----------------------------
-        // DIRECT CHOICE GROUPS
-        // -----------------------------
-
-        final List<ChoiceGroup> directGroups = [];
-
-        final choiceGroupsData =
-        item['choice_groups'];
-
-        if (choiceGroupsData is List) {
-          for (final groupData in choiceGroupsData) {
-            final List<MenuVariation> choices = [];
-
-            final choicesData =
-            groupData['choices'];
-
-            if (choicesData is List) {
-              for (final choiceData in choicesData) {
-                choices.add(
-                  MenuVariation(
-                    id: choiceData['id'],
-                    name: choiceData['name'],
-                    price:
-                    choiceData['price']?.toString(),
-                    takeAwayPrice: null,
-                    deliveryPrice: null,
-                    choiceGroups: [],
-                  ),
-                );
-              }
-            }
-
-            directGroups.add(
-              ChoiceGroup(
-                id: groupData['id'],
-                name: groupData['name'],
-                minChoices:
-                groupData['min_choices'],
-                maxChoices:
-                groupData['max_choices'],
-                choices: choices,
-              ),
-            );
-          }
-        }
-
-        // -----------------------------
-        // MENU VARIATION
-        // -----------------------------
-
-        MenuVariation? selectedVariation;
-
-        final variationData =
-        item['menu_variation'];
-
-        if (variationData != null) {
-          final List<ChoiceGroup>
-          variationGroups = [];
-
-          final variationGroupsData =
-          variationData['choice_groups'];
-
-          if (variationGroupsData is List) {
-            for (final groupData
-            in variationGroupsData) {
-              final List<MenuVariation> choices = [];
-
-              final choicesData =
-              groupData['choices'];
-
-              if (choicesData is List) {
-                for (final choiceData
-                in choicesData) {
-                  choices.add(
-                    MenuVariation(
-                      id: choiceData['id'],
-                      name: choiceData['name'],
-                      price: choiceData['price']
-                          ?.toString(),
-                      takeAwayPrice: null,
-                      deliveryPrice: null,
-                      choiceGroups: [],
-                    ),
-                  );
-                }
-              }
-
-              variationGroups.add(
-                ChoiceGroup(
-                  id: groupData['id'],
-                  name: groupData['name'],
-                  minChoices:
-                  groupData['min_choices'],
-                  maxChoices:
-                  groupData['max_choices'],
-                  choices: choices,
-                ),
-              );
-            }
-          }
-
-          selectedVariation = MenuVariation(
-            id: variationData['id'],
-            name: variationData['name'],
-            price:
-            variationData['price']?.toString(),
-            takeAwayPrice:
-            variationData['takeaway_price']
-                ?.toString(),
-            deliveryPrice:
-            variationData['delivery_price']
-                ?.toString(),
-            choiceGroups: variationGroups,
-          );
-        }
-
-        // -----------------------------
-        // FINAL DEAL ITEM
-        // -----------------------------
-
-        return Menu(
-          id: item['id'],
-          menuId: item['menu_id']?.toString(),
-          name: item['name'],
-
-          price: item['price']?.toString(),
-          takeAwayPrice:
-          item['takeaway_price']?.toString(),
-          deliveryPrice:
-          item['delivery_price']?.toString(),
-
-          image: null,
-          imageUrl: null,
-          description: null,
-          ingridient: null,
-
-          isDeal: false,
-
-          menuVariations: [],
-
-          choiceGroup: directGroups,
-
-          dealMenuDetails: [],
-
-          quantity: item['quantity'],
-
-          menuVariation: selectedVariation,
-        );
-      }).toList();
-    } catch (e) {
-      debugPrint(
-        'Error parsing deal: $e',
-      );
-
-      return [];
-    }
-  }
-
 
   // ADD TO CART
   Future<void> addToCart(
-      Menu food,
-      int quantity,
-      ) async {
-    final index = cartItems.indexWhere(
-          (item) => _isSameCartItem(item, food),
-    );
-    // ITEM ALREADY IN CART
-    if (index != -1) {
-      final oldItem = cartItems[index];
-      final newQuantity =
-          (oldItem.quantity ?? 1) + quantity;
-      cartItems[index] = oldItem.copyWith(
-        quantity: newQuantity,
-      );
-      notifyListeners();
-      final databaseId = _cartDatabaseIds[_cartKey(oldItem)];
-
-      if (databaseId != null) {
-        await _cartRepository.updateQuantity(
-          databaseId,
-          newQuantity,
-        );
-      }
-      return;
-    }
-
-    // NEW ITEM
+    Menu food,
+    int quantity,
+  ) async {
     final selectedPrice = food.isDeal == true
         ? double.tryParse(food.price ?? '0') ?? 0
         : getSelectedPrice(food);
-
-    final newItem = food.copyWith(
+    final newItem = _toOrderDetails(food).copyWith(
       quantity: quantity,
       price: selectedPrice.toString(),
-      menuVariation: food.menuVariation,
-      choiceGroup:
-      food.menuVariation?.choiceGroups ??
-          food.choiceGroup,
+      takeawayPrice: selectedPrice.toString(),
+      deliveryPrice: selectedPrice.toString(),
     );
-// SAVE TO DATABASE FIRST
-    final cartData = {
-      'menu_id': food.id,
-      'name': food.name,
-      'price': selectedPrice,
-      'takeaway_price':
-      double.tryParse(
-        food.takeAwayPrice ?? '0',
-      ) ??
-          0,
-      'delivery_price':
-      double.tryParse(
-        food.deliveryPrice ?? '0',
-      ) ??
-          0,
-      'quantity': quantity,
 
-      'menu_variation': food.isDeal == true
-          ? null
-          : food.menuVariation == null
-          ? null
-          : jsonEncode({
-        'id': food.menuVariation!.id,
-        'name': food.menuVariation!.name,
-        'price': food.menuVariation!.price,
-      }),
-      'choices': food.isDeal == true
-          ? null
-          : _encodeChoices(food),
-      'deal_details': _encodeDeal(food),
-    };
-    final databaseId =
-    await _cartRepository.addToCart(cartData);
-    _cartDatabaseIds[_cartKey(newItem)] = databaseId;
-// NOW update UI
-    debugPrint('========== BEFORE CART ADD ==========');
-    debugPrint('ITEM: ${newItem.name}');
-    debugPrint(
-      'VARIATION: ${newItem.menuVariation?.id} - ${newItem.menuVariation?.name}',
+    final index = cartItems.indexWhere(
+      (item) => _isSameCartItem(item, newItem),
     );
-    debugPrint(
-      'VARIATION PRICE: ${newItem.menuVariation?.price}',
-    );
-    debugPrint('PRICE: ${newItem.price}');
-    debugPrint('====================================');
-    cartItems.add(newItem);
-    notifyListeners();
-  }
 
-  // UPDATE EXISTING CART ITEM
-  Future<void> updateCartItem(
-      Menu oldItem,
-      Menu updatedItem,
-      ) async {
-    final index = cartItems.indexWhere(
-          (item) => _isSameCartItem(item, oldItem),
-    );
-    if (index == -1) return;
-    final databaseId =
-    _cartDatabaseIds[_cartKey(oldItem)];
-    final finalPrice =
-    getSelectedPrice(updatedItem);
-    final newItem = updatedItem.copyWith(
-      quantity: oldItem.quantity ?? 1,
-      price: finalPrice.toString(),
-    );
-    cartItems[index] = newItem;
-    if (databaseId != null) {
-      final cartData = {
-        'menu_id': newItem.id,
-        'name': newItem.name,
-        'price': finalPrice,
+    // ITEM ALREADY IN CART
+    if (index != -1) {
+      final oldItem = cartItems[index];
+      final newQuantity = (oldItem.quantity ?? 1) + quantity;
 
-        'takeaway_price':
-        double.tryParse(
-          newItem.takeAwayPrice ?? '0',
-        ) ??
-            0,
-        'delivery_price':
-        double.tryParse(
-          newItem.deliveryPrice ?? '0',
-        ) ??
-            0,
-        'quantity':
-        newItem.quantity ?? 1,
-        'menu_variation':
-        newItem.menuVariation == null
-            ? null
-            : jsonEncode({
-          'id':
-          newItem.menuVariation!.id,
-          'name':
-          newItem.menuVariation!.name,
-          'price':
-          newItem.menuVariation!.price,
-        }),
-        'choices':
-        _encodeChoices(newItem),
-        'deal_details':
-        _encodeDeal(newItem),
-      };
-      await _cartRepository.updateCartItem(
-        databaseId,
-        cartData,
-      );
-      // Old key remove
-      _cartDatabaseIds.remove(
-        _cartKey(oldItem),
-      );
-      // New key save
-      _cartDatabaseIds[_cartKey(newItem)] =
-          databaseId;
-    }
-    notifyListeners();
-  }
-  // INCREASE QUANTITY
-  Future<void> increaseQuantity(Menu food) async {
-    final index = cartItems.indexWhere(
-          (item) => _isSameCartItem(item, food),
-    );
-    if (index == -1) return;
-    final item = cartItems[index];
-    final newQuantity = (item.quantity ?? 1) + 1;
-    cartItems[index] = item.copyWith(
-      quantity: newQuantity,
-    );
-    notifyListeners();
-    final databaseId = _cartDatabaseIds[_cartKey(item)];
-    if (databaseId != null) {
-      await _cartRepository.updateQuantity(
-        databaseId,
-        newQuantity,
-      );
-    }
-  }
-  // DECREASE QUANTITY
-  Future<void> decreaseQuantity(Menu food) async {
-    final index = cartItems.indexWhere(
-          (item) => _isSameCartItem(item, food),
-    );
-    if (index == -1) return;
-    final item = cartItems[index];
-    final quantity = item.quantity ?? 1;
-    final databaseId = _cartDatabaseIds[_cartKey(item)];
-    if (quantity > 1) {
-      final newQuantity = quantity - 1;
-      cartItems[index] = item.copyWith(
-        quantity: newQuantity,
-      );
-      notifyListeners();
-      if (databaseId != null) {
-        await _cartRepository.updateQuantity(
-          databaseId,
+      if (oldItem.id != null) {
+        await _dbController.updateQuantity(
+          oldItem.id!,
           newQuantity,
         );
       }
     } else {
-      if (databaseId != null) {
-        await _cartRepository.deleteCartItem(
-          databaseId,
-        );
+      debugPrint('========== BEFORE CART ADD ==========');
+      debugPrint('ITEM: ${newItem.menuName}');
+      debugPrint(
+        'VARIATION: ${newItem.menuVariation?.id} - ${newItem.menuVariation?.name}',
+      );
+      debugPrint(
+        'VARIATION PRICE: ${newItem.menuVariation?.price}',
+      );
+      debugPrint('PRICE: ${newItem.price}');
+      debugPrint('====================================');
+
+      await _dbController.addToCart(newItem);
+    }
+
+    await loadCart();
+  }
+
+  OrderDetails? simpleCartItem(Menu food) {
+    if (food.isDeal == true) {
+      return null;
+    }
+
+    if (food.menuVariations.isNotEmpty ||
+        food.choiceGroup.isNotEmpty) {
+      return null;
+    }
+
+    for (final item in cartItems) {
+      if (item.menuId == food.id?.toString() && !item.isDeal) {
+        return item;
       }
-      _cartDatabaseIds.remove(_cartKey(item));
-      cartItems.removeAt(index);
-
-      notifyListeners();
     }
+
+    return null;
   }
-  // REMOVE FROM CART
 
+  // UPDATE EXISTING CART ITEM
+  Future<void> updateCartItem(OrderDetails item) async {
+    if (item.id == null) return;
 
-  Future<void> removeFromCart(Menu food) async {
-    final index = cartItems.indexWhere(
-          (item) => _isSameCartItem(item, food),
+    final finalPrice = _orderPrice(item);
+
+    await _dbController.updateCart(
+      item.id!,
+      item.copyWith(
+        price: finalPrice.toString(),
+      ),
     );
-    if (index == -1) return;
-    final item = cartItems[index];
-    final databaseId = _cartDatabaseIds[_cartKey(item)];
-    if (databaseId != null) {
-      await _cartRepository.deleteCartItem(
-        databaseId,
+
+    await loadCart();
+  }
+
+  // INCREASE QUANTITY
+  Future<void> increaseQuantity(OrderDetails item) async {
+    if (item.id == null) return;
+
+    await _dbController.updateQuantity(
+      item.id!,
+      (item.quantity ?? 1) + 1,
+    );
+
+    await loadCart();
+  }
+
+  // DECREASE QUANTITY
+  Future<void> decreaseQuantity(OrderDetails item) async {
+    if (item.id == null) return;
+
+    final quantity = item.quantity ?? 1;
+
+    if (quantity > 1) {
+      await _dbController.updateQuantity(
+        item.id!,
+        quantity - 1,
       );
-      _cartDatabaseIds.remove(
-        _cartKey(item),
-      );
+    } else {
+      await _dbController.deleteCart(item.id!);
     }
-    cartItems.removeAt(index);
-    notifyListeners();
+
+    await loadCart();
   }
+
+  // REMOVE FROM CART
+  Future<void> removeFromCart(OrderDetails item) async {
+    if (item.id == null) return;
+
+    await _dbController.deleteCart(item.id!);
+    await loadCart();
+  }
+
   // CLEAR CART
-
   Future<void> clearCart() async {
-    cartItems.clear();
-
-    await _cartRepository.clearCart();
-
-    notifyListeners();
+    await _dbController.clearCart();
+    await loadCart();
   }
+
   // GET SELECTED PRICE
-
-
-  // double getSelectedPrice(Menu food) {
-  //
-  //   // Customized item ki final price
-  //   // har order type mein currently use hogi.
-  //   if (food.menuVariation != null &&
-  //       food.menuVariation!.price != null &&
-  //       food.menuVariation!.price!.isNotEmpty) {
-  //     return double.tryParse(
-  //       food.menuVariation!.price!,
-  //     ) ?? 0;
-  //   }
-  //
-  //   if (orderType == 'Delivery') {
-  //     return double.tryParse(
-  //       food.deliveryPrice ?? '0',
-  //     ) ?? 0;
-  //   }
-  //
-  //   if (orderType == 'Takeaway') {
-  //     return double.tryParse(
-  //       food.takeAwayPrice ?? '0',
-  //     ) ?? 0;
-  //   }
-  //
-  //   return double.tryParse(
-  //     food.price ?? '0',
-  //   ) ?? 0;
-  // }
   double getSelectedPrice(Menu food) {
-    // ==========================================================
-    // BASE MENU PRICE
-    // ==========================================================
-
-    final basePrice =
-        double.tryParse(
-          food.price ?? '0',
-        ) ??
-            0;
-
-    // ==========================================================
-    // VARIATION EXTRA PRICE
-    // ==========================================================
+    final basePrice = double.tryParse(food.price ?? '0') ?? 0;
 
     double variationPrice = 0;
 
     if (food.menuVariation != null) {
       variationPrice =
-          double.tryParse(
-            food.menuVariation!.price ?? '0',
-          ) ??
-              0;
+          double.tryParse(food.menuVariation!.price ?? '0') ?? 0;
     }
-
-    // ==========================================================
-    // SELECTED CHOICES EXTRA PRICE
-    // ==========================================================
 
     double choicesPrice = 0;
 
-    final groups = food.choiceGroup;
-
-    for (final group in groups) {
+    for (final group in food.choiceGroup) {
       for (final choice in group.choices) {
-        choicesPrice +=
-            double.tryParse(
-              choice.price ?? '0',
-            ) ??
-                0;
+        choicesPrice += double.tryParse(choice.price ?? '0') ?? 0;
       }
     }
 
-    // ==========================================================
-    // FINAL PRICE
-    // ==========================================================
+    final finalPrice = basePrice + variationPrice + choicesPrice;
 
-    final finalPrice =
-        basePrice +
-            variationPrice +
-            choicesPrice;
-
-    debugPrint(
-      '========== PRICE CALCULATION ==========',
-    );
+    debugPrint('========== PRICE CALCULATION ==========');
     debugPrint('Item: ${food.name}');
     debugPrint('Base Price: $basePrice');
-    debugPrint(
-      'Variation Price: $variationPrice',
-    );
-    debugPrint(
-      'Choices Price: $choicesPrice',
-    );
-    debugPrint(
-      'FINAL PRICE: $finalPrice',
-    );
-    debugPrint(
-      '========================================',
-    );
+    debugPrint('Variation Price: $variationPrice');
+    debugPrint('Choices Price: $choicesPrice');
+    debugPrint('FINAL PRICE: $finalPrice');
+    debugPrint('========================================');
 
     return finalPrice;
   }
+
+  double _orderPrice(OrderDetails item) {
+    final basePrice = double.tryParse(item.price ?? '0') ?? 0;
+
+    final variationPrice =
+        double.tryParse(item.menuVariation?.price ?? '0') ?? 0;
+
+    double choicesPrice = 0;
+
+    for (final choice in item.orderDetailChoice) {
+      choicesPrice += double.tryParse(choice.price ?? '0') ?? 0;
+    }
+
+    return basePrice + variationPrice + choicesPrice;
+  }
+
   // CHANGE ORDER TYPE
   Future<void> changeOrderType(String type) async {
     orderType = type;
-
-    final dbItems = await _cartRepository.getCartItems();
-
+    await loadCart();
+  }void _applyOrderTypePrices() {
     for (int i = 0; i < cartItems.length; i++) {
-      final food = cartItems[i];
+      final item = cartItems[i];
 
-      final dbItem = dbItems.firstWhere(
-            (item) => item['menu_id'] == food.id,
-        orElse: () => {},
-      );
-
-      if (dbItem.isEmpty) {
-        continue;
-      }
-
-      // ORIGINAL PRICES
       final dineInPrice =
-          double.tryParse(
-            dbItem['price']?.toString() ?? '0',
-          ) ??
-              0;
+          double.tryParse(item.price ?? '0') ?? 0;
 
       final takeawayPrice =
-          double.tryParse(
-            dbItem['takeaway_price']?.toString() ?? '0',
-          ) ??
-              0;
+          double.tryParse(item.takeawayPrice ?? '0') ?? 0;
 
       final deliveryPrice =
-          double.tryParse(
-            dbItem['delivery_price']?.toString() ?? '0',
-          ) ??
-              0;
+          double.tryParse(item.deliveryPrice ?? '0') ?? 0;
 
       double selectedPrice;
 
-// Base price order type ke hisab sai
-      double baseForType;
-      if (type == 'Delivery') {
-        baseForType = deliveryPrice;
-      } else if (type == 'Takeaway') {
-        baseForType = takeawayPrice;
+      if (orderType == 'Delivery') {
+        selectedPrice = deliveryPrice;
+      } else if (orderType == 'Takeaway') {
+        selectedPrice = takeawayPrice;
       } else {
-        baseForType = dineInPrice;
+        selectedPrice = dineInPrice;
       }
 
-// Agar item customized hai, to variation + choices ki extra price add karein
-      final menuVariation = food.menuVariation;
-
-      if (menuVariation != null) {
-        final variationExtra =
-            double.tryParse(menuVariation.price ?? '0') ?? 0;
-
-        double choicesExtra = 0;
-        for (final group in food.choiceGroup) {   
-          for (final choice in group.choices) {
-            choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
-          }
-        }
-
-        selectedPrice = baseForType + variationExtra + choicesExtra;
-      } else {
-        selectedPrice = baseForType;
-      }
-      // ONLY UI PRICE UPDATE
-      cartItems[i] = food.copyWith(
+      // IMPORTANT:
+      // price already final hai.
+      // Variation aur choices dobara add nahi karni.
+      cartItems[i] = item.copyWith(
         price: selectedPrice.toString(),
-
-        // Original prices preserve
-        takeAwayPrice: takeawayPrice.toString(),
-        deliveryPrice: deliveryPrice.toString(),
       );
     }
-    notifyListeners();
   }
+  // void _applyOrderTypePrices() {
+  //   for (int i = 0; i < cartItems.length; i++) {
+  //     final item = cartItems[i];
+  //
+  //     final dineInPrice = double.tryParse(item.price ?? '0') ?? 0;
+  //     final takeawayPrice =
+  //         double.tryParse(item.takeawayPrice ?? '0') ?? 0;
+  //     final deliveryPrice =
+  //         double.tryParse(item.deliveryPrice ?? '0') ?? 0;
+  //
+  //     double selectedPrice;
+  //
+  //     if (orderType == 'Delivery') {
+  //       selectedPrice = deliveryPrice;
+  //     } else if (orderType == 'Takeaway') {
+  //       selectedPrice = takeawayPrice;
+  //     } else {
+  //       selectedPrice = dineInPrice;
+  //     }
+  //
+  //     if (orderType != 'Dine-In') {
+  //       final variationExtra =
+  //           double.tryParse(item.menuVariation?.price ?? '0') ?? 0;
+  //
+  //       double choicesExtra = 0;
+  //
+  //       for (final choice in item.orderDetailChoice) {
+  //         choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+  //       }
+  //
+  //       selectedPrice += variationExtra + choicesExtra;
+  //     }
+  //
+  //     cartItems[i] = item.copyWith(
+  //       price: selectedPrice.toString(),
+  //     );
+  //   }
+  // }
 }

@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 import '../deal_detail_view.dart';
 import '../model/menu_model.dart';

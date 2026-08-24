@@ -261,7 +261,14 @@ class _ProfileScreenState extends State<ProfileView> {
                 },
               ),
               const SizedBox(height: 12),
-
+              ProfileOptionTile(
+                title: 'Discount Voucher',
+                icon: Icons.discount_outlined,
+                onTap: () {
+                  // Discount voucher
+                },
+              ),
+              const SizedBox(height: 12),
               ProfileOptionTile(
                 title: 'Discount Voucher',
                 icon: Icons.discount_outlined,

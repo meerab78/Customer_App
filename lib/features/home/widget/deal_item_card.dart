@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -9,11 +10,13 @@ import 'variation_selector.dart';
 class DealItemCard extends StatefulWidget {
   final Menu item;
   final ValueChanged<Menu>? onItemUpdated;
+  final ValueChanged<bool>? onCompletionChanged;
 
   const DealItemCard({
     super.key,
     required this.item,
     this.onItemUpdated,
+    this.onCompletionChanged,
   });
 
   @override
@@ -37,7 +40,6 @@ class _DealItemCardState extends State<DealItemCard> {
 
     _initializeExistingSelection();
   }
-
 // EXISTING SELECTION LOAD KARO
   void _initializeExistingSelection() {
     // EXISTING SELECTED VARIATION
@@ -69,40 +71,17 @@ class _DealItemCardState extends State<DealItemCard> {
       _originalBasePrice =
           (_originalBasePrice ?? 0) - variationExtra - choicesExtra;
     }
-
-    // DIRECT CHOICES
-    _initializeChoices(widget.item.choiceGroup);
-
-    // VARIATION KE CHOICES
-    if (widget.item.menuVariation != null) {
-      _initializeChoices(widget.item.menuVariation!.choiceGroups);
-    }
   }
 
 // CHOICES LOAD KARNE KA HELPER
   void _initializeChoices(List<ChoiceGroup> groups) {
     for (final group in groups) {
       final groupId = group.id;
+
       if (groupId == null) continue;
-
-      final existingChoices = group.choices;
-      if (existingChoices.isEmpty) continue;
-
-      final current = List<MenuVariation>.from(
-        selectedChoices[groupId] ?? [],
-      );
-
-      for (final choice in existingChoices) {
-        final alreadyExists =
-        current.any((item) => item.id == choice.id);
-        if (!alreadyExists) {
-          current.add(choice);
-        }
-      }
-
-      selectedChoices[groupId] = current;
     }
   }
+
   @override
   void didUpdateWidget(
       covariant DealItemCard oldWidget,
@@ -150,19 +129,28 @@ class _DealItemCardState extends State<DealItemCard> {
     return total;
   }
 // CUSTOMIZATION AVAILABLE?
+
   bool get hasCustomization {
     return widget.item.menuVariations.isNotEmpty ||
-        widget.item.choiceGroup.isNotEmpty;
+        widget.item.choiceGroup.isNotEmpty ||
+        widget.item.menuVariation != null;
   }
 // CHOICE GROUPS
   List<ChoiceGroup> get choiceGroups {
     final groups = <ChoiceGroup>[];
+
     groups.addAll(widget.item.choiceGroup);
+
     if (selectedVariation != null) {
       groups.addAll(
         selectedVariation!.choiceGroups,
       );
+    } else if (widget.item.menuVariation != null) {
+      groups.addAll(
+        widget.item.menuVariation!.choiceGroups,
+      );
     }
+
     return groups;
   }
 // VALIDATION
@@ -265,9 +253,10 @@ class _DealItemCardState extends State<DealItemCard> {
     });
   }
 
-// BUILD UPDATED ITEM
+  // BUILD UPDATED ITEM
   Menu _buildUpdatedItem() {
-    final groups = choiceGroups.map((group) {
+    // Direct choices sirf parent Menu ke choiceGroup mein jayengi
+    final directGroups = widget.item.choiceGroup.map((group) {
       final selected = selectedChoices[group.id] ?? [];
 
       return group.copyWith(
@@ -278,19 +267,30 @@ class _DealItemCardState extends State<DealItemCard> {
     MenuVariation? finalVariation;
 
     if (selectedVariation != null) {
+      // Variation ke choices sirf variation ke andar jayengi
+      final variationGroups =
+      selectedVariation!.choiceGroups.map((group) {
+        final selected = selectedChoices[group.id] ?? [];
+
+        return group.copyWith(
+          choices: selected,
+        );
+      }).toList();
+
       finalVariation = selectedVariation!.copyWith(
         price: finalPrice.toString(),
         takeAwayPrice: selectedVariation!.takeAwayPrice,
         deliveryPrice: selectedVariation!.deliveryPrice,
-        choiceGroups: groups,
+        choiceGroups: variationGroups,
       );
     }
+
     return widget.item.copyWith(
       price: finalPrice.toString(),
       menuVariation: finalVariation,
-      // IMPORTANT:
-      // Deal item ke selected direct choices bhi preserve honge
-      choiceGroup: groups,
+
+      // Sirf direct choices
+      choiceGroup: directGroups,
     );
   }
 // IMAGE
@@ -312,10 +312,10 @@ class _DealItemCardState extends State<DealItemCard> {
 
   Widget _placeholder() {
     return Container(
-      color: AppColors.grey100,
+      color: AppColors.tertiary.withOpacity(0.1),
       child: Icon(
         Icons.fastfood_outlined,
-        color: AppColors.grey600,
+        color: AppColors.tertiary,
       ),
     );
   }
@@ -324,18 +324,30 @@ class _DealItemCardState extends State<DealItemCard> {
 
   @override
   Widget build(BuildContext context) {
+    // UI-only flag — purely derived from existing getters,
+    // used just to color the status chip below.
+    final bool isReady = !hasCustomization || isValid;
+
     return Container(
       margin: const EdgeInsets.only(
-        bottom: 12,
+        bottom: 14,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: isExpanded
               ? AppColors.primary
-              : AppColors.grey200,
+              : AppColors.borderColorGrey,
+          width: isExpanded ? 1.4 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.softShadow04,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -347,15 +359,44 @@ class _DealItemCardState extends State<DealItemCard> {
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(14),
-                    child: SizedBox(
-                      width: 75,
-                      height: 75,
-                      child: _image(),
-                    ),
+                  Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius:
+                        BorderRadius.circular(14),
+                        child: SizedBox(
+                          width: 75,
+                          height: 75,
+                          child: _image(),
+                        ),
+                      ),
+                      Positioned(
+                        right: -4,
+                        top: -4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isReady
+                                ? AppColors.success
+                                : AppColors.tertiary,
+                            border: Border.all(
+                              color: AppColors.card,
+                              width: 2,
+                            ),
+                          ),
+                          child: Icon(
+                            isReady
+                                ? Icons.check_rounded
+                                : Icons.edit_rounded,
+                            size: 11,
+                            color: AppColors.white,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   const SizedBox(width: 14),
@@ -365,13 +406,39 @@ class _DealItemCardState extends State<DealItemCard> {
                       crossAxisAlignment:
                       CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          widget.item.name ??
-                              'Item',
-                          style: getBoldStyle(
-                            fontSize: MyFonts.size16,
-                            color: AppColors.text,
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                widget.item.name ??
+                                    'Item',
+                                style: getBoldStyle(
+                                  fontSize: MyFonts.size16,
+                                  color: AppColors.text,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets
+                                  .symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.tertiary
+                                    .withOpacity(0.12),
+                                borderRadius:
+                                BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                'x${widget.item.quantity ?? 1}',
+                                style: getBoldStyle(
+                                  fontSize: MyFonts.size13,
+                                  color: AppColors.tertiary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
 
                         const SizedBox(height: 6),
@@ -384,42 +451,61 @@ class _DealItemCardState extends State<DealItemCard> {
                             AppColors.primary,
                           ),
                         ),
+// SELECTED CHOICES
+                        ...selectedChoices.entries.expand(
+                              (entry) {
+                            final choices = entry.value;
+
+                            return choices.map(
+                                  (choice) => Padding(
+                                padding: const EdgeInsets.only(top: 3),
+                                child: Text(
+                                  '• ${choice.name ?? ''}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: getRegularStyle(
+                                    fontSize: MyFonts.size12,
+                                    color: AppColors.grey500,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
 
                         if (hasCustomization) ...[
-                          const SizedBox(height: 5),
+                          const SizedBox(height: 6),
 
-                          Text(
-                            isExpanded
-                                ? 'Close customization'
-                                : 'Tap to customize',
-                            style: getRegularStyle(
-                              fontSize: MyFonts.size12,
-                              color:
-                              AppColors.primary,
-                            ),
+                          Row(
+                            children: [
+                              Text(
+                                isExpanded
+                                    ? 'Close customization'
+                                    : (isReady
+                                    ? 'Tap to edit'
+                                    : 'Tap to customize'),
+                                style: getRegularStyle(
+                                  fontSize: MyFonts.size12,
+                                  color:
+                                  AppColors.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              AnimatedRotation(
+                                turns: isExpanded ? 0.5 : 0,
+                                duration: const Duration(
+                                  milliseconds: 200,
+                                ),
+                                child: Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 16,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ],
-                    ),
-                  ),
-
-                  if (hasCustomization)
-                    Icon(
-                      isExpanded
-                          ? Icons
-                          .keyboard_arrow_up
-                          : Icons
-                          .keyboard_arrow_down,
-                      color: AppColors.primary,
-                    ),
-
-                  const SizedBox(width: 4),
-
-                  Text(
-                    'x${widget.item.quantity ?? 1}',
-                    style: getBoldStyle(
-                      fontSize: MyFonts.size16,
-                      color: AppColors.text,
                     ),
                   ),
                 ],
@@ -428,8 +514,12 @@ class _DealItemCardState extends State<DealItemCard> {
           ),
 // EXPANDED CUSTOMIZATION
 
-          if (isExpanded && hasCustomization)
-            Padding(
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 220),
+            crossFadeState: (isExpanded && hasCustomization)
+                ? CrossFadeState.showFirst
+                : CrossFadeState.showSecond,
+            firstChild: Padding(
               padding:
               const EdgeInsets.fromLTRB(
                 14,
@@ -439,7 +529,7 @@ class _DealItemCardState extends State<DealItemCard> {
               ),
               child: Column(
                 children: [
-                  const Divider(),
+                  Divider(color: AppColors.divider),
 
                   const SizedBox(height: 8),
 
@@ -463,21 +553,21 @@ class _DealItemCardState extends State<DealItemCard> {
 // DONE BUTTON
                   SizedBox(
                     width: double.infinity,
-                    height: 45,
+                    height: 46,
                     child: ElevatedButton(
                       onPressed: isValid
                           ? () {
                         final updatedItem =
                         _buildUpdatedItem();
 
-                        widget.onItemUpdated
-                            ?.call(
+                        widget.onItemUpdated?.call(
                           updatedItem,
                         );
 
+                        widget.onCompletionChanged?.call(true);
+
                         setState(() {
-                          isExpanded =
-                          false;
+                          isExpanded = false;
                         });
                       }
                           : null,
@@ -485,6 +575,8 @@ class _DealItemCardState extends State<DealItemCard> {
                       ElevatedButton.styleFrom(
                         backgroundColor:
                         AppColors.primary,
+                        disabledBackgroundColor:
+                        AppColors.grey300,
                         foregroundColor:
                         AppColors.white,
                         elevation: 0,
@@ -492,7 +584,7 @@ class _DealItemCardState extends State<DealItemCard> {
                         RoundedRectangleBorder(
                           borderRadius:
                           BorderRadius.circular(
-                            12,
+                            13,
                           ),
                         ),
                       ),
@@ -512,9 +604,13 @@ class _DealItemCardState extends State<DealItemCard> {
                 ],
               ),
             ),
+            secondChild: const SizedBox(
+              width: double.infinity,
+              height: 0,
+            ),
+          ),
         ],
       ),
     );
   }
 }
-
