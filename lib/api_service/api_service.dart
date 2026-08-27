@@ -1,10 +1,10 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
+
 class ApiService {
-  Future<dynamic> getRequest(String url) async {
+  Future<dynamic> getRequest(String url, {String? token}) async {
     try {
       final client = IOClient(
         HttpClient()
@@ -12,6 +12,9 @@ class ApiService {
       );
       final response = await client.get(
         Uri.parse(url),
+        headers: {
+          if (token != null) "Authorization": "Bearer $token",
+        },
       );
       client.close();
       if (response.statusCode == 200) {
@@ -26,10 +29,12 @@ class ApiService {
       throw Exception(e.toString());
     }
   }
+
   Future<dynamic> postRequest(
       String url,
-      Map<String, dynamic> body,
-      ) async {
+      Map<String, dynamic> body, {
+        String? token,
+      }) async {
     try {
       final client = IOClient(
         HttpClient()
@@ -40,6 +45,7 @@ class ApiService {
         Uri.parse(url),
         headers: {
           "Content-Type": "application/json",
+          if (token != null) "Authorization": "Bearer $token",
         },
         body: jsonEncode(body),
       );
@@ -51,17 +57,17 @@ class ApiService {
         print("POST Status Code: ${response.statusCode}");
         print("POST Response: ${response.body}");
 
-        throw Exception(
-          "Error Code: ${response.statusCode}",
-        );
+        try {
+          final decoded = jsonDecode(response.body);
+          if (decoded is Map) {
+            return decoded;
+          }
+        } catch (_) {
+          // JSON nahi hai, neeche exception chali jayegi
+        }
+
+        throw Exception("Error Code: ${response.statusCode}");
       }
-      // if (response.statusCode == 200) {
-      //   return jsonDecode(response.body);
-      // } else {
-      //   throw Exception(
-      //     "Error Code: ${response.statusCode}",
-      //   );
-      // }
     } catch (e) {
       print("POST API Error: $e");
       throw Exception(e.toString());

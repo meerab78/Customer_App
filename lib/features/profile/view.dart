@@ -1,4 +1,5 @@
-﻿import '../auth/controller.dart';
+﻿import '../auth/address/manage_address_view.dart';
+import '../auth/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -270,13 +271,17 @@ class _ProfileScreenState extends State<ProfileView> {
               ),
               const SizedBox(height: 12),
               ProfileOptionTile(
-                title: 'Discount Voucher',
-                icon: Icons.discount_outlined,
+                title: 'Manage Address',
+                icon: Icons.location_on,
                 onTap: () {
-                  // Discount voucher
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ManageAddressView(),
+                    ),
+                  );
                 },
               ),
-
               const SizedBox(height: 12),
 
               ProfileOptionTile(
