@@ -1,4 +1,5 @@
-﻿// import 'dart:async';
+﻿//
+// import 'dart:async';
 //
 // import 'package:flutter/material.dart';
 // import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -120,6 +121,37 @@
 //
 //                   const SizedBox(height: 10),
 //
+//                   // SEARCH RESULTS LIST
+//                   if (provider.searchResults.isNotEmpty)
+//                     Container(
+//                       constraints: const BoxConstraints(maxHeight: 200),
+//                       decoration: BoxDecoration(
+//                         color: AppColors.white,
+//                         borderRadius: BorderRadius.circular(18),
+//                         boxShadow: const [
+//                           BoxShadow(color: AppColors.black26, blurRadius: 10)
+//                         ],
+//                       ),
+//                       child: ListView.builder(
+//                         shrinkWrap: true,
+//                         itemCount: provider.searchResults.length,
+//                         itemBuilder: (context, index) {
+//                           final place = provider.searchResults[index];
+//                           return ListTile(
+//                             leading: const Icon(Icons.location_on,
+//                                 color: AppColors.red),
+//                             title: Text(
+//                               place["description"],
+//                               maxLines: 2,
+//                               overflow: TextOverflow.ellipsis,
+//                             ),
+//                             onTap: () async {
+//                               await provider.selectPlace(place["place_id"]);
+//                             },
+//                           );
+//                         },
+//                       ),
+//                     ),
 //                 ],
 //               ),
 //             ),
@@ -188,53 +220,58 @@
 //                         hintText: "House/Flat No, Street, Landmark (optional)",
 //                         prefixIcon: Icon(Icons.home_outlined),
 //                         border: InputBorder.none,
-//                         contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+//                         contentPadding:
+//                         EdgeInsets.symmetric(vertical: 14, horizontal: 8),
 //                       ),
 //                     ),
 //                   ),
 //
 //                   const SizedBox(height: 12),
 //
-//                   if (provider.searchResults.isEmpty)
-//                     SizedBox(
-//                       width: double.infinity,
-//                       height: 52,
-//                       child: ElevatedButton(
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: AppColors.black,
-//                           shape: RoundedRectangleBorder(
-//                             borderRadius: BorderRadius.circular(16),
-//                           ),
-//                         ),
-//                         onPressed: provider.selectedAddress.isEmpty
-//                             ? null
-//                             : () async {
-//                           if (widget.pickerMode) {
-//                             final extraDetail =
-//                             provider.addressDetailController.text.trim();
-//                             final fullAddress = extraDetail.isNotEmpty
-//                                 ? "$extraDetail, ${provider.selectedAddress}"
-//                                 : provider.selectedAddress;
-//
-//                             Navigator.pop(context, {
-//                               "address1": fullAddress,
-//                               "latitude": provider.latitude?.toString() ?? "",
-//                               "longitude": provider.longitude?.toString() ?? "",
-//                             });
-//                           } else {
-//                             await provider.saveAddress();
-//                             Navigator.pushReplacement(
-//                               context,
-//                               MaterialPageRoute(builder: (_) => const BaseView()),
-//                             );
-//                           }
-//                         },
-//                         child: Text(
-//                           widget.pickerMode ? "Confirm Location" : "Continue",
-//                           style: getBoldStyle(color: AppColors.white, fontSize: MyFonts.size16),
+//                   // CONTINUE / CONFIRM BUTTON (hamesha dikhega)
+//                   SizedBox(
+//                     width: double.infinity,
+//                     height: 52,
+//                     child: ElevatedButton(
+//                       style: ElevatedButton.styleFrom(
+//                         backgroundColor: AppColors.black,
+//                         shape: RoundedRectangleBorder(
+//                           borderRadius: BorderRadius.circular(16),
 //                         ),
 //                       ),
+//                       onPressed: provider.selectedAddress.isEmpty
+//                           ? null
+//                           : () async {
+//                         if (widget.pickerMode) {
+//                           final extraDetail =
+//                           provider.addressDetailController.text.trim();
+//                           final fullAddress = extraDetail.isNotEmpty
+//                               ? "$extraDetail, ${provider.selectedAddress}"
+//                               : provider.selectedAddress;
+//
+//                           Navigator.pop(context, {
+//                             "address1": fullAddress,
+//                             "latitude":
+//                             provider.latitude?.toString() ?? "",
+//                             "longitude":
+//                             provider.longitude?.toString() ?? "",
+//                           });
+//                         } else {
+//                           await provider.saveAddress();
+//                           Navigator.pushReplacement(
+//                             context,
+//                             MaterialPageRoute(
+//                                 builder: (_) => const BaseView()),
+//                           );
+//                         }
+//                       },
+//                       child: Text(
+//                         widget.pickerMode ? "Confirm Location" : "Continue",
+//                         style: getBoldStyle(
+//                             color: AppColors.white, fontSize: MyFonts.size16),
+//                       ),
 //                     ),
+//                   ),
 //                 ],
 //               ),
 //             ),
@@ -329,12 +366,26 @@ class _AddressScreenState extends State<AddressView> {
           ),
 
           // Fixed center pin — YEHI EKLOTA marker hai (Careem/Uber style)
-          const Center(
+          Center(
             child: IgnorePointer(
-              child: Icon(
-                Icons.location_pin,
-                color: AppColors.red,
-                size: 45,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.location_pin,
+                    color: AppColors.primary,
+                    size: 46,
+                  ),
+                  Container(
+                    margin: const EdgeInsets.only(top: 2),
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.black26,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -344,22 +395,39 @@ class _AddressScreenState extends State<AddressView> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
+                  // Search bar
                   Container(
                     decoration: BoxDecoration(
                       color: AppColors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: const [
-                        BoxShadow(color: AppColors.black26, blurRadius: 12)
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.softShadow08,
+                          blurRadius: 16,
+                          offset: const Offset(0, 6),
+                        ),
                       ],
                     ),
                     child: TextField(
                       controller: provider.searchController,
                       onChanged: provider.searchAddress,
-                      decoration: const InputDecoration(
+                      style: getRegularStyle(
+                        fontSize: MyFonts.size14,
+                        color: AppColors.text,
+                      ),
+                      decoration: InputDecoration(
                         hintText: "Search your location",
-                        prefixIcon: Icon(Icons.search),
+                        hintStyle: getRegularStyle(
+                          fontSize: MyFonts.size14,
+                          color: AppColors.greyText,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          color: AppColors.primary,
+                        ),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 16),
+                        contentPadding:
+                        const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),
                   ),
@@ -369,26 +437,51 @@ class _AddressScreenState extends State<AddressView> {
                   // SEARCH RESULTS LIST
                   if (provider.searchResults.isNotEmpty)
                     Container(
-                      constraints: const BoxConstraints(maxHeight: 200),
+                      constraints: const BoxConstraints(maxHeight: 220),
                       decoration: BoxDecoration(
                         color: AppColors.white,
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: const [
-                          BoxShadow(color: AppColors.black26, blurRadius: 10)
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.softShadow08,
+                            blurRadius: 14,
+                            offset: const Offset(0, 4),
+                          ),
                         ],
                       ),
-                      child: ListView.builder(
+                      child: ListView.separated(
                         shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(vertical: 6),
                         itemCount: provider.searchResults.length,
+                        separatorBuilder: (_, __) => Divider(
+                          height: 1,
+                          indent: 56,
+                          color: AppColors.grey200,
+                        ),
                         itemBuilder: (context, index) {
                           final place = provider.searchResults[index];
                           return ListTile(
-                            leading: const Icon(Icons.location_on,
-                                color: AppColors.red),
+                            leading: Container(
+                              width: 34,
+                              height: 34,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.10),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                Icons.location_on_rounded,
+                                color: AppColors.primary,
+                                size: 18,
+                              ),
+                            ),
                             title: Text(
                               place["description"],
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
+                              style: getRegularStyle(
+                                fontSize: MyFonts.size13,
+                                color: AppColors.text,
+                              ),
                             ),
                             onTap: () async {
                               await provider.selectPlace(place["place_id"]);
@@ -404,14 +497,30 @@ class _AddressScreenState extends State<AddressView> {
 
           Positioned(
             right: 16,
-            bottom: 260,
-            child: FloatingActionButton(
-              mini: true,
-              backgroundColor: AppColors.white,
-              onPressed: () async {
-                await provider.getCurrentLocation();
-              },
-              child: const Icon(Icons.my_location, color: AppColors.black),
+            bottom: 270,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.softShadow08,
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: FloatingActionButton(
+                mini: true,
+                elevation: 0,
+                backgroundColor: AppColors.white,
+                onPressed: () async {
+                  await provider.getCurrentLocation();
+                },
+                child: Icon(
+                  Icons.my_location_rounded,
+                  color: AppColors.primary,
+                ),
+              ),
             ),
           ),
 
@@ -420,58 +529,113 @@ class _AddressScreenState extends State<AddressView> {
             right: 12,
             bottom: 15,
             child: Container(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
               decoration: BoxDecoration(
                 color: AppColors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: const [
-                  BoxShadow(color: AppColors.black26, blurRadius: 15)
+                borderRadius: BorderRadius.circular(26),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.softShadow08,
+                    blurRadius: 20,
+                    offset: const Offset(0, -4),
+                  ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  // Drag-handle style divider for visual polish
+                  Container(
+                    width: 40,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 14),
+                    decoration: BoxDecoration(
+                      color: AppColors.grey200,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+
                   Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.location_on, color: AppColors.red),
-                      const SizedBox(width: 10),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.10),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.location_on_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
                       Expanded(
-                        child: Text(
-                          provider.isLoading
-                              ? "Locating..."
-                              : (provider.selectedAddress.isEmpty
-                              ? "Select your delivery address"
-                              : provider.selectedAddress),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Delivery location",
+                              style: getSemiBoldStyle(
+                                fontSize: MyFonts.size12,
+                                color: AppColors.greyText,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              provider.isLoading
+                                  ? "Locating..."
+                                  : (provider.selectedAddress.isEmpty
+                                  ? "Select your delivery address"
+                                  : provider.selectedAddress),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: getSemiBoldStyle(
+                                fontSize: MyFonts.size14,
+                                color: AppColors.text,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   // House / Street / Landmark field
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white,
-                      border: Border.all(color: AppColors.black26),
+                      color: AppColors.grey100.withOpacity(0.6),
+                      border: Border.all(color: AppColors.grey200),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: TextField(
                       controller: provider.addressDetailController,
                       maxLines: 2,
-                      decoration: const InputDecoration(
+                      style: getRegularStyle(
+                        fontSize: MyFonts.size13,
+                        color: AppColors.text,
+                      ),
+                      decoration: InputDecoration(
                         hintText: "House/Flat No, Street, Landmark (optional)",
-                        prefixIcon: Icon(Icons.home_outlined),
+                        hintStyle: getRegularStyle(
+                          fontSize: MyFonts.size13,
+                          color: AppColors.greyText,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.home_outlined,
+                          color: AppColors.greyText,
+                        ),
                         border: InputBorder.none,
-                        contentPadding:
-                        EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                        contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 8),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   // CONTINUE / CONFIRM BUTTON (hamesha dikhega)
                   SizedBox(
@@ -479,7 +643,9 @@ class _AddressScreenState extends State<AddressView> {
                     height: 52,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.black,
+                        backgroundColor: AppColors.primary,
+                        disabledBackgroundColor: AppColors.grey300,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -510,10 +676,24 @@ class _AddressScreenState extends State<AddressView> {
                           );
                         }
                       },
-                      child: Text(
-                        widget.pickerMode ? "Confirm Location" : "Continue",
-                        style: getBoldStyle(
-                            color: AppColors.white, fontSize: MyFonts.size16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            widget.pickerMode
+                                ? "Confirm Location"
+                                : "Continue",
+                            style: getBoldStyle(
+                                color: AppColors.white,
+                                fontSize: MyFonts.size16),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.arrow_forward_rounded,
+                            color: AppColors.white,
+                            size: 18,
+                          ),
+                        ],
                       ),
                     ),
                   ),

@@ -66,88 +66,307 @@ class _CheckoutViewState extends State<CheckoutView> {
   }
 
   // Saved addresses show karne ke liye bottom sheet
+  // void _showAddressDropdown() {
+  //   final addressManager = context.read<AddressManagerController>();
+  //
+  //   showModalBottomSheet(
+  //     context: context,
+  //     backgroundColor: AppColors.white,
+  //     shape: const RoundedRectangleBorder(
+  //       borderRadius: BorderRadius.vertical(
+  //         top: Radius.circular(20),
+  //       ),
+  //     ),
+  //     builder: (_) {
+  //       return SafeArea(
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //
+  //             const SizedBox(height: 12),
+  //
+  //             Text(
+  //               'Select Address',
+  //               style: getBoldStyle(
+  //                 fontSize: MyFonts.size16,
+  //                 color: AppColors.text,
+  //               ),
+  //             ),
+  //
+  //             const SizedBox(height: 8),
+  //
+  //             // Saved addresses ki list
+  //             ...addressManager.addresses.map((address) {
+  //
+  //               final isSelected =
+  //                   addressManager.selectedAddress?.addressId ==
+  //                       address.addressId;
+  //
+  //               return ListTile(
+  //
+  //                 leading: Icon(
+  //                   _iconForType(address.addressTypeId),
+  //                   color: AppColors.primary,
+  //                 ),
+  //
+  //                 title: Text(
+  //                   address.typeName,
+  //                   style: getBoldStyle(
+  //                     fontSize: MyFonts.size14,
+  //                     color: AppColors.text,
+  //                   ),
+  //                 ),
+  //
+  //                 subtitle: Text(
+  //                   address.address1,
+  //                   maxLines: 2,
+  //                   overflow: TextOverflow.ellipsis,
+  //                   style: getRegularStyle(
+  //                     fontSize: MyFonts.size12,
+  //                     color: AppColors.greyText,
+  //                   ),
+  //                 ),
+  //
+  //                 trailing: isSelected
+  //                     ? Icon(
+  //                   Icons.check_circle,
+  //                   color: AppColors.primary,
+  //                 )
+  //                     : null,
+  //
+  //                 onTap: () {
+  //                   addressManager.selectAddress(address);
+  //
+  //                   Navigator.pop(context);
+  //
+  //                   // New address select hone ke baad
+  //                   // delivery fee dobara calculate hogi
+  //                   _recalcFee();
+  //                 },
+  //               );
+  //             }),
+  //
+  //             const SizedBox(height: 12),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
   void _showAddressDropdown() {
     final addressManager = context.read<AddressManagerController>();
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(20),
-        ),
-      ),
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
       builder: (_) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(28),
+            ),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 10, 18, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Top handle
+                  Center(
+                    child: Container(
+                      width: 45,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: AppColors.grey200,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
 
-              const SizedBox(height: 12),
+                  const SizedBox(height: 18),
 
-              Text(
-                'Select Address',
-                style: getBoldStyle(
-                  fontSize: MyFonts.size16,
-                  color: AppColors.text,
-                ),
+                  // Header
+                  Row(
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(.10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.location_on_rounded,
+                          color: AppColors.primary,
+                          size: 22,
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Select Address',
+                              style: getBoldStyle(
+                                fontSize: MyFonts.size18,
+                                color: AppColors.text,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Choose your delivery address',
+                              style: getRegularStyle(
+                                fontSize: MyFonts.size12,
+                                color: AppColors.greyText,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Address list
+                  Flexible(
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: addressManager.addresses.length,
+                      separatorBuilder: (_, __) =>
+                      const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final address =
+                        addressManager.addresses[index];
+
+                        final isSelected =
+                            addressManager.selectedAddress?.addressId ==
+                                address.addressId;
+
+                        return InkWell(
+                          onTap: () {
+                            addressManager.selectAddress(address);
+
+                            Navigator.pop(context);
+
+                            _recalcFee();
+                          },
+                          borderRadius: BorderRadius.circular(18),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppColors.primary.withOpacity(.07)
+                                  : AppColors.background,
+                              borderRadius: BorderRadius.circular(18),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.grey200,
+                                width: isSelected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                // Address icon
+                                Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? AppColors.primary.withOpacity(.12)
+                                        : AppColors.white,
+                                    borderRadius:
+                                    BorderRadius.circular(14),
+                                  ),
+                                  child: Icon(
+                                    _iconForType(
+                                      address.addressTypeId,
+                                    ),
+                                    color: AppColors.primary,
+                                    size: 22,
+                                  ),
+                                ),
+
+                                const SizedBox(width: 12),
+
+                                // Address details
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        address.typeName,
+                                        style: getBoldStyle(
+                                          fontSize: MyFonts.size14,
+                                          color: AppColors.text,
+                                        ),
+                                      ),
+
+                                      const SizedBox(height: 4),
+
+                                      Text(
+                                        address.address1,
+                                        maxLines: 2,
+                                        overflow:
+                                        TextOverflow.ellipsis,
+                                        style: getRegularStyle(
+                                          fontSize: MyFonts.size12,
+                                          color: AppColors.greyText,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(width: 8),
+
+                                // Selected tick
+                                if (isSelected)
+                                  Container(
+                                    width: 25,
+                                    height: 25,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.check,
+                                      color: AppColors.white,
+                                      size: 16,
+                                    ),
+                                  )
+                                else
+                                  Container(
+                                    width: 25,
+                                    height: 25,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: AppColors.grey200,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+                ],
               ),
-
-              const SizedBox(height: 8),
-
-              // Saved addresses ki list
-              ...addressManager.addresses.map((address) {
-
-                final isSelected =
-                    addressManager.selectedAddress?.addressId ==
-                        address.addressId;
-
-                return ListTile(
-
-                  leading: Icon(
-                    _iconForType(address.addressTypeId),
-                    color: AppColors.primary,
-                  ),
-
-                  title: Text(
-                    address.typeName,
-                    style: getBoldStyle(
-                      fontSize: MyFonts.size14,
-                      color: AppColors.text,
-                    ),
-                  ),
-
-                  subtitle: Text(
-                    address.address1,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: getRegularStyle(
-                      fontSize: MyFonts.size12,
-                      color: AppColors.greyText,
-                    ),
-                  ),
-
-                  trailing: isSelected
-                      ? Icon(
-                    Icons.check_circle,
-                    color: AppColors.primary,
-                  )
-                      : null,
-
-                  onTap: () {
-                    addressManager.selectAddress(address);
-
-                    Navigator.pop(context);
-
-                    // New address select hone ke baad
-                    // delivery fee dobara calculate hogi
-                    _recalcFee();
-                  },
-                );
-              }),
-
-              const SizedBox(height: 12),
-            ],
+            ),
           ),
         );
       },

@@ -33,11 +33,25 @@ class AddressManagerController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // API se addresses get karo
       addresses = await _repo.getCustomerAddresses();
 
-      // Default address select karo
-      _preselectDefault();
+      if (selectedAddress != null) {
+        bool stillExists = false;
+
+        for (final address in addresses) {
+          if (address.addressId == selectedAddress!.addressId) {
+            selectedAddress = address;
+            stillExists = true;
+            break;
+          }
+        }
+
+        if (!stillExists) {
+          _preselectDefault();
+        }
+      } else {
+        _preselectDefault();
+      }
     } catch (e) {
       debugPrint("loadAddresses error: $e");
     }
