@@ -11,6 +11,7 @@ class CartController extends ChangeNotifier {
 
   String orderType = 'Takeaway';
 
+
   List<OrderDetails> cartItems = [];
   int get totalItemCount {
     return cartItems.fold(0, (sum, item) => sum + (item.quantity ?? 1));
@@ -87,7 +88,6 @@ class CartController extends ChangeNotifier {
         );
       }
     }
-
     return choices;
   }
 
@@ -143,13 +143,13 @@ class CartController extends ChangeNotifier {
   Future<void> loadCart() async {
     cartItems = await _dbController.getCart();
 
-    debugPrint('========== LOAD CART FROM DB ==========');
+    debugPrint('=== LOAD CART FROM DB ===');
     for (final item in cartItems) {
       debugPrint(
         '${item.menuName} => price: ${item.price}, takeaway: ${item.takeawayPrice}',
       );
     }
-    debugPrint('========================================');
+    debugPrint('===================');
 
     _applyOrderTypePrices();
     notifyListeners();
@@ -345,4 +345,5 @@ class CartController extends ChangeNotifier {
       );
     }
   }
+
 }

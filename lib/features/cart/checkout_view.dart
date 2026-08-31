@@ -249,6 +249,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                                 // Selected tick
                                 if (isSelected)
+
                                   Container(
                                     width: 25,
                                     height: 25,
@@ -1048,11 +1049,7 @@ class _CheckoutViewState extends State<CheckoutView> {
       ),
     );
   }
-
-  // ==========================================
   // SUMMARY ROW
-  // ==========================================
-
   Widget _summaryRow(
       String title,
       double value,
