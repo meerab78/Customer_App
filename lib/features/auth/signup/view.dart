@@ -95,7 +95,6 @@ class _SignupScreenState extends State<SignUpView> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 20),
             child: Column(
               children: [
@@ -204,7 +203,7 @@ class _SignupScreenState extends State<SignUpView> {
                     ),
                     child: Column(
                       children: [
-                         Align(
+                        Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             "Let's get started",
@@ -217,7 +216,7 @@ class _SignupScreenState extends State<SignUpView> {
 
                         const SizedBox(height: 3),
 
-                         Align(
+                        Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Enter your details to create your account',
@@ -320,16 +319,16 @@ class _SignupScreenState extends State<SignUpView> {
                         const SizedBox(height: 16),
 
                         SizedBox(
-                          width: double.infinity,
-                          child: Consumer<AuthController>(
-                            builder: (context, provider, child) {
-                              return CustomButton(
-                                text: 'Create Account',
-                                isLoading: provider.isLoading,
-                                onPressed: _createAccount,
-                              );
-                            },
-                          )
+                            width: double.infinity,
+                            child: Consumer<AuthController>(
+                              builder: (context, provider, child) {
+                                return CustomButton(
+                                  text: 'Create Account',
+                                  isLoading: provider.isLoading,
+                                  onPressed: _createAccount,
+                                );
+                              },
+                            )
                         ),
 
                         const SizedBox(height: 10),
@@ -359,7 +358,7 @@ class _SignupScreenState extends State<SignUpView> {
 
                         const SizedBox(height: 4),
 
-                         Text(
+                        Text(
                           'By creating an account, you agree to our Terms & Conditions',
                           textAlign: TextAlign.center,
                           style: getRegularStyle(
@@ -379,8 +378,3 @@ class _SignupScreenState extends State<SignUpView> {
     );
   }
 }
-
-
-
-
-

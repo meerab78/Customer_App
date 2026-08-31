@@ -9,6 +9,7 @@ import '../../base/view.dart';
 import '../address/view.dart';
 
 class SplashView extends StatefulWidget {
+
   const SplashView({super.key});
 
   @override
@@ -108,6 +109,7 @@ class _SplashScreenState extends State<SplashView> {
 
                   const SizedBox(height: 30),
                 ],
+
               ),
             ],
           ),

@@ -2,11 +2,13 @@
 import '../search/view.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
+import '../cart/controller.dart';
 import '../cart/view.dart';
 import '../profile/profile_entry_view.dart';
 import '../home/view.dart';
@@ -31,6 +33,9 @@ class _BaseViewState
 
   bool _isLoggedIn = false;
   bool _isCheckingLogin = true;
+
+  // Cart tab is always at this fixed position (Home, Search, Cart, ...)
+  static const int _cartTabIndex = 2;
 
   @override
   void initState() {
@@ -59,6 +64,53 @@ class _BaseViewState
     });
   }
 
+  // Cart icon with item-count badge
+  Widget _cartIcon(int cartCount) {
+    final isActive = _selectedIndex == _cartTabIndex;
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Icon(
+          Icons.shopping_cart_outlined,
+          color: isActive ? AppColors.white : AppColors.grey,
+        ),
+
+        if (cartCount > 0)
+          Positioned(
+            right: -8,
+            top: -6,
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 5,
+                vertical: 1,
+              ),
+              constraints: const BoxConstraints(
+                minWidth: 16,
+                minHeight: 16,
+              ),
+              decoration: BoxDecoration(
+                color: AppColors.error,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.white,
+                  width: 1.4,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                cartCount > 9 ? '9+' : '$cartCount',
+                style: getBoldStyle(
+                  fontSize: MyFonts.size9,
+                  color: AppColors.white,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
 
@@ -70,6 +122,8 @@ class _BaseViewState
         ),
       );
     }
+
+    final cartCount = context.watch<CartController>().totalItemCount;
 
     // Screens
     final screens = <Widget>[
@@ -144,9 +198,10 @@ class _BaseViewState
                 text: 'Search',
               ),
 
-              // Cart
-              const GButton(
+              // Cart (with item-count badge)
+              GButton(
                 icon: Icons.shopping_cart_outlined,
+                leading: _cartIcon(cartCount),
                 text: 'Cart',
               ),
 
@@ -169,4 +224,3 @@ class _BaseViewState
     );
   }
 }
-

@@ -104,29 +104,6 @@ class HomeHeader extends StatelessWidget {
                 ),
               ),
             ),
-
-            // Theme Button
-            // Align(
-            //   alignment: Alignment.centerRight,
-            //
-            //   child: InkWell(
-            //     borderRadius: BorderRadius.circular(14),
-            //
-            //     onTap: () {
-            //       // Theme functionality
-            //     },
-            //
-            //     child: Padding(
-            //       padding: const EdgeInsets.all(0),
-            //
-            //       child: Icon(
-            //         Icons.dark_mode_outlined,
-            //         size: 40,
-            //         color: AppColors.primary,
-            //       ),
-            //     ),
-            //   ),
-            // ),
           ],
         ),
       ),

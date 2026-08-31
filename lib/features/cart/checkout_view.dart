@@ -10,6 +10,9 @@ import '../home/controller.dart';
 import '../auth/address/manager_controller.dart';
 import '../auth/address/manage_address_view.dart';
 import '../auth/address/model/address_model.dart';
+import '../../core/db/shared_pref.dart';
+import 'order_playload_builder.dart';
+import 'order_repository.dart';
 
 class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});
@@ -19,6 +22,10 @@ class CheckoutView extends StatefulWidget {
 }
 
 class _CheckoutViewState extends State<CheckoutView> {
+  // NEW: order placement state
+  final OrderRepository _orderRepository = OrderRepository();
+  final SharedPrefService _prefs = SharedPrefService();
+  bool _isPlacingOrder = false;
 
   @override
   void initState() {
@@ -64,95 +71,6 @@ class _CheckoutViewState extends State<CheckoutView> {
       orderAmount: subtotal,
     );
   }
-
-  // Saved addresses show karne ke liye bottom sheet
-  // void _showAddressDropdown() {
-  //   final addressManager = context.read<AddressManagerController>();
-  //
-  //   showModalBottomSheet(
-  //     context: context,
-  //     backgroundColor: AppColors.white,
-  //     shape: const RoundedRectangleBorder(
-  //       borderRadius: BorderRadius.vertical(
-  //         top: Radius.circular(20),
-  //       ),
-  //     ),
-  //     builder: (_) {
-  //       return SafeArea(
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //
-  //             const SizedBox(height: 12),
-  //
-  //             Text(
-  //               'Select Address',
-  //               style: getBoldStyle(
-  //                 fontSize: MyFonts.size16,
-  //                 color: AppColors.text,
-  //               ),
-  //             ),
-  //
-  //             const SizedBox(height: 8),
-  //
-  //             // Saved addresses ki list
-  //             ...addressManager.addresses.map((address) {
-  //
-  //               final isSelected =
-  //                   addressManager.selectedAddress?.addressId ==
-  //                       address.addressId;
-  //
-  //               return ListTile(
-  //
-  //                 leading: Icon(
-  //                   _iconForType(address.addressTypeId),
-  //                   color: AppColors.primary,
-  //                 ),
-  //
-  //                 title: Text(
-  //                   address.typeName,
-  //                   style: getBoldStyle(
-  //                     fontSize: MyFonts.size14,
-  //                     color: AppColors.text,
-  //                   ),
-  //                 ),
-  //
-  //                 subtitle: Text(
-  //                   address.address1,
-  //                   maxLines: 2,
-  //                   overflow: TextOverflow.ellipsis,
-  //                   style: getRegularStyle(
-  //                     fontSize: MyFonts.size12,
-  //                     color: AppColors.greyText,
-  //                   ),
-  //                 ),
-  //
-  //                 trailing: isSelected
-  //                     ? Icon(
-  //                   Icons.check_circle,
-  //                   color: AppColors.primary,
-  //                 )
-  //                     : null,
-  //
-  //                 onTap: () {
-  //                   addressManager.selectAddress(address);
-  //
-  //                   Navigator.pop(context);
-  //
-  //                   // New address select hone ke baad
-  //                   // delivery fee dobara calculate hogi
-  //                   _recalcFee();
-  //                 },
-  //               );
-  //             }),
-  //
-  //             const SizedBox(height: 12),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
   void _showAddressDropdown() {
     final addressManager = context.read<AddressManagerController>();
 
@@ -420,6 +338,119 @@ class _CheckoutViewState extends State<CheckoutView> {
         return Icons.location_on;
     }
   }
+  // NEW: ORDER PLACEMENT
+
+  Future<void> _placeOrder() async {
+    final cart = context.read<CartController>();
+    final addressManager = context.read<AddressManagerController>();
+    final home = context.read<HomeController>();
+
+    final branch = home.selectedBranch;
+    final menuData = home.menuModel?.data;
+
+    if (branch == null || menuData == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Branch info not available. Please try again."),
+        ),
+      );
+      return;
+    }
+
+    if (cart.orderType == 'Delivery' &&
+        addressManager.selectedAddress == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please select a delivery address.")),
+      );
+      return;
+    }
+
+    setState(() => _isPlacingOrder = true);
+
+    try {
+      final userId = await _prefs.getUserId();
+      final customerId = userId?.toString() ?? '';
+      final subTotal = _calculateSubtotal(cart);
+      final taxPercent = double.tryParse(menuData.taxPercent ?? '0') ?? 0;
+      final taxInclude = menuData.taxInclude ?? true;
+
+      final payload = OrderPayloadBuilder.build(
+        cartItems: cart.cartItems,
+        orderType: cart.orderType,
+        customerId: customerId,
+        branchId: branch.id.toString(),
+        subTotal: subTotal,
+        taxPercent: taxPercent,
+        taxInclude: taxInclude,
+        deliveryFee: addressManager.deliveryFee,
+        deliveryAddressId: addressManager.selectedAddress?.id?.toString(),      );
+
+      final response = await _orderRepository.placeOrder(payload);
+
+      if (!mounted) return;
+
+      if (response['Success'] == true) {
+        await cart.clearCart();
+
+        if (!mounted) return;
+
+        await showDialog(
+          context: context,
+          builder: (_) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: Text(
+              'Order Placed! ',
+              style: getBoldStyle(
+                fontSize: MyFonts.size18,
+                color: AppColors.text,
+              ),
+            ),
+            content: Text(
+              'Your order has been placed successfully.',
+              style: getRegularStyle(
+                fontSize: MyFonts.size14,
+                color: AppColors.greyText,
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(
+                  'OK',
+                  style: getSemiBoldStyle(
+                    fontSize: MyFonts.size14,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+        if (!mounted) return;
+        Navigator.pop(context);
+      } else {
+        final errorMsg = response['ErrorMessage']?.toString() ??
+            response['Message']?.toString() ??
+            "Failed to place order. Please try again.";
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorMsg)),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Something went wrong. Please try again."),
+        ),
+      );
+    }
+
+    if (mounted) setState(() => _isPlacingOrder = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -459,9 +490,14 @@ class _CheckoutViewState extends State<CheckoutView> {
               addressManager.deliveryAvailable) {
             deliveryCharges = addressManager.deliveryFee;
           }
-
+// Tax nikaalo (menu data se) — tax_include: true hai isliye
+// yeh subtotal ke andar hi shaamil hai, sirf dikhane ke liye
+          final menuData = context.read<HomeController>().menuModel?.data;
+          final taxPercent = double.tryParse(menuData?.taxPercent ?? '0') ?? 0;
+          final taxAmount = (subtotal * taxPercent) / (100 + taxPercent);
           // Final total
           final total = subtotal + deliveryCharges;
+
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
@@ -619,7 +655,30 @@ class _CheckoutViewState extends State<CheckoutView> {
                         'Subtotal',
                         subtotal,
                       ),
-
+                      // TAX ROW (included tax — breakdown ke liye)
+                      if (taxAmount > 0)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Tax (${taxPercent.toStringAsFixed(0)}% incl.)',
+                                style: getRegularStyle(
+                                  fontSize: MyFonts.size14,
+                                  color: AppColors.greyText,
+                                ),
+                              ),
+                              Text(
+                                'Rs ${taxAmount.toStringAsFixed(0)}',
+                                style: getSemiBoldStyle(
+                                  fontSize: MyFonts.size14,
+                                  color: AppColors.text,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       // DELIVERY CHARGES
 
                       if (cart.orderType == 'Delivery')
@@ -744,15 +803,15 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                   child: ElevatedButton(
 
-                    // Agar Delivery area se bahar hai
-                    // to button disabled hoga
+                    // CHANGED: Delivery area se bahar ho, cart khaali ho,
+                    // ya order already place ho raha ho to button disabled
                     onPressed:
-                    cart.orderType == 'Delivery' &&
-                        !addressManager.deliveryAvailable
+                    (_isPlacingOrder ||
+                        cart.cartItems.isEmpty ||
+                        (cart.orderType == 'Delivery' &&
+                            !addressManager.deliveryAvailable))
                         ? null
-                        : () {
-                      // Place order API
-                    },
+                        : _placeOrder,
 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
@@ -764,7 +823,16 @@ class _CheckoutViewState extends State<CheckoutView> {
                       ),
                     ),
 
-                    child: Text(
+                    child: _isPlacingOrder
+                        ? const SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                        : Text(
                       'Place Order',
                       style: getExtraBoldStyle(
                         fontSize: MyFonts.size16,

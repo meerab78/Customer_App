@@ -12,6 +12,9 @@ class CartController extends ChangeNotifier {
   String orderType = 'Takeaway';
 
   List<OrderDetails> cartItems = [];
+  int get totalItemCount {
+    return cartItems.fold(0, (sum, item) => sum + (item.quantity ?? 1));
+  }
 
   CartController({
     DbController? dbController,
@@ -91,7 +94,7 @@ class CartController extends ChangeNotifier {
   List<OrderDetails> _dealDetailsFromMenu(Menu food) {
     return food.dealMenuDetails.map((item) {
       return OrderDetails(
-        menuId: item.menuId ?? item.id?.toString(),
+        menuId: item.id?.toString() ?? item.menuId,
         menuName: item.name,
         price: item.price,
         takeawayPrice: item.takeAwayPrice,
@@ -183,17 +186,6 @@ class CartController extends ChangeNotifier {
         );
       }
     } else {
-      debugPrint('========== BEFORE CART ADD ==========');
-      debugPrint('ITEM: ${newItem.menuName}');
-      debugPrint(
-        'VARIATION: ${newItem.menuVariation?.id} - ${newItem.menuVariation?.name}',
-      );
-      debugPrint(
-        'VARIATION PRICE: ${newItem.menuVariation?.price}',
-      );
-      debugPrint('PRICE: ${newItem.price}');
-      debugPrint('====================================');
-
       await _dbController.addToCart(newItem);
     }
 
@@ -300,14 +292,6 @@ class CartController extends ChangeNotifier {
 
     final finalPrice = basePrice + variationPrice + choicesPrice;
 
-    debugPrint('========== PRICE CALCULATION ==========');
-    debugPrint('Item: ${food.name}');
-    debugPrint('Base Price: $basePrice');
-    debugPrint('Variation Price: $variationPrice');
-    debugPrint('Choices Price: $choicesPrice');
-    debugPrint('FINAL PRICE: $finalPrice');
-    debugPrint('========================================');
-
     return finalPrice;
   }
 
@@ -361,42 +345,4 @@ class CartController extends ChangeNotifier {
       );
     }
   }
-  // void _applyOrderTypePrices() {
-  //   for (int i = 0; i < cartItems.length; i++) {
-  //     final item = cartItems[i];
-  //
-  //     final dineInPrice = double.tryParse(item.price ?? '0') ?? 0;
-  //     final takeawayPrice =
-  //         double.tryParse(item.takeawayPrice ?? '0') ?? 0;
-  //     final deliveryPrice =
-  //         double.tryParse(item.deliveryPrice ?? '0') ?? 0;
-  //
-  //     double selectedPrice;
-  //
-  //     if (orderType == 'Delivery') {
-  //       selectedPrice = deliveryPrice;
-  //     } else if (orderType == 'Takeaway') {
-  //       selectedPrice = takeawayPrice;
-  //     } else {
-  //       selectedPrice = dineInPrice;
-  //     }
-  //
-  //     if (orderType != 'Dine-In') {
-  //       final variationExtra =
-  //           double.tryParse(item.menuVariation?.price ?? '0') ?? 0;
-  //
-  //       double choicesExtra = 0;
-  //
-  //       for (final choice in item.orderDetailChoice) {
-  //         choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
-  //       }
-  //
-  //       selectedPrice += variationExtra + choicesExtra;
-  //     }
-  //
-  //     cartItems[i] = item.copyWith(
-  //       price: selectedPrice.toString(),
-  //     );
-  //   }
-  // }
 }
