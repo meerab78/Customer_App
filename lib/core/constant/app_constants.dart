@@ -5,6 +5,8 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 
+import '../../features/home/model/menu_model.dart';
+
 
 class AppConstants {
   static String googleMapBaseUrl =
@@ -32,6 +34,7 @@ class AppConstants {
   static String bearerToken = '';
   // static UserResponse? userResponse;
 
+  static ValueNotifier<MenuModel>? menuResponse ;
 
   // static CategoriesResponse? categoriesResponse;
   // static bData? currentBranch;

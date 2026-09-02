@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿
+import 'package:flutter/material.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
 import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
@@ -59,10 +60,21 @@ class _EditProfileScreenState extends State<EditProfileView> {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey200,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+
                 Text(
                   'Select Date of Birth',
                   style: getBoldStyle(
@@ -86,13 +98,28 @@ class _EditProfileScreenState extends State<EditProfileView> {
 
                 SizedBox(
                   width: double.infinity,
+                  height: 52,
                   child: ElevatedButton(
                     onPressed: () {
                       if (selectedDate == null) return;
 
                       Navigator.pop(context);
                     },
-                    child: const Text('Select Date'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    child: Text(
+                      'Select Date',
+                      style: getBoldStyle(
+                        color: AppColors.white,
+                        fontSize: MyFonts.size15,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -146,22 +173,75 @@ class _EditProfileScreenState extends State<EditProfileView> {
       backgroundColor: AppColors.background,
 
       appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: AppColors.text),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: Text(
           'Edit Profile',
           style: getBoldStyle(
             color: AppColors.text,
-            fontSize: null,
+            fontSize: MyFonts.size18,
           ),
         ),
       ),
 
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(18, 20, 18, 30),
+        padding: const EdgeInsets.fromLTRB(18, 10, 18, 30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             Text(
+            // Header avatar
+            Center(
+              child: Container(
+                height: 88,
+                width: 88,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.16),
+                      AppColors.primary.withOpacity(0.04),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    height: 62,
+                    width: 62,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.30),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 30,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            Text(
               'Basic Details',
               style: getExtraBoldStyle(
                 fontSize: MyFonts.size18,
@@ -216,6 +296,10 @@ class _EditProfileScreenState extends State<EditProfileView> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.grey200,
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
             color: AppColors.softShadow04,
@@ -245,6 +329,10 @@ class _EditProfileScreenState extends State<EditProfileView> {
         decoration: BoxDecoration(
           color: AppColors.white,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: AppColors.grey200,
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: AppColors.softShadow04,
@@ -296,10 +384,18 @@ class _EditProfileScreenState extends State<EditProfileView> {
               ),
             ),
 
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 16,
-              color: AppColors.greyText,
+            Container(
+              height: 28,
+              width: 28,
+              decoration: BoxDecoration(
+                color: AppColors.grey100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 13,
+                color: AppColors.greyText,
+              ),
             ),
           ],
         ),
@@ -310,36 +406,112 @@ class _EditProfileScreenState extends State<EditProfileView> {
   void _showGenderPicker() {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(28),
+        ),
+      ),
       builder: (context) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _genderOption('Male'),
-              _genderOption('Female'),
-              _genderOption('Other'),
-            ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: AppColors.grey200,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+
+                Text(
+                  'Select Gender',
+                  style: getBoldStyle(
+                    fontSize: MyFonts.size18,
+                    color: AppColors.text,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                _genderOption('Male', Icons.male_rounded),
+                _genderOption('Female', Icons.female_rounded),
+                _genderOption('Other', Icons.person_outline_rounded),
+
+                const SizedBox(height: 6),
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  Widget _genderOption(String gender) {
-    return ListTile(
-      leading:  Icon(
-        Icons.person_outline_rounded,
-        color: AppColors.primary,
-      ),
-      title: Text(gender),
-      onTap: () {
-        setState(() {
-          _selectedGender = gender;
-        });
+  Widget _genderOption(String gender, IconData icon) {
+    final isSelected = _selectedGender == gender;
 
-        Navigator.pop(context);
-      },
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _selectedGender = gender;
+          });
+
+          Navigator.pop(context);
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.primary.withOpacity(0.08)
+                : AppColors.grey100,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: isSelected
+                  ? AppColors.primary
+                  : Colors.transparent,
+              width: 1.3,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: AppColors.primary,
+                size: 22,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  gender,
+                  style: getSemiBoldStyle(
+                    fontSize: MyFonts.size14,
+                    color: AppColors.text,
+                  ),
+                ),
+              ),
+              if (isSelected)
+                Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
-

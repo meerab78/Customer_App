@@ -13,6 +13,7 @@ class CartController extends ChangeNotifier {
 
 
   List<OrderDetails> cartItems = [];
+  bool isLoading = false;
   int get totalItemCount {
     return cartItems.fold(0, (sum, item) => sum + (item.quantity ?? 1));
   }
@@ -141,17 +142,13 @@ class CartController extends ChangeNotifier {
 
   // LOAD CART FROM DATABASE
   Future<void> loadCart() async {
+    isLoading = true;
+    notifyListeners();
     cartItems = await _dbController.getCart();
 
-    debugPrint('=== LOAD CART FROM DB ===');
-    for (final item in cartItems) {
-      debugPrint(
-        '${item.menuName} => price: ${item.price}, takeaway: ${item.takeawayPrice}',
-      );
-    }
-    debugPrint('===================');
-
     _applyOrderTypePrices();
+
+    isLoading = false;
     notifyListeners();
   }
 

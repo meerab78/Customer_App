@@ -26,7 +26,12 @@ class CategoryItemsView extends StatelessWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: false,
-
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: Text(
           category.name ?? "Items",
           style: getBoldStyle(

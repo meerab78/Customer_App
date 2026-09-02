@@ -1,7 +1,8 @@
-﻿
+﻿import 'package:skeletonizer/skeletonizer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/db/sqflite/model.dart' as db;
+import '../../core/utils/page_transitions.dart';
 import '../home/model/menu_model.dart';
 import 'checkout_view.dart';
 import 'controller.dart';
@@ -33,10 +34,17 @@ class CartView extends StatelessWidget {
 
       body: Consumer<CartController>(
         builder: (context, cart, _) {
+          // 1. Loading ho raha ho -> skeleton
+          if (cart.isLoading) {
+            return _skeletonCart();
+          }
+
+          // 2. Cart khaali ho -> empty message
           if (cart.cartItems.isEmpty) {
             return _emptyCart();
           }
 
+          // 3. Normal cart
           double total = 0;
 
           for (final food in cart.cartItems) {
@@ -59,7 +67,6 @@ class CartView extends StatelessWidget {
                   itemCount: cart.cartItems.length,
                   itemBuilder: (context, index) {
                     final food = cart.cartItems[index];
-
                     return Dismissible(
                       key: ValueKey(
                         food.id ?? '${food.menuId}_$index',
@@ -236,9 +243,7 @@ class CartView extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (_) => const CheckoutView(),
-                  ),
+                  PageTransitions.slideFromRight(const CheckoutView()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -308,6 +313,73 @@ class CartView extends StatelessWidget {
       ),
     );
   }
+}
+
+// Skeleton (loading) — fake cards shimmer ke saath
+Widget _skeletonCart() {
+  return Skeletonizer(
+    enabled: true,
+    child: ListView.builder(
+      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+      itemCount: 6, // 6 fake cards
+      itemBuilder: (context, index) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: AppColors.white,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Row(
+            children: [
+              // fake image
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: AppColors.grey200,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              const SizedBox(width: 14),
+              // fake text
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Loading food item name',
+                      style: getBoldStyle(
+                        fontSize: MyFonts.size15,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Rs 000',
+                      style: getRegularStyle(
+                        fontSize: MyFonts.size13,
+                        color: AppColors.greyText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // fake qty
+              Container(
+                width: 80,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.grey200,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
 }
 
 Menu _menuFromOrderDetails(db.OrderDetails item) {

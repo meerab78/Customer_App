@@ -59,44 +59,6 @@ class _DealDetailViewState extends State<DealDetailView> {
           (completed) => completed,
     );
   }
-//   bool get isDealComplete {
-//     for (final item in dealItems) {
-//       final groups = <ChoiceGroup>[];
-//
-//       // Direct choice groups
-//       groups.addAll(item.choiceGroup);
-//
-//       // Selected variation ke choice groups
-//       if (item.menuVariation != null) {
-//         groups.addAll(
-//           item.menuVariation!.choiceGroups,
-//         );
-//       }
-//       // REQUIRED GROUP CHECK
-//       for (final group in groups) {
-//         final minChoices =
-//             group.minChoices ?? 0;
-//
-//         if (minChoices == 0) {
-//           continue;
-//         }
-//
-//         final selectedChoices =
-//             group.choices;
-//
-//         // min > 0
-//         // means REQUIRED
-//         if (selectedChoices.length <
-//             minChoices) {
-//           return false;
-//         }
-//       }
-//     }
-//
-//     return true;
-//   }
-
-// CALCULATE FINAL DEAL PRICE
 
   double get totalDealPrice {
     double total = 0;
@@ -199,11 +161,6 @@ class _DealDetailViewState extends State<DealDetailView> {
   //   );
   // }
 
-  // ============================================================
-  // UI-ONLY HELPER (purely derived from existing state, for
-  // display in the progress header below — does not change
-  // any add-to-cart / validation behaviour).
-  // ============================================================
   int get _completedCount =>
       itemCompletion.where((completed) => completed).length;
 
@@ -221,7 +178,12 @@ class _DealDetailViewState extends State<DealDetailView> {
         iconTheme: IconThemeData(
           color: AppColors.textColor,
         ),
-
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: Text(
           widget.food.name ??
               'Deal Details',

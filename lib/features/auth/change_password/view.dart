@@ -1,6 +1,6 @@
-﻿import 'package:flutter/material.dart';
+﻿
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
@@ -109,7 +109,7 @@ class _ChangePasswordScreenState
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
             18,
-            20,
+            10,
             18,
             30,
           ),
@@ -119,89 +119,181 @@ class _ChangePasswordScreenState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                Text(
-                  'Change your password',
-                  style: getExtraBoldStyle(
-                    fontSize: MyFonts.size22,
-                    color: AppColors.text,
+                // Custom back button (appBar is not used on this screen)
+                InkWell(
+                  onTap: () => Navigator.maybePop(context),
+                  borderRadius: BorderRadius.circular(30),
+                  child: Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: AppColors.grey100,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      size: 17,
+                      color: AppColors.text,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                // Icon badge with soft gradient + glow
+                Center(
+                  child: Container(
+                    height: 96,
+                    width: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary.withOpacity(0.16),
+                          AppColors.primary.withOpacity(0.04),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Center(
+                      child: Container(
+                        height: 68,
+                        width: 68,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppColors.primary.withOpacity(0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 8),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.password_rounded,
+                          size: 32,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 22),
+
+                Center(
+                  child: Text(
+                    'Change your password',
+                    style: getExtraBoldStyle(
+                      fontSize: MyFonts.size22,
+                      color: AppColors.text,
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 6),
 
-                Text(
-                  'Enter your new password below.',
-                  style: getRegularStyle(
-                    fontSize: MyFonts.size13,
-                    color: AppColors.greyText,
+                Center(
+                  child: Text(
+                    'Enter your new password below.',
+                    style: getRegularStyle(
+                      fontSize: MyFonts.size13,
+                      color: AppColors.greyText,
+                    ),
                   ),
                 ),
 
-                const SizedBox(height: 25),
+                const SizedBox(height: 26),
 
-                CustomTextField(
-                  controller: _newPasswordController,
-                  hintText: 'New password',
-                  prefixIcon: Icons.lock_outline_rounded,
-                  obscureText: _obscureNewPassword,
-                  textInputAction: TextInputAction.next,
-                  onVisibilityTap: () {
-                    setState(() {
-                      _obscureNewPassword =
-                      !_obscureNewPassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a new password';
-                    }
+                // Form card
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: AppColors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(
+                      color: AppColors.grey200,
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.softShadow06,
+                        blurRadius: 18,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      CustomTextField(
+                        controller: _newPasswordController,
+                        hintText: 'New password',
+                        prefixIcon: Icons.lock_outline_rounded,
+                        obscureText: _obscureNewPassword,
+                        textInputAction: TextInputAction.next,
+                        onVisibilityTap: () {
+                          setState(() {
+                            _obscureNewPassword =
+                            !_obscureNewPassword;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter a new password';
+                          }
 
-                    if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
-                    }
+                          if (value.length < 6) {
+                            return 'Password must be at least 6 characters';
+                          }
 
-                    return null;
-                  },
-                ),
+                          return null;
+                        },
+                      ),
 
-                const SizedBox(height: 14),
+                      const SizedBox(height: 14),
 
-                CustomTextField(
-                  controller: _confirmPasswordController,
-                  hintText: 'Confirm password',
-                  prefixIcon: Icons.lock_outline_rounded,
-                  obscureText: _obscureConfirmPassword,
-                  textInputAction: TextInputAction.done,
-                  onVisibilityTap: () {
-                    setState(() {
-                      _obscureConfirmPassword =
-                      !_obscureConfirmPassword;
-                    });
-                  },
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
-                    }
+                      CustomTextField(
+                        controller: _confirmPasswordController,
+                        hintText: 'Confirm password',
+                        prefixIcon: Icons.lock_outline_rounded,
+                        obscureText: _obscureConfirmPassword,
+                        textInputAction: TextInputAction.done,
+                        onVisibilityTap: () {
+                          setState(() {
+                            _obscureConfirmPassword =
+                            !_obscureConfirmPassword;
+                          });
+                        },
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please confirm your password';
+                          }
 
-                    if (value !=
-                        _newPasswordController.text) {
-                      return 'Passwords do not match';
-                    }
+                          if (value !=
+                              _newPasswordController.text) {
+                            return 'Passwords do not match';
+                          }
 
-                    return null;
-                  },
-                ),
+                          return null;
+                        },
+                      ),
 
-                const SizedBox(height: 28),
+                      const SizedBox(height: 22),
 
-                Consumer<AuthController>(
-                  builder: (context, provider, child) {
-                    return CustomButton(
-                      text: 'Change Password',
-                      isLoading: provider.isLoading,
-                      onPressed: _changePassword,
-                    );
-                  },
+                      Consumer<AuthController>(
+                        builder: (context, provider, child) {
+                          return CustomButton(
+                            text: 'Change Password',
+                            isLoading: provider.isLoading,
+                            onPressed: _changePassword,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -211,7 +303,3 @@ class _ChangePasswordScreenState
     );
   }
 }
-
-
-
-

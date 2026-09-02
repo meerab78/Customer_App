@@ -1,4 +1,5 @@
 ﻿
+import '../cart/order_history_view.dart';
 import '../search/view.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
@@ -134,16 +135,10 @@ class _BaseViewState
       // 2 - Cart
       const CartView(),
       // 3 - History
+      // 3 - History
       if (_isLoggedIn)
-        Center(
-          child: Text(
-            'History',
-            style: getBoldStyle(
-              fontSize: MyFonts.size24,
-              color: AppColors.text,
-            ),
-          ),
-        ),
+        const
+        OrderHistoryView(),
 
       // Last - Profile
       const ProfileEntryView(),

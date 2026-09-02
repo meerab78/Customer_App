@@ -6,6 +6,7 @@ class ApiConstants {
   static const String getAddresses      = "${baseUrlV2}get_customer_addresses";
   static const String addEditAddress    = "${baseUrlV2}add_edit_customer_address";
   static const String getDeliveryCharges = "${baseUrlV1}GetDeliveryCharges";
+  static const String getOrderHistory = "${baseUrlV2}get_order_history";
 
   //  place order endpoint
   static const String placeOrder = "${baseUrlV2}add_edit_order";

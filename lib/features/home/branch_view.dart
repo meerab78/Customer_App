@@ -158,6 +158,12 @@ class _BranchScreenState extends State<BranchView> {
         elevation: 0,
         centerTitle: true,
         backgroundColor:AppColors.background,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         title: Text(
           "Choose Branch",
           style: getBoldStyle(

@@ -1,4 +1,5 @@
 ﻿
+import '../../core/utils/page_transitions.dart';
 import '../auth/address/manage_address_view.dart';
 import '../auth/controller.dart';
 import 'package:flutter/material.dart';
@@ -54,8 +55,8 @@ class _ProfileScreenState extends State<ProfileView> {
   Future<void> _editProfile() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => EditProfileView(
+      PageTransitions.slideFromRight(
+        EditProfileView(
           name: _name,
           dateOfBirth: _dateOfBirth,
           gender: _gender,
@@ -74,8 +75,8 @@ class _ProfileScreenState extends State<ProfileView> {
 
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(
-        builder: (_) => const BaseView(
+      PageTransitions.slideFromRight(
+        const BaseView(
           initialIndex: 0,
         ),
       ),
@@ -297,9 +298,7 @@ class _ProfileScreenState extends State<ProfileView> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const ChangePasswordView(),
-                    ),
+                    PageTransitions.slideFromRight(const ChangePasswordView()),
                   );
                 },
               ),
@@ -318,9 +317,7 @@ class _ProfileScreenState extends State<ProfileView> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(
-                      builder: (_) => const ManageAddressView(),
-                    ),
+                    PageTransitions.slideFromRight(const ManageAddressView()),
                   );
                 },
               ),

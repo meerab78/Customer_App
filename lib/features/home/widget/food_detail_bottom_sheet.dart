@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/utils/page_transitions.dart' show PageTransitions;
 import '../model/menu_model.dart';
 import '../variation_view.dart';
 import '../../cart/controller.dart';
@@ -171,15 +172,6 @@ void showFoodDetailBottomSheet(
                                   choiceGroup: selectedVariation!.choiceGroups,
                                 );
                               }
-
-                              debugPrint('========== BOTTOM SHEET FINAL FOOD ==========');
-                              debugPrint('NAME: ${selectedFood.name}');
-                              debugPrint('VARIATION ID: ${selectedFood.menuVariation?.id}');
-                              debugPrint('VARIATION NAME: ${selectedFood.menuVariation?.name}');
-                              debugPrint('VARIATION PRICE: ${selectedFood.menuVariation?.price}');
-                              debugPrint('CHOICES: ${selectedFood.menuVariation?.choiceGroups}');
-                              debugPrint('==============================================');
-
                               await sheetContext
                                   .read<CartController>()
                                   .addToCart(
@@ -208,15 +200,10 @@ void showFoodDetailBottomSheet(
                             height: 46,
                             child: OutlinedButton(
                               onPressed: () async {
-                                final variation =
-                                await Navigator.push<
-                                    MenuVariation>(
+                                final variation = await Navigator.push<MenuVariation>(
                                   sheetContext,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        VariationView(
-                                          food: food,
-                                        ),
+                                  PageTransitions.slideFromRight<MenuVariation>(
+                                    VariationView(food: food),
                                   ),
                                 );
                                 if (variation != null &&

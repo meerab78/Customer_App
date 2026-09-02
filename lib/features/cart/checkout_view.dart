@@ -1,3 +1,4 @@
+import 'package:customer_app/core/utils/page_transitions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -11,6 +12,7 @@ import '../auth/address/manager_controller.dart';
 import '../auth/address/manage_address_view.dart';
 import '../auth/address/model/address_model.dart';
 import '../../core/db/shared_pref.dart';
+import 'order_history_view.dart';
 import 'order_playload_builder.dart';
 import 'order_repository.dart';
 
@@ -297,9 +299,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
     final selected = await Navigator.push<CustomerAddress>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const ManageAddressView(),
-      ),
+      PageTransitions.slideFromRight(const ManageAddressView()),
     );
 
     if (!mounted) {
@@ -395,6 +395,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
         if (!mounted) return;
 
+        // success dialog dikhao
         await showDialog(
           context: context,
           builder: (_) => AlertDialog(
@@ -402,7 +403,7 @@ class _CheckoutViewState extends State<CheckoutView> {
               borderRadius: BorderRadius.circular(18),
             ),
             title: Text(
-              'Order Placed! ',
+              'Order Placed! 🎉',
               style: getBoldStyle(
                 fontSize: MyFonts.size18,
                 color: AppColors.text,
@@ -431,8 +432,13 @@ class _CheckoutViewState extends State<CheckoutView> {
         );
 
         if (!mounted) return;
-        Navigator.pop(context);
-      } else {
+
+        // dialog ke OK ke baad -> Order History screen pe le jao
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const OrderHistoryView()),
+        );
+      }else {
         final errorMsg = response['ErrorMessage']?.toString() ??
             response['Message']?.toString() ??
             "Failed to place order. Please try again.";

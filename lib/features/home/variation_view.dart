@@ -110,13 +110,9 @@ class _VariationViewState extends State<VariationView> {
     final groups = <ChoiceGroup>[];
 
     // DIRECT CHOICE GROUPS
-    // ==========================================================
 
     groups.addAll(widget.food.choiceGroup);
-
-    // ==========================================================
     // CURRENT SELECTED VARIATION KE AVAILABLE GROUPS
-    // ==========================================================
 
     if (selectedVariation != null) {
       for (final variation in widget.food.menuVariations) {
@@ -289,9 +285,8 @@ class _VariationViewState extends State<VariationView> {
     });
   }
 
-  // ============================================================
   // ADD / UPDATE
-  // ============================================================
+
 
   void _addToCart() {
     if (!isSelectionValid) {
@@ -327,11 +322,7 @@ class _VariationViewState extends State<VariationView> {
 
       return;
     }
-
-    // ----------------------------------------------------------
     // BUILD SELECTED GROUPS
-    // ----------------------------------------------------------
-
     final selectedGroups = choiceGroups
         .where(
           (group) =>
@@ -379,18 +370,14 @@ class _VariationViewState extends State<VariationView> {
     );
   }
 
-  // ============================================================
   // BUILD
-  // ============================================================
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
 
-      // ==========================================================
       // APP BAR — brand navy, gold-accent back button
-      // ==========================================================
+
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: Container(
@@ -448,9 +435,7 @@ class _VariationViewState extends State<VariationView> {
                 crossAxisAlignment:
                 CrossAxisAlignment.start,
                 children: [
-                  // ------------------------------------------------
                   // FOOD SUMMARY CARD
-                  // ------------------------------------------------
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -534,10 +519,7 @@ class _VariationViewState extends State<VariationView> {
                   ),
 
                   padding20,
-
-                  // ------------------------------------------------
                   // Section label
-                  // ------------------------------------------------
                   Padding(
                     padding: const EdgeInsets.only(
                       left: 4, bottom: 10,
@@ -551,9 +533,8 @@ class _VariationViewState extends State<VariationView> {
                     ),
                   ),
 
-                  // ------------------------------------------------
                   // VARIATION SELECTOR (logic untouched)
-                  // ------------------------------------------------
+
                   VariationSelector(
                     // IMPORTANT:
                     // FULL variations list pass hogi.
