@@ -1,2 +1,2 @@
-﻿/// Placeholder repository for profile module.
+﻿/// Placeholder repository.dart for profile module.
 class ProfileRepository {}

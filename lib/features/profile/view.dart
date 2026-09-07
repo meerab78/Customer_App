@@ -1,4 +1,7 @@
 ﻿
+import 'package:customer_app/features/profile/widget/stat_card.dart';
+
+import '../../core/constant/app_constants.dart';
 import '../../core/utils/page_transitions.dart';
 import '../auth/address/manage_address_view.dart';
 import '../auth/controller.dart';
@@ -9,6 +12,10 @@ import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
+import 'Loyalty_transactions/controller.dart';
+import 'Loyalty_transactions/loyalty_history_view.dart';
+import 'Wallet/controller.dart';
+import 'Wallet/wallet_history_view.dart';
 import 'widget/profile_option_tile.dart';
 
 import '../base/view.dart';
@@ -34,6 +41,13 @@ class _ProfileScreenState extends State<ProfileView> {
   void initState() {
     super.initState();
     _loadProfile();
+
+    if (AppConstants.enableLoyaltySystem) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<LoyaltyController>().loadLoyaltyData();
+        context.read<WalletController>().loadWalletData();
+      });
+    }
   }
 
   Future<void> _loadProfile() async {
@@ -80,6 +94,7 @@ class _ProfileScreenState extends State<ProfileView> {
           initialIndex: 0,
         ),
       ),
+
           (route) => false,
     );
   }
@@ -279,8 +294,55 @@ class _ProfileScreenState extends State<ProfileView> {
                   ],
                 ),
               ),
-
               const SizedBox(height: 28),
+
+// LOYALTY & WALLET CARDS — flag ke sath wrapped
+              if (AppConstants.enableLoyaltySystem) ...[
+                Row(
+                  children: [
+                    Expanded(
+                      child: Consumer<LoyaltyController>(
+                        builder: (context, loyalty, _) {
+                          return FeatureStatCard(
+                            icon: Icons.emoji_events_rounded,
+                            title: 'Loyalty Points',
+                            value: '${loyalty.loyaltyPoints.toStringAsFixed(0)} pts',
+                            ctaText: 'View & Redeem',
+                            isLoading: loyalty.isLoading,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                PageTransitions.slideFromRight(const LoyaltyHistoryView()),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Consumer<WalletController>(
+                        builder: (context, wallet, _) {
+                          return FeatureStatCard(
+                            icon: Icons.account_balance_wallet_rounded,
+                            title: 'Wallet',
+                            value: 'Rs ${wallet.walletAmount.toStringAsFixed(0)}',
+                            ctaText: 'View Transactions',
+                            isLoading: wallet.isLoading,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                PageTransitions.slideFromRight(const WalletHistoryView()),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+              ],
 
               Text(
                 'Account',

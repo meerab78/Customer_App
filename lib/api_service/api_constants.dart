@@ -7,7 +7,17 @@ class ApiConstants {
   static const String addEditAddress    = "${baseUrlV2}add_edit_customer_address";
   static const String getDeliveryCharges = "${baseUrlV1}GetDeliveryCharges";
   static const String getOrderHistory = "${baseUrlV2}get_order_history";
+  static const String getCouponsByUserId = "${baseUrlV1}GetCouponsByUserId";
+  static const String getValidateCoupon  = "${baseUrlV1}GetValidateCoupon";
+  static const String baseUrlV2Root =
+      "https://admin.cherryberryrms.com/v2/api/";
+  static const String validatePromotion =
+      "${baseUrlV2Root}promotions/validate";
 
+  static const String getLoyaltyTransactions = "${baseUrlV2}get_loyalty_transactions";
+  static const String getPointConvertPackages = "${baseUrlV2}get_point_convert_packages";
+  static const String convertLoyaltyPointsToWallet = "${baseUrlV2}convert_loyalty_points_to_wallet";
+  static const String getWalletTransactions = "${baseUrlV2}get_wallet_transactions";
   //  place order endpoint
   static const String placeOrder = "${baseUrlV2}add_edit_order";
 

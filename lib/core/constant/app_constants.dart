@@ -13,8 +13,7 @@ class AppConstants {
       'https://maps.googleapis.com/maps/api/place/autocomplete/json';
   static String kPlacesApiKey = 'AIzaSyBUbCbmkNfSvQ8nflO64lgaIowblekfTrc';
   // static String kPlacesApiKey = 'AIzaSyBqgE_Gu8x26dFBZBcZvprKOef-X_aiAX4';
-
-
+static const bool enableLoyaltySystem = true;
   static ThemeMode? currentTheme;
 
   static String branchId = '';

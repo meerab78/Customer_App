@@ -434,6 +434,8 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     bool isDelivery =
     _order.orderTypeName.toLowerCase().contains("deliv");
 
+    double discount = double.tryParse(_order.discountAmount) ?? 0;
+
     return _cardWrapper(
       icon: Icons.account_balance_wallet_rounded,
       title: 'Payment Summary',
@@ -441,6 +443,15 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
         children: [
           _payRow('Subtotal', 'PKR ${_order.subTotal}'),
           _payRow('Tax (${_order.taxPercent}%)', 'PKR ${_order.taxAmount}'),
+
+          // NEW — Discount row (sirf jab discount > 0 ho)
+          if (discount > 0)
+            _payRow(
+              'Discount',
+              '- PKR ${discount.toStringAsFixed(0)}',
+              valueColor: AppColors.primary,
+            ),
+
           if (isDelivery)
             _payRow('Delivery Fee', 'PKR ${_order.deliveryCharge}'),
           Padding(
@@ -458,7 +469,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 ),
               ),
               Text(
-                'PKR ${_order.total}',
+                'PKR ${_order.total}',   // already discount-minus final hai
                 style: getExtraBoldStyle(
                   fontSize: MyFonts.size19,
                   color: AppColors.primary,
@@ -549,7 +560,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     );
   }
 
-  Widget _payRow(String label, String value) {
+  Widget _payRow(String label, String value, {Color? valueColor}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
@@ -566,7 +577,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             value,
             style: getSemiBoldStyle(
               fontSize: MyFonts.size13,
-              color: AppColors.text,
+              color: valueColor ?? AppColors.text,
             ),
           ),
         ],

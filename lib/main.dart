@@ -1,9 +1,7 @@
 import 'dart:io';
-
 import 'package:customer_app/features/profile/profile_entry_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import 'features/auth/address/controller.dart';
 import 'features/auth/address/manager_controller.dart';
 import 'features/auth/address/view.dart';
@@ -11,7 +9,10 @@ import 'features/auth/controller.dart';
 import 'features/auth/splash/view.dart';
 import 'core/db/sqflite/controller.dart';
 import 'features/cart/controller.dart';
+import 'features/coupon/controller.dart';
 import 'features/home/controller.dart';
+import 'features/profile/Loyalty_transactions/controller.dart';
+import 'features/profile/Wallet/controller.dart';
 import 'features/profile/view.dart';
 
 class MyHttpOverrides extends HttpOverrides {
@@ -54,7 +55,15 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => AddressManagerController(),
         ),
-
+        ChangeNotifierProvider(
+          create: (_) => CouponController(),
+        ),
+        ChangeNotifierProvider(
+            create: (_) => LoyaltyController()
+        ),
+        ChangeNotifierProvider(
+            create: (_) => WalletController()
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

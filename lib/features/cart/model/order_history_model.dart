@@ -5,13 +5,15 @@ class OrderHistory {
   final String subTotal;
   final String deliveryCharge;
   final String taxAmount;
-  final String taxPercent;        // NEW: "16.00"
+  final String taxPercent;
   final String total;
   final String orderDate;
-  final String orderTypeName;     // "Take away" / "Delivery"
-  final String orderStatus;       // "Pending" / "Preparing" / "Delivered"
-  final String paymentType;       // NEW: "Cash"
-  final String? deliveryAddress;  // NEW: address1 (delivery ho to)
+  final String orderTypeName;
+  final String orderStatus;
+  final String paymentType;
+  final String? deliveryAddress;
+  final String discountAmount;   // NEW
+  final String discountPer;      // NEW
   final List<OrderHistoryItem> items;
 
   OrderHistory({
@@ -28,13 +30,14 @@ class OrderHistory {
     required this.orderStatus,
     required this.paymentType,
     this.deliveryAddress,
+    this.discountAmount = '0',
+    this.discountPer = '0',
     required this.items,
   });
 
   factory OrderHistory.fromJson(Map<String, dynamic> json) {
     final details = (json['order_details'] as List?) ?? [];
 
-    // address object (delivery order me hota hai, warna null)
     String? address;
     if (json['address'] != null && json['address'] is Map) {
       address = json['address']['address1']?.toString();
@@ -54,6 +57,8 @@ class OrderHistory {
       orderStatus: json['order_status']?['name']?.toString() ?? '',
       paymentType: json['payment_type']?['type']?.toString() ?? '',
       deliveryAddress: address,
+      discountAmount: json['discount_amount']?.toString() ?? '0',   // NEW
+      discountPer: json['discount_per']?.toString() ?? '0',         // NEW
       items: details.map((e) => OrderHistoryItem.fromJson(e)).toList(),
     );
   }

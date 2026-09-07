@@ -2,6 +2,8 @@ import 'package:customer_app/core/utils/page_transitions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../coupon/controller.dart';
+import '../coupon/coupon_section.dart';
 import 'controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
@@ -28,6 +30,7 @@ class _CheckoutViewState extends State<CheckoutView> {
   final OrderRepository _orderRepository = OrderRepository();
   final SharedPrefService _prefs = SharedPrefService();
   bool _isPlacingOrder = false;
+  String _customerId = '';
 
   @override
   void initState() {
@@ -46,11 +49,21 @@ class _CheckoutViewState extends State<CheckoutView> {
     final cart = context.read<CartController>();
 
     await addressManager.loadAddresses();
-
     await addressManager.ensureHomeAddress();
 
     if (cart.orderType == 'Delivery') {
       _recalcFee();
+    }
+
+    final home = context.read<HomeController>();
+    final branchId = home.selectedBranch?.id?.toString() ?? '';
+    final userId = await _prefs.getUserId();
+    _customerId = userId?.toString() ?? '';
+
+    if (branchId.isNotEmpty) {
+      context.read<CouponController>().loadCoupons(branchId);
+    } else {
+      debugPrint("Skipping loadCoupons — branchId empty");
     }
   }
 
@@ -374,6 +387,9 @@ class _CheckoutViewState extends State<CheckoutView> {
       final subTotal = _calculateSubtotal(cart);
       final taxPercent = double.tryParse(menuData.taxPercent ?? '0') ?? 0;
       final taxInclude = menuData.taxInclude ?? true;
+      final couponCtrl = context.read<CouponController>();
+      final appliedCoupon = couponCtrl.appliedCoupon;
+      final legacy = couponCtrl.appliedPromotionData?.legacyCompat;
 
       final payload = OrderPayloadBuilder.build(
         cartItems: cart.cartItems,
@@ -384,8 +400,16 @@ class _CheckoutViewState extends State<CheckoutView> {
         taxPercent: taxPercent,
         taxInclude: taxInclude,
         deliveryFee: addressManager.deliveryFee,
-        deliveryAddressId: addressManager.selectedAddress?.id?.toString(),      );
-
+        deliveryAddressId: addressManager.selectedAddress?.id?.toString(),
+        discountAmount: couponCtrl.discountAmount,
+        discountPercent: appliedCoupon?.isPercentage == true
+            ? appliedCoupon!.discountValue
+            : (legacy?.discountPer?.toDouble() ?? 0),
+        discountId: appliedCoupon?.discountId ??
+            int.tryParse('${legacy?.discountId ?? ''}'),
+        couponId: appliedCoupon?.couponId ??
+            int.tryParse('${legacy?.couponId ?? ''}'),
+      );
       final response = await _orderRepository.placeOrder(payload);
 
       if (!mounted) return;
@@ -403,7 +427,7 @@ class _CheckoutViewState extends State<CheckoutView> {
               borderRadius: BorderRadius.circular(18),
             ),
             title: Text(
-              'Order Placed! 🎉',
+              'Order Placed',
               style: getBoldStyle(
                 fontSize: MyFonts.size18,
                 color: AppColors.text,
@@ -502,8 +526,10 @@ class _CheckoutViewState extends State<CheckoutView> {
           final menuData = context.read<HomeController>().menuModel?.data;
           final taxPercent = double.tryParse(menuData?.taxPercent ?? '0') ?? 0;
           final taxAmount = (subtotal * taxPercent) / (100 + taxPercent);
-          // Final total
-          final total = subtotal + deliveryCharges;
+          // Coupon discount
+          final discount = context.watch<CouponController>().discountAmount;
+          // Final total (discount minus)
+          final total = subtotal + deliveryCharges - discount;
 
 
           return SingleChildScrollView(
@@ -582,12 +608,16 @@ class _CheckoutViewState extends State<CheckoutView> {
                   _deliveryAddressCard(addressManager),
                 ],
 
-                const SizedBox(height: 28),
-
-
+                const SizedBox(height: 24),
+                CouponSection(
+                  branchId: context.read<HomeController>().selectedBranch?.id?.toString() ?? '',
+                  customerId: _customerId,
+                  subtotal: subtotal,
+                  cartItems: cart.cartItems,
+                  orderTypeId: cart.orderType == 'Delivery' ? 3 : 2,
+                  deliveryFee: cart.orderType == 'Delivery' ? addressManager.deliveryFee : 0,
+                ),
                 // ORDER SUMMARY
-
-
                 Text(
                   'Order Summary',
                   style: getBoldStyle(
@@ -597,7 +627,6 @@ class _CheckoutViewState extends State<CheckoutView> {
                 ),
 
                 const SizedBox(height: 12),
-
                 Container(
                   padding: const EdgeInsets.all(16),
 
@@ -681,6 +710,30 @@ class _CheckoutViewState extends State<CheckoutView> {
                                 style: getSemiBoldStyle(
                                   fontSize: MyFonts.size14,
                                   color: AppColors.text,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      // DISCOUNT ROW (coupon se)
+                      if (discount > 0)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 4),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Discount',
+                                style: getRegularStyle(
+                                  fontSize: MyFonts.size14,
+                                  color: AppColors.greyText,
+                                ),
+                              ),
+                              Text(
+                                '- Rs ${discount.toStringAsFixed(0)}',
+                                style: getSemiBoldStyle(
+                                  fontSize: MyFonts.size14,
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ],

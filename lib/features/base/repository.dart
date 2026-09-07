@@ -1,2 +1,2 @@
-﻿/// Placeholder repository for base module.
+﻿/// Placeholder repository.dart for base module.
 class BaseRepository {}

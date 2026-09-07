@@ -1,7 +1,7 @@
 import '../../core/db/sqflite/model.dart';
 
 /// Cart + address + branch/tax data ko exact `place_order` JSON payload mein
-/// convert karta hai. Pure static builder hai -- kisi controller/repository
+/// convert karta hai. Pure static builder hai -- kisi controller/repository.dart
 /// se independent, taake reuse/test karna aasan rahe.
 class OrderPayloadBuilder {
   static Map<String, dynamic> build({
@@ -14,6 +14,10 @@ class OrderPayloadBuilder {
     required bool taxInclude,
     required double deliveryFee,
     String? deliveryAddressId,
+    double discountAmount = 0,
+    double discountPercent = 0,
+    int? discountId,
+    int? couponId,
   }) {
     final bool isDelivery = orderType == 'Delivery';
     final int orderTypeId = isDelivery ? 3 : 2;
@@ -25,17 +29,17 @@ class OrderPayloadBuilder {
         : (subTotal * taxPercent) / 100;
 
     final double deliveryCharge = isDelivery ? deliveryFee : 0.0;
-    final double total = subTotal + deliveryCharge;
+    final double total = subTotal + deliveryCharge - discountAmount;
 
     return {
       "notes": "",
       "order_resource": "3",
       "restaurant_branch_id": branchId,
       "customer_id": int.tryParse(customerId) ?? customerId,
-      "discount_amount": "0",
-      "discount_per": "0",
-      "discount_id": null,
-      "coupon_id": null,
+      "discount_amount": discountAmount.toStringAsFixed(2),
+      "discount_per": discountPercent.toStringAsFixed(2),
+      "discount_id": discountId,
+      "coupon_id": couponId,
       "tax_amount": double.parse(taxAmount.toStringAsFixed(2)),
       "tax_percent": taxPercent.toStringAsFixed(2),
       "tax_include": taxInclude ? "1" : "0",
