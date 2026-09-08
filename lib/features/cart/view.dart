@@ -1,4 +1,6 @@
-﻿import 'package:skeletonizer/skeletonizer.dart';
+﻿import 'package:customer_app/features/cart/widget/login_required_sheet.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/db/sqflite/model.dart' as db;
@@ -193,7 +195,22 @@ class CartView extends StatelessWidget {
       ),
     );
   }
+  Future<void> _handleCheckoutTap(BuildContext context) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+    final isLoggedIn = token != null && token.isNotEmpty;
 
+    if (!context.mounted) return;
+
+    if (isLoggedIn) {
+      Navigator.push(
+        context,
+        PageTransitions.slideFromRight(const CheckoutView()),
+      );
+    } else {
+      showLoginRequiredSheet(context);
+    }
+  }
   Widget _checkoutSection(
       BuildContext context,
       double total,
@@ -206,7 +223,7 @@ class CartView extends StatelessWidget {
         20,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: const BorderRadius.vertical(
           top: Radius.circular(28),
         ),
@@ -241,10 +258,7 @@ class CartView extends StatelessWidget {
             height: 54,
             child: ElevatedButton(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  PageTransitions.slideFromRight(const CheckoutView()),
-                );
+                _handleCheckoutTap(context);
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
@@ -327,7 +341,7 @@ Widget _skeletonCart() {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(18),
           ),
           child: Row(

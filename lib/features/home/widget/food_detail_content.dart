@@ -127,11 +127,11 @@ class FoodImage extends StatelessWidget {
       height: 165,
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.softShadow07,
+            color: AppColors.shadow,
             blurRadius: 14,
             offset: const Offset(0, 6),
           ),
@@ -159,7 +159,7 @@ class FoodPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.grey100,
+      color: AppColors.containerColor4,
       child: Icon(
         Icons.fastfood_rounded,
         size: 55,

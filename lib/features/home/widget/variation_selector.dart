@@ -116,7 +116,7 @@ class _VariationTile extends StatelessWidget {
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : AppColors.grey300,
+                : AppColors.borderLight,
             width: isSelected ? 1.5 : 1,
           ),
         ),

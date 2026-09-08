@@ -29,9 +29,9 @@ class FeatureStatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.grey200),
+          border: Border.all(color: AppColors.borderLight),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,13 +1,12 @@
 ﻿
 import 'package:customer_app/features/profile/widget/stat_card.dart';
-
 import '../../core/constant/app_constants.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/utils/page_transitions.dart';
 import '../auth/address/manage_address_view.dart';
 import '../auth/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
@@ -17,7 +16,6 @@ import 'Loyalty_transactions/loyalty_history_view.dart';
 import 'Wallet/controller.dart';
 import 'Wallet/wallet_history_view.dart';
 import 'widget/profile_option_tile.dart';
-
 import '../base/view.dart';
 import '../auth/change_password/view.dart';
 import 'edit_profile_view.dart';
@@ -166,251 +164,320 @@ class _ProfileScreenState extends State<ProfileView> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Profile',
-                style: getExtraBoldStyle(
-                  fontSize: MyFonts.size30,
-                  color: AppColors.text,
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              // Profile Header Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 28,
-                  horizontal: 16,
-                ),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primary,
-                      AppColors.secondary,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(26),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.28),
-                      blurRadius: 22,
-                      offset: const Offset(0, 10),
+    return ListenableBuilder(
+      listenable: ThemeService.instance,
+      builder: (context, _) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Profile',
+                    style: getExtraBoldStyle(
+                      fontSize: MyFonts.size30,
+                      color: AppColors.text,
                     ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Stack(
+                  ),
+
+                  const SizedBox(height: 22),
+
+                  // Profile Header Card
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 28,
+                      horizontal: 16,
+                    ),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppColors.primary,
+                          AppColors.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(26),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.28),
+                          blurRadius: 22,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Column(
                       children: [
-                        Container(
-                          height: 100,
-                          width: 100,
-                          padding: const EdgeInsets.all(3),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.white.withOpacity(0.6),
-                              width: 2,
+                        Stack(
+                          children: [
+                            Container(
+                              height: 100,
+                              width: 100,
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: AppColors.white.withOpacity(0.6),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: AppColors.white.withOpacity(0.16),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.person_rounded,
+                                  size: 52,
+                                  color: AppColors.white,
+                                ),
+                              ),
                             ),
-                          ),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: AppColors.white.withOpacity(0.16),
-                              shape: BoxShape.circle,
+
+                            Positioned(
+                              right: 0,
+                              bottom: 2,
+                              child: GestureDetector(
+                                onTap: _editProfile,
+                                child: Container(
+                                  height: 32,
+                                  width: 32,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.white,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: AppColors.primary,
+                                      width: 2,
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: AppColors.black26,
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    Icons.edit_rounded,
+                                    size: 15,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
                             ),
-                            child: Icon(
-                              Icons.person_rounded,
-                              size: 52,
-                              color: AppColors.white,
-                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        Text(
+                          _name.isEmpty ? 'User' : _name,
+                          style: getExtraBoldStyle(
+                            fontSize: MyFonts.size20,
+                            color: AppColors.white,
                           ),
                         ),
 
-                        Positioned(
-                          right: 0,
-                          bottom: 2,
-                          child: GestureDetector(
-                            onTap: _editProfile,
-                            child: Container(
-                              height: 32,
-                              width: 32,
-                              decoration: BoxDecoration(
-                                color: AppColors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppColors.primary,
-                                  width: 2,
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: AppColors.black26,
-                                    blurRadius: 6,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.edit_rounded,
-                                size: 15,
-                                color: AppColors.primary,
-                              ),
-                            ),
+                        const SizedBox(height: 4),
+
+                        Text(
+                          _email,
+                          style: getRegularStyle(
+                            fontSize: MyFonts.size13,
+                            color: AppColors.white.withOpacity(0.85),
                           ),
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 28),
 
-                    const SizedBox(height: 16),
-
-                    Text(
-                      _name.isEmpty ? 'User' : _name,
-                      style: getExtraBoldStyle(
-                        fontSize: MyFonts.size20,
-                        color: AppColors.white,
-                      ),
-                    ),
-
-                    const SizedBox(height: 4),
-
-                    Text(
-                      _email,
-                      style: getRegularStyle(
-                        fontSize: MyFonts.size13,
-                        color: AppColors.white.withOpacity(0.85),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 28),
-
-// LOYALTY & WALLET CARDS — flag ke sath wrapped
-              if (AppConstants.enableLoyaltySystem) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: Consumer<LoyaltyController>(
-                        builder: (context, loyalty, _) {
-                          return FeatureStatCard(
-                            icon: Icons.emoji_events_rounded,
-                            title: 'Loyalty Points',
-                            value: '${loyalty.loyaltyPoints.toStringAsFixed(0)} pts',
-                            ctaText: 'View & Redeem',
-                            isLoading: loyalty.isLoading,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                PageTransitions.slideFromRight(const LoyaltyHistoryView()),
+                  // LOYALTY & WALLET CARDS — flag ke sath wrapped
+                  if (AppConstants.enableLoyaltySystem) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Consumer<LoyaltyController>(
+                            builder: (context, loyalty, _) {
+                              return FeatureStatCard(
+                                icon: Icons.emoji_events_rounded,
+                                title: 'Loyalty Points',
+                                value: '${loyalty.loyaltyPoints.toStringAsFixed(0)} pts',
+                                ctaText: 'View & Redeem',
+                                isLoading: loyalty.isLoading,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    PageTransitions.slideFromRight(const LoyaltyHistoryView()),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Consumer<WalletController>(
-                        builder: (context, wallet, _) {
-                          return FeatureStatCard(
-                            icon: Icons.account_balance_wallet_rounded,
-                            title: 'Wallet',
-                            value: 'Rs ${wallet.walletAmount.toStringAsFixed(0)}',
-                            ctaText: 'View Transactions',
-                            isLoading: wallet.isLoading,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                PageTransitions.slideFromRight(const WalletHistoryView()),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Consumer<WalletController>(
+                            builder: (context, wallet, _) {
+                              return FeatureStatCard(
+                                icon: Icons.account_balance_wallet_rounded,
+                                title: 'Wallet',
+                                value: 'Rs ${wallet.walletAmount.toStringAsFixed(0)}',
+                                ctaText: 'View Transactions',
+                                isLoading: wallet.isLoading,
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    PageTransitions.slideFromRight(const WalletHistoryView()),
+                                  );
+                                },
                               );
                             },
-                          );
-                        },
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
+                    const SizedBox(height: 28),
                   ],
-                ),
-                const SizedBox(height: 28),
-              ],
 
-              Text(
-                'Account',
-                style: getExtraBoldStyle(
-                  fontSize: MyFonts.size17,
-                  color: AppColors.text,
-                ),
+                  Text(
+                    'Account',
+                    style: getExtraBoldStyle(
+                      fontSize: MyFonts.size17,
+                      color: AppColors.text,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  ProfileOptionTile(
+                    title: 'Change Password',
+                    icon: Icons.lock_outline_rounded,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageTransitions.slideFromRight(const ChangePasswordView()),
+                      );
+                    },
+                  ),
+
+                  ProfileOptionTile(
+                    title: 'Discount Voucher',
+                    icon: Icons.discount_outlined,
+                    onTap: () {
+                      // Discount voucher
+                    },
+                  ),
+
+                  ProfileOptionTile(
+                    title: 'Manage Address',
+                    icon: Icons.location_on,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        PageTransitions.slideFromRight(const ManageAddressView()),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  Text(
+                    'Preferences',
+                    style: getExtraBoldStyle(
+                      fontSize: MyFonts.size17,
+                      color: AppColors.text,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  Builder(
+                    builder: (context) {
+                      final isDark = ThemeService.instance.isDarkMode;
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.card,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.grey200),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Icon(
+                                isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                                color: AppColors.primary,
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Dark Mode',
+                                style: getSemiBoldStyle(
+                                  fontSize: MyFonts.size14,
+                                  color: AppColors.text,
+                                ),
+                              ),
+                            ),
+                            Switch(
+                              value: isDark,
+                              activeColor: AppColors.primary,
+                              onChanged: (val) {
+                                ThemeService.instance.toggleTheme();
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  Text(
+                    'Danger Zone',
+                    style: getExtraBoldStyle(
+                      fontSize: MyFonts.size17,
+                      color: AppColors.text,
+                    ),
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  ProfileOptionTile(
+                    title: 'Delete Account',
+                    icon: Icons.delete_outline_rounded,
+                    onTap: _deleteAccount,
+                  ),
+
+                  ProfileOptionTile(
+                    title: 'Logout',
+                    icon: Icons.logout_rounded,
+                    onTap: _logout,
+                  ),
+                ],
               ),
-
-              const SizedBox(height: 15),
-
-              ProfileOptionTile(
-                title: 'Change Password',
-                icon: Icons.lock_outline_rounded,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageTransitions.slideFromRight(const ChangePasswordView()),
-                  );
-                },
-              ),
-
-              ProfileOptionTile(
-                title: 'Discount Voucher',
-                icon: Icons.discount_outlined,
-                onTap: () {
-                  // Discount voucher
-                },
-              ),
-
-              ProfileOptionTile(
-                title: 'Manage Address',
-                icon: Icons.location_on,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageTransitions.slideFromRight(const ManageAddressView()),
-                  );
-                },
-              ),
-
-              const SizedBox(height: 10),
-
-              Text(
-                'Danger Zone',
-                style: getExtraBoldStyle(
-                  fontSize: MyFonts.size17,
-                  color: AppColors.text,
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              ProfileOptionTile(
-                title: 'Delete Account',
-                icon: Icons.delete_outline_rounded,
-                onTap: _deleteAccount,
-              ),
-
-              ProfileOptionTile(
-                title: 'Logout',
-                icon: Icons.logout_rounded,
-                onTap: _logout,
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

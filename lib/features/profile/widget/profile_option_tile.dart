@@ -21,15 +21,15 @@ class ProfileOptionTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.grey200,
+          color: AppColors.borderLight,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.softShadow05,
+            color: AppColors.shadow,
             blurRadius: 14,
             offset: const Offset(0, 4),
           ),
@@ -78,7 +78,7 @@ class ProfileOptionTile extends StatelessWidget {
                   height: 28,
                   width: 28,
                   decoration: BoxDecoration(
-                    color: AppColors.grey100,
+                    color: AppColors.containerColor4,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(

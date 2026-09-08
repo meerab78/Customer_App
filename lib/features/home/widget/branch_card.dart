@@ -24,14 +24,14 @@ class BranchCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: AppColors.grey200,
+          color: AppColors.borderLight,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.softShadow04,
+            color: AppColors.shadow,
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -127,9 +127,8 @@ class BranchCard extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.grey100,
-                                  borderRadius:
-                                  BorderRadius.circular(18),
+                                  color: AppColors.containerColor4,
+                                  borderRadius: BorderRadius.circular(18),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,

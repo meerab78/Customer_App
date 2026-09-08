@@ -1,4 +1,5 @@
 ﻿
+import '../../core/theme/app_theme.dart' show ThemeService;
 import '../cart/order_history_view.dart';
 import '../search/view.dart';
 import 'package:flutter/material.dart';
@@ -124,98 +125,104 @@ class _BaseViewState
       );
     }
 
-    final cartCount = context.watch<CartController>().totalItemCount;
+    return ListenableBuilder(
+      listenable: ThemeService.instance,
+      builder: (context, _) {
 
-    // Screens
-    final screens = <Widget>[
-      // 0 - Home
-      const HomeView(),
-      // 1 - Search
-      const SearchView(),
-      // 2 - Cart
-      const CartView(),
-      // 3 - History
-      // 3 - History
-      if (_isLoggedIn)
-        const
-        OrderHistoryView(),
+        final cartCount = context.watch<CartController>().totalItemCount;
 
-      // Last - Profile
-      const ProfileEntryView(),
-    ];
+        // Screens
+        final screens = <Widget>[
+          // 0 - Home
+          HomeView(),
+          // 1 - Search
+          SearchView(),
+          // 2 - Cart
+          CartView(),
+          // 3 - History
+          // 3 - History
+          if (_isLoggedIn)
 
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: screens,
-      ),
-      bottomNavigationBar: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 8,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.softShadow08,
-              blurRadius: 10,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
-        child: SafeArea(
-          top: false,
-          child: GNav(
-            selectedIndex: _selectedIndex,
-            onTabChange: _onTabTapped,
-            gap: 6,
+            OrderHistoryView(),
+
+          // Last - Profile
+          ProfileEntryView(),
+        ];
+
+        return Scaffold(
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: screens,
+          ),
+          bottomNavigationBar: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 12,
-              vertical: 12,
+              vertical: 8,
             ),
-            duration: const Duration(
-              milliseconds: 300,
-            ),
-            tabBorderRadius: 20,
-            activeColor: AppColors.white,
-            color: AppColors.grey,
-            tabBackgroundColor: AppColors.primary,
-            tabs: [
-              // Home
-              const GButton(
-                icon: Icons.home_outlined,
-                text: 'Home',
-              ),
-              // Search
-              const GButton(
-                icon: Icons.search,
-                text: 'Search',
-              ),
-
-              // Cart (with item-count badge)
-              GButton(
-                icon: Icons.shopping_cart_outlined,
-                leading: _cartIcon(cartCount),
-                text: 'Cart',
-              ),
-
-              // History
-              if (_isLoggedIn)
-                const GButton(
-                  icon: Icons.history_outlined,
-                  text: 'History',
+            decoration: BoxDecoration(
+              color: AppColors.navBarColor,
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.softShadow08,
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
                 ),
+              ],
+            ),
+            child: SafeArea(
+              top: false,
+              child: GNav(
+                selectedIndex: _selectedIndex,
+                onTabChange: _onTabTapped,
+                gap: 6,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                duration: const Duration(
+                  milliseconds: 300,
+                ),
+                tabBorderRadius: 20,
+                activeColor: AppColors.white,
+                color: AppColors.grey,
+                tabBackgroundColor: AppColors.primary,
+                tabs: [
+                  // Home
+                  const GButton(
+                    icon: Icons.home_outlined,
+                    text: 'Home',
+                  ),
+                  // Search
+                  const GButton(
+                    icon: Icons.search,
+                    text: 'Search',
+                  ),
 
-              // Profile
-              const GButton(
-                icon: Icons.person_outline,
-                text: 'Profile',
+                  // Cart (with item-count badge)
+                  GButton(
+                    icon: Icons.shopping_cart_outlined,
+                    leading: _cartIcon(cartCount),
+                    text: 'Cart',
+                  ),
+
+                  // History
+                  if (_isLoggedIn)
+                    const GButton(
+                      icon: Icons.history_outlined,
+                      text: 'History',
+                    ),
+
+                  // Profile
+                  const GButton(
+                    icon: Icons.person_outline,
+                    text: 'Profile',
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

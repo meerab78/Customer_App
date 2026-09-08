@@ -8,6 +8,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
 
+enum _CouponMode { selectVoucher, typeCode }
+
 class CouponSection extends StatefulWidget {
   final String branchId;
   final String customerId;
@@ -32,6 +34,8 @@ class CouponSection extends StatefulWidget {
 
 class _CouponSectionState extends State<CouponSection> {
   final TextEditingController _codeController = TextEditingController();
+  _CouponMode _mode = _CouponMode.selectVoucher;
+  bool _codeError = false;
 
   @override
   void dispose() {
@@ -39,7 +43,6 @@ class _CouponSectionState extends State<CouponSection> {
     super.dispose();
   }
 
-  // List se select kiya hua coupon apply
   Future<void> _applyListCoupon(String code) async {
     final coupon = context.read<CouponController>();
 
@@ -50,17 +53,16 @@ class _CouponSectionState extends State<CouponSection> {
     );
 
     if (!mounted) return;
-
-    if (success) {
-      _codeController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Coupon applied!")),
-      );
-    }
+    if (success) _codeController.clear();
   }
 
-  // Manual typed code apply (promo pehle, coupon fallback)
   Future<void> _applyManualCode() async {
+    if (_codeController.text.trim().isEmpty) {
+      setState(() => _codeError = true);
+      return;
+    }
+    setState(() => _codeError = false);
+
     final coupon = context.read<CouponController>();
 
     final success = await coupon.applyManualCode(
@@ -77,9 +79,7 @@ class _CouponSectionState extends State<CouponSection> {
 
     if (success) {
       _codeController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Code applied!")),
-      );
+      setState(() => _mode = _CouponMode.selectVoucher);
     }
   }
 
@@ -87,290 +87,337 @@ class _CouponSectionState extends State<CouponSection> {
   Widget build(BuildContext context) {
     return Consumer<CouponController>(
       builder: (context, coupon, _) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Discount & Coupon',
-              style: getBoldStyle(
-                fontSize: MyFonts.size19,
-                color: AppColors.text,
+        return Container(
+          width: double.infinity,
+          // padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ---- HEADER: title + tab icons ----
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _mode == _CouponMode.selectVoucher
+                          ? 'Select Voucher'
+                          : 'Type Coupon code',
+                      style: getBoldStyle(fontSize: MyFonts.size17, color: AppColors.text),
+                    ),
+                  ),
+                  _tabIcons(),
+                ],
               ),
-            ),
-            const SizedBox(height: 12),
-
-            if (coupon.hasApplied)
-              _appliedCard(coupon)
-            else ...[
-              _promoInput(coupon),
               const SizedBox(height: 14),
-              if (coupon.isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(12),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (coupon.coupons.isNotEmpty) ...[
+
+              if (_mode == _CouponMode.selectVoucher)
+                _voucherList(coupon)
+              else
+                _codeInput(coupon),
+
+              if (coupon.errorMessage != null) ...[
+                const SizedBox(height: 10),
                 Text(
-                  'Available Coupons',
-                  style: getSemiBoldStyle(
-                    fontSize: MyFonts.size14,
-                    color: AppColors.greyText,
-                  ),
+                  coupon.errorMessage!,
+                  style: getSemiBoldStyle(fontSize: MyFonts.size12, color: AppColors.error),
                 ),
-                const SizedBox(height: 8),
-                ...coupon.coupons.map((c) => _couponCard(c)),
               ],
             ],
-
-            if (coupon.errorMessage != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                coupon.errorMessage!,
-                style: getSemiBoldStyle(
-                  fontSize: MyFonts.size12,
-                  color: AppColors.error,
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 20),
-          ],
+          ),
         );
       },
     );
   }
 
-  Widget _promoInput(CouponController coupon) {
+  // ---- TAB ICONS (top right) ----
+  Widget _tabIcons() {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          _tabIconButton(
+            icon: Icons.confirmation_number_outlined,
+            selected: _mode == _CouponMode.selectVoucher,
+            onTap: () => setState(() => _mode = _CouponMode.selectVoucher),
+          ),
+          const SizedBox(width: 3),
+          _tabIconButton(
+            icon: Icons.local_offer_outlined,
+            selected: _mode == _CouponMode.typeCode,
+            onTap: () => setState(() => _mode = _CouponMode.typeCode),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tabIconButton({
+    required IconData icon,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 32,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.card : Colors.transparent,
+          borderRadius: BorderRadius.circular(9),
+          border: selected ? Border.all(color: AppColors.borderLight) : null,
+        ),
+        child: Icon(
+          icon,
+          size: 17,
+          color: selected ? AppColors.primary : AppColors.greyText,
+        ),
+      ),
+    );
+  }
+
+  // ---- MODE A: VOUCHER LIST ----
+  Widget _voucherList(CouponController coupon) {
+    if (coupon.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 20),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (coupon.coupons.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        child: Center(
+          child: Text(
+            'No vouchers available',
+            style: getRegularStyle(fontSize: MyFonts.size12, color: AppColors.greyText),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: coupon.coupons.map((c) {
+        final isApplied = coupon.appliedCoupon?.couponCode == c.couponCode;
+        return _voucherTicket(coupon, c, isApplied);
+      }).toList(),
+    );
+  }
+
+  // ---- Ticket-style voucher card ----
+  Widget _voucherTicket(CouponController coupon, Coupon c, bool isApplied) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Stack(
+        alignment: Alignment.centerLeft,
+        children: [
+          ClipPath(
+            child: Container(
+              height: 84,
+              decoration: BoxDecoration(
+                color: isApplied ? AppColors.primary : AppColors.primary.withOpacity(0.10),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  // Left: % off block
+                  SizedBox(
+                    width: 92,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          c.isPercentage
+                              ? '${c.discountValue.toStringAsFixed(0)}%'
+                              : 'Rs ${c.discountValue.toStringAsFixed(0)}',
+                          style: getExtraBoldStyle(
+                            fontSize: MyFonts.size19,
+                            color: isApplied ? AppColors.white : AppColors.primary,
+                          ),
+                        ),
+                        Text(
+                          'OFF',
+                          style: getBoldStyle(
+                            fontSize: MyFonts.size11,
+                            color: isApplied
+                                ? AppColors.white.withOpacity(0.85)
+                                : AppColors.primary.withOpacity(0.75),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Dashed divider
+                  _dashedDivider(isApplied),
+                  const SizedBox(width: 14),
+                  // Right: details + apply
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          c.discountName ?? c.couponCode,
+                          style: getBoldStyle(
+                            fontSize: MyFonts.size13,
+                            color: isApplied ? AppColors.white : AppColors.text,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        if (c.minOrderAmount > 0)
+                          Text(
+                            'Min. spend Rs ${c.minOrderAmount.toStringAsFixed(0)}',
+                            style: getRegularStyle(
+                              fontSize: MyFonts.size11,
+                              color: isApplied ? AppColors.white.withOpacity(0.85) : AppColors.greyText,
+                            ),
+                          ),
+                        if (c.validTill != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            'Valid until: ${c.validTill}',
+                            style: getRegularStyle(
+                              fontSize: MyFonts.size10,
+                              color: isApplied ? AppColors.white.withOpacity(0.7) : AppColors.greyText.withOpacity(0.8),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 14),
+                    child: GestureDetector(
+                      onTap: isApplied
+                          ? () => coupon.removeCoupon()
+                          : () => _applyListCoupon(c.couponCode),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isApplied ? AppColors.white : AppColors.primary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          isApplied ? 'APPLIED' : 'APPLY',
+                          style: getBoldStyle(
+                            fontSize: MyFonts.size10,
+                            color: isApplied ? AppColors.primary : AppColors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dashedDivider(bool isApplied) {
+    return SizedBox(
+      height: 60,
+      width: 1,
+      child: Column(
+        children: List.generate(8, (index) {
+          return Expanded(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: 1.5),
+              color: isApplied
+                  ? AppColors.white.withOpacity(0.4)
+                  : AppColors.primary.withOpacity(0.3),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ---- MODE B: TYPE CODE ----
+  Widget _codeInput(CouponController coupon) {
+    final hasApplied = coupon.hasApplied;
+
     return Row(
       children: [
         Expanded(
           child: Container(
-            height: 48,
+            height: 50,
             decoration: BoxDecoration(
-              color: AppColors.white,
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.grey200),
+              border: Border.all(
+                color: _codeError ? AppColors.error : AppColors.borderLight,
+                width: _codeError ? 1.4 : 1,
+              ),
             ),
-            child: TextField(
+            child: hasApplied
+                ? InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => coupon.removeCoupon(),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  children: [
+                    Icon(Icons.local_offer_outlined, size: 17, color: AppColors.greyText.withOpacity(0.6)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Remove selected voucher',
+                        style: getRegularStyle(fontSize: MyFonts.size13, color: AppColors.greyText),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+                : TextField(
               controller: _codeController,
               textCapitalization: TextCapitalization.characters,
+              onChanged: (_) {
+                if (_codeError) setState(() => _codeError = false);
+              },
               decoration: InputDecoration(
-                hintText: "Enter promo or coupon code",
-                hintStyle: getRegularStyle(
-                  fontSize: MyFonts.size13,
-                  color: AppColors.greyText,
-                ),
-                prefixIcon: Icon(
-                  Icons.local_offer_outlined,
-                  size: 18,
-                  color: AppColors.greyText,
-                ),
+                hintText: "Enter coupon code",
+                hintStyle: getRegularStyle(fontSize: MyFonts.size13, color: AppColors.greyText),
+                prefixIcon: Icon(Icons.local_offer_outlined, size: 18, color: AppColors.greyText),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 14,
-                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
           ),
         ),
         const SizedBox(width: 10),
         SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: coupon.isValidating ? null : _applyManualCode,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-            ),
+          height: 50,
+          child: TextButton(
+            onPressed: coupon.isValidating
+                ? null
+                : (hasApplied ? () => coupon.removeCoupon() : _applyManualCode),
             child: coupon.isValidating
                 ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: Colors.white,
-              ),
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
             )
                 : Text(
-              'Apply',
+              hasApplied ? 'Remove' : 'Apply',
               style: getBoldStyle(
                 fontSize: MyFonts.size14,
-                color: AppColors.white,
+                color: hasApplied ? AppColors.error : AppColors.primary,
               ),
             ),
           ),
         ),
       ],
-    );
-  }
-
-  Widget _couponCard(Coupon c) {
-    String discountText = c.isPercentage
-        ? '${c.discountValue.toStringAsFixed(0)}% OFF'
-        : 'Rs ${c.discountValue.toStringAsFixed(0)} OFF';
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.grey200),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.confirmation_num_outlined,
-              color: AppColors.primary,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  c.couponCode,
-                  style: getBoldStyle(
-                    fontSize: MyFonts.size14,
-                    color: AppColors.text,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '$discountText  •  ${c.discountName ?? ''}',
-                  style: getRegularStyle(
-                    fontSize: MyFonts.size11,
-                    color: AppColors.greyText,
-                  ),
-                ),
-                if (c.minOrderAmount > 0) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Min order: Rs ${c.minOrderAmount.toStringAsFixed(0)}',
-                    style: getRegularStyle(
-                      fontSize: MyFonts.size10,
-                      color: AppColors.greyText,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          TextButton(
-            onPressed: () => _applyListCoupon(c.couponCode),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 6,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-                side: BorderSide(color: AppColors.primary),
-              ),
-            ),
-            child: Text(
-              'APPLY',
-              style: getBoldStyle(
-                fontSize: MyFonts.size12,
-                color: AppColors.primary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _appliedCard(CouponController coupon) {
-    final code = coupon.appliedDisplayCode ?? '';
-    final isPercentage = coupon.appliedIsPercentage;
-    final value = coupon.appliedDiscountValue;
-
-    String discountText = isPercentage
-        ? '${value.toStringAsFixed(0)}% OFF'
-        : 'Rs ${value.toStringAsFixed(0)} OFF';
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.primary),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.check_circle, color: AppColors.primary, size: 22),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      code,
-                      style: getBoldStyle(
-                        fontSize: MyFonts.size15,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        discountText,
-                        style: getBoldStyle(
-                          fontSize: MyFonts.size10,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'You saved Rs ${coupon.discountAmount.toStringAsFixed(0)}',
-                  style: getRegularStyle(
-                    fontSize: MyFonts.size12,
-                    color: AppColors.greyText,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: () => coupon.removeCoupon(),
-            icon: Icon(
-              Icons.close_rounded,
-              color: AppColors.error,
-              size: 20,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

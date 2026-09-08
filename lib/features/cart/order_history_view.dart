@@ -1,6 +1,7 @@
-import 'dart:async';
 
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import 'order_detail_view.dart';
 import 'order_repository.dart';
@@ -30,10 +31,13 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
     super.initState();
     _loadOrders();
 
-    // Har 15 second me status refresh karo
-    _pollTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      _loadOrders(silent: true);
-    });
+// Har 15 second me status refresh karo
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 15),
+          (timer) {
+        _loadOrders(silent: true);
+      },
+    );
   }
 
   @override
@@ -42,7 +46,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
     super.dispose();
   }
 
-  // Orders load karna
+// Orders load karna
   Future<void> _loadOrders({bool silent = false}) async {
     if (silent == false) {
       setState(() {
@@ -54,6 +58,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
       String restaurantId = "1248";
 
       int? savedId = await _prefs.getRestaurantId();
+
       if (savedId != null) {
         restaurantId = savedId.toString();
       }
@@ -61,8 +66,10 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
       List<OrderHistory> orders =
       await _repo.getOrderHistory(restaurantId);
 
-      // Latest order upar dikhane ke liye sort
-      orders.sort((a, b) => b.orderDate.compareTo(a.orderDate));
+// Latest order upar dikhane ke liye sort
+      orders.sort(
+            (a, b) => b.orderDate.compareTo(a.orderDate),
+      );
 
       if (mounted) {
         setState(() {
@@ -72,6 +79,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
       }
     } catch (e) {
       print("Order history error: $e");
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -80,7 +88,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
     }
   }
 
-  // Status ke hisaab se color
+// Status ke hisaab se color
   Color _statusColor(String status) {
     String s = status.toLowerCase();
 
@@ -97,7 +105,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
     }
   }
 
-  // Status ke hisaab se icon
+// Status ke hisaab se icon
   IconData _statusIcon(String status) {
     String s = status.toLowerCase();
 
@@ -127,7 +135,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
           'ORDERS',
           style: getExtraBoldStyle(
             fontSize: MyFonts.size22,
-            color: AppColors.primary,  // yellow
+            color: AppColors.primary,
           ),
         ),
       ),
@@ -136,12 +144,14 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
     );
   }
 
-  // Body banana
+// ============================================================
+// BODY
+// ============================================================
+
   Widget _buildBody() {
+// Skeleton while API is loading
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return _buildSkeleton();
     }
 
     if (_orders.isEmpty) {
@@ -152,7 +162,12 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
       color: AppColors.primary,
       onRefresh: _loadOrders,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
+        padding: const EdgeInsets.fromLTRB(
+          16,
+          8,
+          16,
+          30,
+        ),
         itemCount: _orders.length,
         itemBuilder: (context, index) {
           return _orderCard(_orders[index]);
@@ -161,7 +176,126 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
     );
   }
 
-  // Empty state
+// ============================================================
+// SKELETON
+// ============================================================
+
+  Widget _buildSkeleton() {
+    return Skeletonizer(
+      enabled: true,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(
+          16,
+          8,
+          16,
+          30,
+        ),
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return _orderSkeletonCard();
+        },
+      ),
+    );
+  }
+
+// ============================================================
+// SKELETON ORDER CARD
+// ============================================================
+
+  Widget _orderSkeletonCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+// Order number + status
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Bone.text(
+                      words: 2,
+                      fontSize: 14,
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Bone.text(
+                      words: 3,
+                      fontSize: 10,
+                    ),
+                  ],
+                ),
+              ),
+
+              Bone(
+                width: 65,
+                height: 22,
+                borderRadius:
+                BorderRadius.circular(20),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 10),
+
+// Divider
+          Bone(
+            width: double.infinity,
+            height: 1,
+          ),
+
+          const SizedBox(height: 10),
+
+// Item + price + arrow
+          Row(
+            children: [
+              Bone.circle(size: 15),
+
+              const SizedBox(width: 8),
+
+              Expanded(
+                child: Bone.text(
+                  words: 2,
+                  fontSize: 13,
+                ),
+              ),
+
+              const SizedBox(width: 8),
+
+              Bone.text(
+                words: 1,
+                fontSize: 14,
+              ),
+
+              const SizedBox(width: 7),
+
+              Bone(
+                width: 8,
+                height: 13,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+// ============================================================
+// EMPTY STATE
+// ============================================================
+
   Widget _emptyState() {
     return Center(
       child: Column(
@@ -205,11 +339,17 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
       ),
     );
   }
-  // Ek order ka card (compact + border)
+
+// ============================================================
+// ORDER CARD
+// ============================================================
+
   Widget _orderCard(OrderHistory order) {
-    Color statusColor = _statusColor(order.orderStatus);
+    Color statusColor =
+    _statusColor(order.orderStatus);
 
     String mainItem = "";
+
     if (order.items.isNotEmpty) {
       mainItem = order.items[0].menuName;
     }
@@ -219,7 +359,9 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => OrderDetailsView(order: order),
+            builder: (_) => OrderDetailsView(
+              order: order,
+            ),
           ),
         );
       },
@@ -227,21 +369,24 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.grey200),
+          border: Border.all(color: AppColors.borderLight),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
           children: [
 
-            // ROW 1: Order number + status badge
+// ROW 1
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                    CrossAxisAlignment.start,
                     children: [
                       Text(
                         'ORDER #${order.orderNo ?? order.id ?? ''}',
@@ -250,7 +395,9 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                           color: AppColors.text,
                         ),
                       ),
+
                       const SizedBox(height: 2),
+
                       Text(
                         order.formattedDateTime,
                         style: getRegularStyle(
@@ -262,15 +409,18 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                   ),
                 ),
 
-                // Status badge (pill)
+// Status badge
                 Container(
-                  padding: const EdgeInsets.symmetric(
+                  padding:
+                  const EdgeInsets.symmetric(
                     horizontal: 10,
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(20),
+                    color:
+                    statusColor.withOpacity(0.12),
+                    borderRadius:
+                    BorderRadius.circular(20),
                   ),
                   child: Text(
                     order.orderStatus,
@@ -285,11 +435,10 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
 
             const SizedBox(height: 8),
 
-            Container(height: 1, color: AppColors.grey200),
-
+            Container(height: 1, color: AppColors.borderLight),
             const SizedBox(height: 8),
 
-            // ROW 2: item + total + arrow (ek hi row me, compact)
+// ROW 2
             Row(
               children: [
                 Icon(
@@ -297,19 +446,24 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                   size: 15,
                   color: AppColors.greyText,
                 ),
+
                 const SizedBox(width: 8),
+
                 Expanded(
                   child: Text(
                     mainItem,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    overflow:
+                    TextOverflow.ellipsis,
                     style: getSemiBoldStyle(
                       fontSize: MyFonts.size13,
                       color: AppColors.text,
                     ),
                   ),
                 ),
+
                 const SizedBox(width: 8),
+
                 Text(
                   'PKR${order.total}',
                   style: getExtraBoldStyle(
@@ -317,7 +471,9 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
                     color: AppColors.primary,
                   ),
                 ),
+
                 const SizedBox(width: 6),
+
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 13,

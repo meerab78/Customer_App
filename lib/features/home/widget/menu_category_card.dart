@@ -62,21 +62,21 @@ class MenuCategoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primary
-              : AppColors.white,
+              : AppColors.card,
 
           borderRadius: BorderRadius.circular(20),
 
           border: Border.all(
             color: selected
                 ? AppColors.primary
-                : AppColors.grey200,
+                : AppColors.borderLight,
             width: 1,
           ),
 
           boxShadow: [
             BoxShadow(
               color: selected
-                  ? AppColors.black.withOpacity(0.14)
+                  ? AppColors.shadow
                   : AppColors.softShadow06,
               blurRadius: selected ? 12 : 7,
               offset: const Offset(0, 4),
@@ -125,7 +125,7 @@ class MenuCategoryCard extends StatelessWidget {
                   fontSize: MyFonts.size12,
                   color: selected
                       ? AppColors.white
-                      : AppColors.black87,
+                      : AppColors.text,
                 ).copyWith(height: 1.2),
               ),
             ),

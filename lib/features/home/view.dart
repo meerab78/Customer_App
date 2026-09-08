@@ -1,11 +1,10 @@
-﻿
-import 'package:customer_app/features/home/widget/add_to_cart_handler.dart';
+﻿import 'package:customer_app/features/home/widget/add_to_cart_handler.dart';
 import 'package:customer_app/features/home/widget/special_deals_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 import 'controller.dart';
-import '../../core/shared/widgets/reusable_loading.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
@@ -54,8 +53,9 @@ class _HomeScreenState extends State<HomeView> {
   Widget build(BuildContext context) {
     final provider = Provider.of<HomeController>(context);
 
+// Show skeleton while API is loading
     if (provider.isLoading || provider.menuModel == null) {
-      return const CustomLoading();
+      return _buildSkeleton();
     }
 
     final categories =
@@ -75,16 +75,10 @@ class _HomeScreenState extends State<HomeView> {
     final selectedCategoryItems =
         selectedCategory.menu;
 
-    // Get all deal items
     final specialDeals = categories
         .expand((category) => category.menu)
         .where((food) => food.isDeal == true)
         .toList();
-
-    // Only show first 4 deals on Home
-    final homeSpecialDeals = specialDeals.length > 4
-        ? specialDeals.take(4).toList()
-        : specialDeals;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -95,17 +89,17 @@ class _HomeScreenState extends State<HomeView> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              // =========================
-              // HEADER
-              // =========================
+// =========================
+// HEADER
+// =========================
 
-              const HomeHeader(),
+               HomeHeader(),
 
-              const SizedBox(height: 14),
+               SizedBox(height: 14),
 
-              // =========================
-              // MENU HEADING
-              // =========================
+// =========================
+// MENU HEADING
+// =========================
 
               Text(
                 "Menu",
@@ -117,9 +111,9 @@ class _HomeScreenState extends State<HomeView> {
 
               const SizedBox(height: 8),
 
-              // =========================
-              // CATEGORIES
-              // =========================
+// =========================
+// CATEGORIES
+// =========================
 
               SizedBox(
                 height: 120,
@@ -143,9 +137,9 @@ class _HomeScreenState extends State<HomeView> {
 
               const SizedBox(height: 18),
 
-              // =========================
-              // SELECTED CATEGORY
-              // =========================
+// =========================
+// SELECTED CATEGORY
+// =========================
 
               Row(
                 children: [
@@ -185,9 +179,9 @@ class _HomeScreenState extends State<HomeView> {
 
               const SizedBox(height: 6),
 
-              // =========================
-              // SELECTED CATEGORY ITEMS
-              // =========================
+// =========================
+// SELECTED CATEGORY ITEMS
+// =========================
 
               SizedBox(
                 height: 205,
@@ -206,7 +200,11 @@ class _HomeScreenState extends State<HomeView> {
               ),
 
               const SizedBox(height: 24),
-              // SPECIAL DEALS
+
+// =========================
+// SPECIAL DEALS
+// =========================
+
               if (specialDeals.isNotEmpty) ...[
                 Row(
                   children: [
@@ -248,12 +246,10 @@ class _HomeScreenState extends State<HomeView> {
                   height: 205,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-
-                    // ALL deals will be horizontally scrollable
                     itemCount: specialDeals.length,
-
                     itemBuilder: (context, index) {
                       final food = specialDeals[index];
+
                       return FoodItemCard(
                         food: food,
                         onTap: () {
@@ -269,6 +265,244 @@ class _HomeScreenState extends State<HomeView> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+// ============================================================
+// SKELETON HOME
+// ============================================================
+
+  Widget _buildSkeleton() {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: SafeArea(
+        child: Skeletonizer(
+          enabled: true,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+// =========================
+// HEADER SKELETON
+// =========================
+
+                Row(
+                  children: [
+                    Bone.circle(size: 45),
+
+                    const SizedBox(width: 10),
+
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Bone.text(
+                            words: 2,
+                            fontSize: 13,
+                          ),
+                          const SizedBox(height: 6),
+                          Bone.text(
+                            words: 3,
+                            fontSize: 11,
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    Bone.circle(size: 40),
+                  ],
+                ),
+
+                const SizedBox(height: 22),
+
+// =========================
+// MENU TITLE
+// =========================
+
+                Bone.text(
+                  words: 1,
+                  fontSize: 22,
+                ),
+
+                const SizedBox(height: 12),
+
+// =========================
+// CATEGORY SKELETON
+// =========================
+
+                SizedBox(
+                  height: 120,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 5,
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(width: 10),
+                    itemBuilder: (_, index) {
+                      return Container(
+                        width: 85,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                          BorderRadius.circular(14),
+                        ),
+                        child: Column(
+                          mainAxisAlignment:
+                          MainAxisAlignment.center,
+                          children: [
+                            Bone.circle(size: 48),
+                            const SizedBox(height: 9),
+                            Bone.text(
+                              words: 1,
+                              fontSize: 11,
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+// =========================
+// CATEGORY HEADING
+// =========================
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Bone.text(
+                        words: 2,
+                        fontSize: 19,
+                      ),
+                    ),
+                    Bone.text(
+                      words: 1,
+                      fontSize: 13,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+// =========================
+// FOOD CARDS SKELETON
+// =========================
+
+                SizedBox(
+                  height: 205,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 3,
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(width: 12),
+                    itemBuilder: (_, index) {
+                      return _foodCardSkeleton();
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+// =========================
+// SPECIAL DEALS HEADING
+// =========================
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Bone.text(
+                        words: 2,
+                        fontSize: 19,
+                      ),
+                    ),
+                    Bone.text(
+                      words: 1,
+                      fontSize: 13,
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+// =========================
+// DEAL CARDS SKELETON
+// =========================
+
+                SizedBox(
+                  height: 205,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: 3,
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(width: 12),
+                    itemBuilder: (_, index) {
+                      return _foodCardSkeleton();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+// ============================================================
+// FOOD CARD SKELETON
+// ============================================================
+
+  Widget _foodCardSkeleton() {
+    return Container(
+      width: 155,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Bone(
+            width: double.infinity,
+            height: 105,
+            borderRadius:
+            BorderRadius.circular(12),
+          ),
+
+          const SizedBox(height: 10),
+
+          Bone.text(
+            words: 2,
+            fontSize: 13,
+          ),
+
+          const SizedBox(height: 7),
+
+          Bone.text(
+            words: 1,
+            fontSize: 11,
+          ),
+
+          const Spacer(),
+
+          Row(
+            mainAxisAlignment:
+            MainAxisAlignment.spaceBetween,
+            children: [
+              Bone.text(
+                words: 1,
+                fontSize: 13,
+              ),
+              Bone.circle(size: 28),
+            ],
+          ),
+        ],
       ),
     );
   }

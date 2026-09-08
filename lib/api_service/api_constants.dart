@@ -13,7 +13,7 @@ class ApiConstants {
       "https://admin.cherryberryrms.com/v2/api/";
   static const String validatePromotion =
       "${baseUrlV2Root}promotions/validate";
-
+  static const guestSignUp = '${baseUrlV2}guest_signup';
   static const String getLoyaltyTransactions = "${baseUrlV2}get_loyalty_transactions";
   static const String getPointConvertPackages = "${baseUrlV2}get_point_convert_packages";
   static const String convertLoyaltyPointsToWallet = "${baseUrlV2}convert_loyalty_points_to_wallet";

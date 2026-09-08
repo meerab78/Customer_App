@@ -33,14 +33,14 @@ class CartItemCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(9),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppColors.grey200.withOpacity(.65),
+            color: AppColors.borderLight,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.softShadow04,
+              color: AppColors.shadow,
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -321,7 +321,7 @@ class CartItemCard extends StatelessWidget {
         color: AppColors.background,
         borderRadius: BorderRadius.circular(13),
         border: Border.all(
-          color: AppColors.grey200.withOpacity(.55),
+          color: AppColors.borderLight,
         ),
       ),
       child: Column(
@@ -371,7 +371,7 @@ class CartItemCard extends StatelessWidget {
         vertical: 6,
       ),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.containerColor4,
         borderRadius: BorderRadius.circular(10),
       ),
       child: Column(
@@ -573,7 +573,7 @@ class CartItemCard extends StatelessWidget {
 
   Widget _placeholder() {
     return Container(
-      color: AppColors.grey100,
+      color: AppColors.containerColor4,
       child: Icon(
         item.isDeal
             ? Icons.card_giftcard_outlined

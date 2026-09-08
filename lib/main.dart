@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:customer_app/features/profile/profile_entry_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/address/controller.dart';
 import 'features/auth/address/manager_controller.dart';
 import 'features/auth/address/view.dart';
@@ -23,6 +24,7 @@ class MyHttpOverrides extends HttpOverrides {
           (X509Certificate cert, String host, int port) => true;
   }
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
@@ -31,6 +33,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -59,17 +62,38 @@ class MyApp extends StatelessWidget {
           create: (_) => CouponController(),
         ),
         ChangeNotifierProvider(
-            create: (_) => LoyaltyController()
+          create: (_) => LoyaltyController(),
         ),
         ChangeNotifierProvider(
-            create: (_) => WalletController()
+          create: (_) => WalletController(),
         ),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Customer App',
-        theme: ThemeData(),
-        home: const SplashView(),
+      child: ListenableBuilder(
+        listenable: ThemeService.instance,
+        builder: (context, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Customer App',
+            themeMode: ThemeService.instance.themeMode,
+            theme: ThemeData(
+              brightness: Brightness.light,
+              scaffoldBackgroundColor: Colors.white,
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.white,
+                elevation: 0,
+              ),
+            ),
+            darkTheme: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF121212),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFF121212),
+                elevation: 0,
+              ),
+            ),
+            home: const SplashView(),
+          );
+        },
       ),
     );
   }

@@ -54,7 +54,7 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
         context,
         MaterialPageRoute(
           builder: (_) =>
-          const BaseView(
+           BaseView(
             initialIndex: 0,
           ),
         ),
@@ -67,7 +67,7 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
   @override
   Widget build(BuildContext context) {
     if (_isCheckingLogin) {
-      return const Scaffold(
+      return  Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
@@ -75,10 +75,10 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
     }
 
     if (_isLoggedIn) {
-      return const ProfileView();
+      return  ProfileView();
     }
 
-    return const SignInView();
+    return  SignInView();
   }
 }
 

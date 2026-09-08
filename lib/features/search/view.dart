@@ -61,11 +61,11 @@ class _SearchScreenState extends State<SearchView> {
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppColors.white,
+                  color: AppColors.card,
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.softShadow05,
+                      color: AppColors.shadow,
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

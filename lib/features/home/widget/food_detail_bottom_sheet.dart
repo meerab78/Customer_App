@@ -54,7 +54,7 @@ void showFoodDetailBottomSheet(
                   sigmaY: 3,
                 ),
                 child: Container(
-                  color: AppColors.black.withOpacity(.10),
+                  color: AppColors.shadow,
                 ),
               ),
 
@@ -65,9 +65,9 @@ void showFoodDetailBottomSheet(
                     maxHeight:
                     MediaQuery.of(sheetContext).size.height * .72,
                   ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.vertical(
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(28),
                     ),
                   ),
@@ -80,9 +80,8 @@ void showFoodDetailBottomSheet(
                         width: 42,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColors.grey300,
-                          borderRadius:
-                          BorderRadius.circular(20),
+                          color: AppColors.borderLight,
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
 
@@ -107,12 +106,13 @@ void showFoodDetailBottomSheet(
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: AppColors.grey100,
+                                  color: AppColors.containerColor4,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.close_rounded,
                                   size: 20,
+                                  color: AppColors.iconColor,
                                 ),
                               ),
                             ),

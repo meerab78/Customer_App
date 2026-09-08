@@ -184,11 +184,11 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.04),
+            color: AppColors.shadow,
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -237,7 +237,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 
           if (isDelivered == false) ...[
             const SizedBox(height: 22),
-            Container(height: 1, color: AppColors.grey200),
+            Container(height: 1, color: AppColors.borderLight),
             const SizedBox(height: 22),
             _progressTracker(),
           ],
@@ -265,7 +265,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                     width: 26,
                     height: 26,
                     decoration: BoxDecoration(
-                      color: isDone ? AppColors.primary : AppColors.grey200,
+                      color: isDone ? AppColors.primary : AppColors.borderLight,
                       shape: BoxShape.circle,
                       border: isCurrent
                           ? Border.all(
@@ -285,9 +285,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                       child: Container(
                         height: 3,
                         decoration: BoxDecoration(
-                          color: index < current
-                              ? AppColors.primary
-                              : AppColors.grey200,
+                          color: index < current ? AppColors.primary : AppColors.borderLight,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -456,7 +454,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             _payRow('Delivery Fee', 'PKR ${_order.deliveryCharge}'),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Container(height: 1, color: AppColors.grey200),
+            child: Container(height: 1, color: AppColors.borderLight),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -493,11 +491,11 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: AppColors.black.withOpacity(0.04),
+            color: AppColors.shadow,
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),

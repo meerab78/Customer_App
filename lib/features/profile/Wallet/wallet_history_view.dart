@@ -147,9 +147,9 @@ class _WalletHistoryViewState extends State<WalletHistoryView> {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.grey200),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Row(
         children: [

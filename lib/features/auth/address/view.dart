@@ -116,11 +116,11 @@ class _AddressScreenState extends State<AddressView> {
                   // Search bar
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.white,
+                      color: AppColors.card,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: AppColors.softShadow08,
+                          color: AppColors.shadow,
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -157,11 +157,11 @@ class _AddressScreenState extends State<AddressView> {
                     Container(
                       constraints: const BoxConstraints(maxHeight: 220),
                       decoration: BoxDecoration(
-                        color: AppColors.white,
+                        color: AppColors.card,
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.softShadow08,
+                            color: AppColors.shadow,
                             blurRadius: 14,
                             offset: const Offset(0, 4),
                           ),
@@ -174,7 +174,7 @@ class _AddressScreenState extends State<AddressView> {
                         separatorBuilder: (_, __) => Divider(
                           height: 1,
                           indent: 56,
-                          color: AppColors.grey200,
+                          color: AppColors.borderLight,
                         ),
                         itemBuilder: (context, index) {
                           final place = provider.searchResults[index];
@@ -230,7 +230,7 @@ class _AddressScreenState extends State<AddressView> {
               child: FloatingActionButton(
                 mini: true,
                 elevation: 0,
-                backgroundColor: AppColors.white,
+                backgroundColor: AppColors.card,
                 onPressed: () async {
                   await provider.getCurrentLocation();
                 },
@@ -249,11 +249,11 @@ class _AddressScreenState extends State<AddressView> {
             child: Container(
               padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
               decoration: BoxDecoration(
-                color: AppColors.white,
+                color: AppColors.card,
                 borderRadius: BorderRadius.circular(26),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.softShadow08,
+                    color: AppColors.shadow,
                     blurRadius: 20,
                     offset: const Offset(0, -4),
                   ),
@@ -268,7 +268,7 @@ class _AddressScreenState extends State<AddressView> {
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 14),
                     decoration: BoxDecoration(
-                      color: AppColors.grey200,
+                      color: AppColors.borderLight,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
@@ -325,8 +325,8 @@ class _AddressScreenState extends State<AddressView> {
                   // House / Street / Landmark field
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.grey100.withOpacity(0.6),
-                      border: Border.all(color: AppColors.grey200),
+                      color: AppColors.containerColor4,
+                      border: Border.all(color: AppColors.borderLight),
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: TextField(

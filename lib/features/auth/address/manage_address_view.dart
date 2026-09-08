@@ -345,17 +345,15 @@ class _ManageAddressViewState extends State<ManageAddressView> {
         padding: const EdgeInsets.all(14),
 
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected
-                ? AppColors.primary
-                : AppColors.grey200,
+            color: isSelected ? AppColors.primary : AppColors.borderLight,
             width: isSelected ? 1.6 : 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.softShadow06,
+              color: AppColors.shadow,
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -374,7 +372,7 @@ class _ManageAddressViewState extends State<ManageAddressView> {
               decoration: BoxDecoration(
                 color: hasAddress
                     ? AppColors.primary.withOpacity(0.10)
-                    : AppColors.grey100,
+                    : AppColors.containerColor4,
                 borderRadius: BorderRadius.circular(14),
               ),
               child: Icon(
@@ -471,7 +469,7 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                 margin: const EdgeInsets.only(left: 2),
 
                 decoration: BoxDecoration(
-                  color: AppColors.grey100,
+                  color: AppColors.containerColor4,
                   borderRadius: BorderRadius.circular(10),
                 ),
 

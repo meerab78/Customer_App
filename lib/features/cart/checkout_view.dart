@@ -2,8 +2,10 @@ import 'package:customer_app/core/utils/page_transitions.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../core/constant/app_constants.dart';
 import '../coupon/controller.dart';
 import '../coupon/coupon_section.dart';
+import '../profile/Wallet/controller.dart' show WalletController;
 import 'controller.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
@@ -31,6 +33,7 @@ class _CheckoutViewState extends State<CheckoutView> {
   final SharedPrefService _prefs = SharedPrefService();
   bool _isPlacingOrder = false;
   String _customerId = '';
+  bool _useWallet = false;
 
   @override
   void initState() {
@@ -65,6 +68,9 @@ class _CheckoutViewState extends State<CheckoutView> {
     } else {
       debugPrint("Skipping loadCoupons — branchId empty");
     }
+    if (AppConstants.enableLoyaltySystem) {
+      context.read<WalletController>().loadWalletData();
+    }
   }
 
   // Delivery fee calculate karna
@@ -96,7 +102,7 @@ class _CheckoutViewState extends State<CheckoutView> {
       builder: (_) {
         return Container(
           decoration: BoxDecoration(
-            color: AppColors.white,
+            color: AppColors.card,
             borderRadius: const BorderRadius.vertical(
               top: Radius.circular(28),
             ),
@@ -215,7 +221,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                                   decoration: BoxDecoration(
                                     color: isSelected
                                         ? AppColors.primary.withOpacity(.12)
-                                        : AppColors.white,
+                                        : AppColors.card,
                                     borderRadius:
                                     BorderRadius.circular(14),
                                   ),
@@ -285,7 +291,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: AppColors.grey200,
+                                        color: AppColors.borderLight,
                                       ),
                                     ),
                                   ),
@@ -390,6 +396,14 @@ class _CheckoutViewState extends State<CheckoutView> {
       final couponCtrl = context.read<CouponController>();
       final appliedCoupon = couponCtrl.appliedCoupon;
       final legacy = couponCtrl.appliedPromotionData?.legacyCompat;
+      final walletCtrl = context.read<WalletController>();
+      double deliveryCharges = cart.orderType == 'Delivery' ? addressManager.deliveryFee : 0;
+      double subtotalAfterDiscount = subTotal + deliveryCharges - couponCtrl.discountAmount;
+      double walletToApply = (_useWallet && AppConstants.enableLoyaltySystem)
+          ? (walletCtrl.walletAmount > subtotalAfterDiscount
+          ? subtotalAfterDiscount
+          : walletCtrl.walletAmount)
+          : 0.0;
 
       final payload = OrderPayloadBuilder.build(
         cartItems: cart.cartItems,
@@ -405,14 +419,17 @@ class _CheckoutViewState extends State<CheckoutView> {
         discountPercent: appliedCoupon?.isPercentage == true
             ? appliedCoupon!.discountValue
             : (legacy?.discountPer?.toDouble() ?? 0),
-        discountId: appliedCoupon?.discountId ??
-            int.tryParse('${legacy?.discountId ?? ''}'),
-        couponId: appliedCoupon?.couponId ??
-            int.tryParse('${legacy?.couponId ?? ''}'),
+        discountId: appliedCoupon?.discountId ?? int.tryParse('${legacy?.discountId ?? ''}'),
+        couponId: appliedCoupon?.couponId ?? int.tryParse('${legacy?.couponId ?? ''}'),
+        walletAmount: walletToApply,
       );
       final response = await _orderRepository.placeOrder(payload);
 
       if (!mounted) return;
+      if (AppConstants.enableLoyaltySystem) {
+        walletCtrl.loadWalletData();
+      }
+
 
       if (response['Success'] == true) {
         await cart.clearCart();
@@ -528,9 +545,16 @@ class _CheckoutViewState extends State<CheckoutView> {
           final taxAmount = (subtotal * taxPercent) / (100 + taxPercent);
           // Coupon discount
           final discount = context.watch<CouponController>().discountAmount;
-          // Final total (discount minus)
-          final total = subtotal + deliveryCharges - discount;
+//  NEW — wallet calculation
+          final walletController = context.watch<WalletController>();
+          final subtotalAfterDiscount = subtotal + deliveryCharges - discount;
+          final walletApplied = (_useWallet && AppConstants.enableLoyaltySystem)
+              ? (walletController.walletAmount > subtotalAfterDiscount
+              ? subtotalAfterDiscount
+              : walletController.walletAmount)
+              : 0.0;
 
+          final total = subtotalAfterDiscount - walletApplied;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
@@ -545,7 +569,7 @@ class _CheckoutViewState extends State<CheckoutView> {
               children: [
 
                 // ORDER TYPE
-
+// ORDER TYPE
                 Text(
                   'Order Type',
                   style: getBoldStyle(
@@ -556,7 +580,6 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                 const SizedBox(height: 12),
 
-                // Takeaway
                 Row(
                   children: [
                     Expanded(
@@ -564,30 +587,24 @@ class _CheckoutViewState extends State<CheckoutView> {
                         title: 'Takeaway',
                         icon: Icons.shopping_bag_rounded,
                         selected: cart.orderType == 'Takeaway',
-
                         onTap: () async {
                           await cart.changeOrderType('Takeaway');
                         },
                       ),
                     ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _orderTypeCard(
+                        title: 'Delivery',
+                        icon: Icons.delivery_dining_rounded,
+                        selected: cart.orderType == 'Delivery',
+                        onTap: () async {
+                          await cart.changeOrderType('Delivery');
+                          _recalcFee();
+                        },
+                      ),
+                    ),
                   ],
-                ),
-
-                const SizedBox(height: 10),
-
-                // Delivery
-                _orderTypeCard(
-                  title: 'Delivery',
-                  icon: Icons.delivery_dining_rounded,
-                  selected: cart.orderType == 'Delivery',
-
-                  onTap: () async {
-
-                    await cart.changeOrderType('Delivery');
-
-                    // Delivery select hone ke baad fee calculate
-                    _recalcFee();
-                  },
                 ),
                 // DELIVERY ADDRESS
 
@@ -617,6 +634,56 @@ class _CheckoutViewState extends State<CheckoutView> {
                   orderTypeId: cart.orderType == 'Delivery' ? 3 : 2,
                   deliveryFee: cart.orderType == 'Delivery' ? addressManager.deliveryFee : 0,
                 ),
+                const SizedBox(height: 16),
+                if (AppConstants.enableLoyaltySystem && walletController.walletAmount > 0) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    margin: const EdgeInsets.only(bottom: 24),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: AppColors.borderLight),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary, size: 17),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Use wallet balance',
+                                style: getSemiBoldStyle(fontSize: MyFonts.size13, color: AppColors.text),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Rs ${walletController.walletAmount.toStringAsFixed(0)} available',
+                                style: getRegularStyle(fontSize: MyFonts.size11, color: AppColors.greyText),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _useWallet,
+                          activeColor: AppColors.primary,
+                          onChanged: (val) {
+                            setState(() => _useWallet = val);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ] else
+                  const SizedBox(height: 15),
                 // ORDER SUMMARY
                 Text(
                   'Order Summary',
@@ -627,232 +694,342 @@ class _CheckoutViewState extends State<CheckoutView> {
                 ),
 
                 const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(16),
 
+                Container(
+                  width: double.infinity,
                   decoration: BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.circular(20),
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: AppColors.borderLight),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.shadow,
+                        blurRadius: 20,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
                   ),
 
                   child: Column(
                     children: [
 
-                      // Cart items
-                      ...cart.cartItems.map((food) {
-
-                        final price =
-                            double.tryParse(food.price ?? '0') ?? 0;
-
-                        final quantity = food.quantity ?? 1;
-
-                        final itemTotal = price * quantity;
-
-                        return Padding(
-                          padding: const EdgeInsets.only(
-                            bottom: 12,
-                          ),
-
-                          child: Row(
-                            children: [
-
-                              // Food name
-                              Expanded(
-                                child: Text(
-                                  '${food.menuName ?? 'Food'} × $quantity',
-                                  style: getRegularStyle(
-                                    fontSize: MyFonts.size14,
-                                    color: AppColors.text,
-                                  ),
-                                ),
+                      // ---- Header strip ----
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 30,
+                              height: 30,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(.08),
+                                borderRadius: BorderRadius.circular(9),
                               ),
-
-                              // Food total price
-                              Text(
-                                'Rs ${itemTotal.toStringAsFixed(0)}',
-                                style: getSemiBoldStyle(
-                                  fontSize: MyFonts.size14,
-                                  color: AppColors.text,
-                                ),
+                              child: Icon(
+                                Icons.receipt_long_rounded,
+                                size: 16,
+                                color: AppColors.primary,
                               ),
-                            ],
-                          ),
-                        );
-                      }),
-
-                      Divider(
-                        color: AppColors.grey200,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Bill Details',
+                              style: getSemiBoldStyle(
+                                fontSize: MyFonts.size14,
+                                color: AppColors.text,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              '${cart.cartItems.length} item${cart.cartItems.length > 1 ? 's' : ''}',
+                              style: getRegularStyle(
+                                fontSize: MyFonts.size12,
+                                color: AppColors.greyText,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
 
-                      const SizedBox(height: 8),
+                      // ---- Cart items ----
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 0, 18, 4),
+                        child: Column(
+                          children: cart.cartItems.map((food) {
+                            final price = double.tryParse(food.price ?? '0') ?? 0;
+                            final quantity = food.quantity ?? 1;
+                            final itemTotal = price * quantity;
 
-                      // Subtotal
-                      _summaryRow(
-                        'Subtotal',
-                        subtotal,
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    alignment: Alignment.center,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withOpacity(.08),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Text(
+                                      '$quantity',
+                                      style: getBoldStyle(
+                                        fontSize: MyFonts.size11,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      food.menuName ?? 'Food',
+                                      style: getRegularStyle(
+                                        fontSize: MyFonts.size14,
+                                        color: AppColors.text,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Rs ${itemTotal.toStringAsFixed(0)}',
+                                    style: getSemiBoldStyle(
+                                      fontSize: MyFonts.size14,
+                                      color: AppColors.text,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                      // TAX ROW (included tax — breakdown ke liye)
-                      if (taxAmount > 0)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Tax (${taxPercent.toStringAsFixed(0)}% incl.)',
-                                style: getRegularStyle(
-                                  fontSize: MyFonts.size14,
-                                  color: AppColors.greyText,
-                                ),
+
+                      // ---- Dashed divider ----
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Row(
+                          children: List.generate(
+                            40,
+                                (index) => Expanded(
+                              child: Container(
+                                height: 1,
+                                margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                                color: index % 2 == 0
+                                    ? AppColors.borderLight
+                                    : Colors.transparent,
                               ),
-                              Text(
-                                'Rs ${taxAmount.toStringAsFixed(0)}',
-                                style: getSemiBoldStyle(
-                                  fontSize: MyFonts.size14,
-                                  color: AppColors.text,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      // DISCOUNT ROW (coupon se)
-                      if (discount > 0)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Discount',
-                                style: getRegularStyle(
-                                  fontSize: MyFonts.size14,
-                                  color: AppColors.greyText,
-                                ),
-                              ),
-                              Text(
-                                '- Rs ${discount.toStringAsFixed(0)}',
-                                style: getSemiBoldStyle(
-                                  fontSize: MyFonts.size14,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      // DELIVERY CHARGES
-
-                      if (cart.orderType == 'Delivery')
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 4,
-                          ),
-
-                          child: Row(
-                            mainAxisAlignment:
-                            MainAxisAlignment.spaceBetween,
-
-                            children: [
-
-                              Text(
-                                'Delivery Charges',
-                                style: getRegularStyle(
-                                  fontSize: MyFonts.size14,
-                                  color: AppColors.greyText,
-                                ),
-                              ),
-
-                              // Fee calculate ho rahi hai
-                              if (addressManager.isCalculatingFee)
-
-                                Text(
-                                  'Calculating...',
-                                  style: getSemiBoldStyle(
-                                    fontSize: MyFonts.size13,
-                                    color: AppColors.greyText,
-                                  ),
-                                )
-
-                              // Delivery available nahi
-                              else if (
-                              !addressManager.deliveryAvailable
-                              )
-
-                                const SizedBox()
-
-                              // Delivery available hai
-                              else
-
-                                Text(
-                                  'Rs ${addressManager.deliveryFee.toStringAsFixed(0)}',
-                                  style: getSemiBoldStyle(
-                                    fontSize: MyFonts.size14,
-                                    color: AppColors.text,
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
-
-
-                      // OUT OF AREA MESSAGE
-
-
-                      if (cart.orderType == 'Delivery' &&
-                          !addressManager.deliveryAvailable &&
-                          !addressManager.isCalculatingFee &&
-                          addressManager.deliveryMessage != null)
-
-                        Padding(
-                          padding: const EdgeInsets.only(
-                            top: 6,
-                          ),
-
-                          child: Text(
-                            addressManager.deliveryMessage!,
-                            style: getSemiBoldStyle(
-                              fontSize: MyFonts.size12,
-                              color: AppColors.red,
                             ),
                           ),
                         ),
-
-                      const SizedBox(height: 8),
-
-                      Divider(
-                        color: AppColors.grey200,
                       ),
 
-                      const SizedBox(height: 8),
+                      // ---- Summary rows ----
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(18, 14, 18, 4),
+                        child: Column(
+                          children: [
+                            _summaryRow('Subtotal', subtotal),
 
-                      // TOTAL
+                            if (taxAmount > 0)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Tax (${taxPercent.toStringAsFixed(0)}% incl.)',
+                                      style: getRegularStyle(
+                                        fontSize: MyFonts.size14,
+                                        color: AppColors.greyText,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Rs ${taxAmount.toStringAsFixed(0)}',
+                                      style: getSemiBoldStyle(
+                                        fontSize: MyFonts.size14,
+                                        color: AppColors.text,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
 
-                      Row(
-                        mainAxisAlignment:
-                        MainAxisAlignment.spaceBetween,
+                            if (discount > 0)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.local_offer_rounded, size: 13, color: AppColors.primary),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'Discount',
+                                          style: getRegularStyle(
+                                            fontSize: MyFonts.size14,
+                                            color: AppColors.greyText,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      '- Rs ${discount.toStringAsFixed(0)}',
+                                      style: getSemiBoldStyle(
+                                        fontSize: MyFonts.size14,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
 
-                        children: [
+                            if (walletApplied > 0)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.account_balance_wallet_rounded, size: 13, color: AppColors.primary),
+                                        const SizedBox(width: 5),
+                                        Text(
+                                          'Wallet Balance',
+                                          style: getRegularStyle(
+                                            fontSize: MyFonts.size14,
+                                            color: AppColors.greyText,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Text(
+                                      '- Rs ${walletApplied.toStringAsFixed(0)}',
+                                      style: getSemiBoldStyle(
+                                        fontSize: MyFonts.size14,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
 
-                          Text(
-                            'Total',
-                            style: getBoldStyle(
-                              fontSize: MyFonts.size18,
-                              color: AppColors.text,
+                            if (cart.orderType == 'Delivery')
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 4),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Delivery Charges',
+                                      style: getRegularStyle(
+                                        fontSize: MyFonts.size14,
+                                        color: AppColors.greyText,
+                                      ),
+                                    ),
+                                    if (addressManager.isCalculatingFee)
+                                      Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 11,
+                                            height: 11,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 1.6,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Calculating...',
+                                            style: getSemiBoldStyle(
+                                              fontSize: MyFonts.size13,
+                                              color: AppColors.greyText,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    else if (!addressManager.deliveryAvailable)
+                                      const SizedBox()
+                                    else
+                                      Text(
+                                        'Rs ${addressManager.deliveryFee.toStringAsFixed(0)}',
+                                        style: getSemiBoldStyle(
+                                          fontSize: MyFonts.size14,
+                                          color: AppColors.text,
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+
+                            if (cart.orderType == 'Delivery' &&
+                                !addressManager.deliveryAvailable &&
+                                !addressManager.isCalculatingFee &&
+                                addressManager.deliveryMessage != null)
+                              Container(
+                                width: double.infinity,
+                                margin: const EdgeInsets.only(top: 10, bottom: 4),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.red.withOpacity(.07),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.error_outline_rounded, size: 15, color: AppColors.red),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        addressManager.deliveryMessage!,
+                                        style: getSemiBoldStyle(
+                                          fontSize: MyFonts.size12,
+                                          color: AppColors.red,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+
+                      // ---- Total (highlighted footer) ----
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.fromLTRB(10, 4, 10, 10),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(.06),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Total Amount',
+                              style: getBoldStyle(
+                                fontSize: MyFonts.size16,
+                                color: AppColors.text,
+                              ),
                             ),
-                          ),
-
-                          Text(
-                            'Rs ${total.toStringAsFixed(0)}',
-                            style: getExtraBoldStyle(
-                              fontSize: MyFonts.size20,
-                              color: AppColors.primary,
+                            Text(
+                              'Rs ${total.toStringAsFixed(0)}',
+                              style: getExtraBoldStyle(
+                                fontSize: MyFonts.size22,
+                                color: AppColors.primary,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
 
 
@@ -911,36 +1088,46 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   // DELIVERY ADDRESS CARD
 
+  // DELIVERY ADDRESS CARD
   Widget _deliveryAddressCard(
       AddressManagerController addressManager,
       ) {
-
     final selected = addressManager.selectedAddress;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
-
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: AppColors.grey200,
-        ),
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.borderLight),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
-
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-
           // Address icon
-          Icon(
-            selected != null
-                ? _iconForType(selected.addressTypeId)
-                : Icons.location_on_outlined,
-
-            color: AppColors.primary,
+          Container(
+            width: 46,
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(.10),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              selected != null
+                  ? _iconForType(selected.addressTypeId)
+                  : Icons.location_on_outlined,
+              color: AppColors.primary,
+              size: 22,
+            ),
           ),
 
           const SizedBox(width: 12),
@@ -948,34 +1135,46 @@ class _CheckoutViewState extends State<CheckoutView> {
           // Address details
           Expanded(
             child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
-                Text(
-                  selected != null
-                      ? selected.typeName
-                      : 'No address',
-
-                  style: getBoldStyle(
-                    fontSize: MyFonts.size14,
-                    color: AppColors.text,
-                  ),
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        selected != null ? selected.typeName : 'No address',
+                        style: getBoldStyle(
+                          fontSize: MyFonts.size14,
+                          color: AppColors.text,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (selected != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(.10),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          'Selected',
+                          style: getSemiBoldStyle(
+                            fontSize: MyFonts.size9,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-
-                const SizedBox(height: 2),
-
+                const SizedBox(height: 3),
                 Text(
-                  selected != null
-                      ? selected.address1
-                      : 'Select delivery address',
-
+                  selected != null ? selected.address1 : 'Select delivery address',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-
                   style: getRegularStyle(
-                    fontSize: MyFonts.size13,
+                    fontSize: MyFonts.size12,
                     color: AppColors.greyText,
                   ),
                 ),
@@ -983,125 +1182,100 @@ class _CheckoutViewState extends State<CheckoutView> {
             ),
           ),
 
-          // Edit address
-          IconButton(
-            onPressed: _openManageAddress,
+          const SizedBox(width: 6),
 
-            icon: Icon(
-              Icons.edit_rounded,
-              color: AppColors.primary,
-              size: 20,
-            ),
-          ),
-
-          // Address dropdown
-          if (addressManager.addresses.length > 1)
-
-            IconButton(
-              onPressed: _showAddressDropdown,
-
-              icon: Icon(
-                Icons.keyboard_arrow_down_rounded,
-                color: AppColors.text,
+          // Actions
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              InkWell(
+                onTap: _openManageAddress,
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                ),
               ),
-            ),
+              if (addressManager.addresses.length > 1) ...[
+                const SizedBox(height: 6),
+                InkWell(
+                  onTap: _showAddressDropdown,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.all(7),
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      color: AppColors.text,
+                      size: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
   }
 
-  // CALCULATE SUBTOTAL
-
-
-  double _calculateSubtotal(CartController cart) {
-
-    double total = 0;
-
-    for (final food in cart.cartItems) {
-
-      final price =
-          double.tryParse(food.price ?? '0') ?? 0;
-
-      final quantity = food.quantity ?? 1;
-
-      total = total + (price * quantity);
-    }
-
-    return total;
-  }
   // ORDER TYPE CARD
-
+  // ORDER TYPE CARD
   Widget _orderTypeCard({
     required String title,
     required IconData icon,
     required bool selected,
     required VoidCallback onTap,
   }) {
-
     return InkWell(
       onTap: onTap,
-
-      borderRadius: BorderRadius.circular(18),
-
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 15,
-        ),
-
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-
-          // Selected ho to halka primary color
           color: selected
               ? AppColors.primary.withOpacity(.08)
-              : AppColors.white,
-
-          borderRadius: BorderRadius.circular(18),
-
+              : AppColors.card,
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : AppColors.grey200,
-
+            color: selected ? AppColors.primary : AppColors.borderLight,
             width: selected ? 1.5 : 1,
           ),
         ),
-
         child: Row(
           children: [
-
-            // Icon
             Icon(
               icon,
-              color: selected
-                  ? AppColors.primary
-                  : AppColors.greyText,
+              color: selected ? AppColors.primary : AppColors.greyText,
+              size: 19,
             ),
-
-            const SizedBox(width: 10),
-
-            // Title
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 title,
-
                 style: getSemiBoldStyle(
-                  fontSize: MyFonts.size14,
-
-                  color: selected
-                      ? AppColors.primary
-                      : AppColors.text,
+                  fontSize: MyFonts.size13,
+                  color: selected ? AppColors.primary : AppColors.text,
                 ),
               ),
             ),
-
-            // Selected check
             if (selected)
-
               Icon(
                 Icons.check_circle_rounded,
                 color: AppColors.primary,
-                size: 20,
+                size: 16,
               ),
           ],
         ),
@@ -1143,5 +1317,18 @@ class _CheckoutViewState extends State<CheckoutView> {
         ],
       ),
     );
+  }
+  // CALCULATE SUBTOTAL
+  double _calculateSubtotal(CartController cart) {
+    double total = 0;
+
+    for (final food in cart.cartItems) {
+      final price = double.tryParse(food.price ?? '0') ?? 0;
+      final quantity = food.quantity ?? 1;
+
+      total = total + (price * quantity);
+    }
+
+    return total;
   }
 }

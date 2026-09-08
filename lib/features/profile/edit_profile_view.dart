@@ -51,7 +51,7 @@ class _EditProfileScreenState extends State<EditProfileView> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(28),
@@ -70,7 +70,7 @@ class _EditProfileScreenState extends State<EditProfileView> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 16),
                   decoration: BoxDecoration(
-                    color: AppColors.grey200,
+                    color: AppColors.borderLight,
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
@@ -294,15 +294,15 @@ class _EditProfileScreenState extends State<EditProfileView> {
     return Container(
       padding: const EdgeInsets.all(6),
       decoration: BoxDecoration(
-        color: AppColors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: AppColors.grey200,
+          color: AppColors.borderLight,
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.softShadow04,
+            color: AppColors.shadow,
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -327,15 +327,15 @@ class _EditProfileScreenState extends State<EditProfileView> {
           vertical: 16,
         ),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.grey200,
+            color: AppColors.borderLight,
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.softShadow04,
+              color: AppColors.shadow,
               blurRadius: 15,
               offset: const Offset(0, 5),
             ),
@@ -388,7 +388,7 @@ class _EditProfileScreenState extends State<EditProfileView> {
               height: 28,
               width: 28,
               decoration: BoxDecoration(
-                color: AppColors.grey100,
+                color: AppColors.containerColor4,
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -406,7 +406,7 @@ class _EditProfileScreenState extends State<EditProfileView> {
   void _showGenderPicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.white,
+      backgroundColor: AppColors.card,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(28),
@@ -474,9 +474,9 @@ class _EditProfileScreenState extends State<EditProfileView> {
             vertical: 14,
           ),
           decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.primary.withOpacity(0.08)
-                : AppColors.grey100,
+              color: isSelected
+                  ? AppColors.primary.withOpacity(0.08)
+                  : AppColors.containerColor4,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected

@@ -127,7 +127,7 @@ class _ChangePasswordScreenState
                     height: 40,
                     width: 40,
                     decoration: BoxDecoration(
-                      color: AppColors.grey100,
+                      color: AppColors.containerColor4,
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
@@ -212,15 +212,15 @@ class _ChangePasswordScreenState
                   width: double.infinity,
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
-                    color: AppColors.white,
+                    color: AppColors.card,
                     borderRadius: BorderRadius.circular(22),
                     border: Border.all(
-                      color: AppColors.grey200,
+                      color: AppColors.borderLight,
                       width: 1,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.softShadow06,
+                        color: AppColors.shadow,
                         blurRadius: 18,
                         offset: const Offset(0, 8),
                       ),

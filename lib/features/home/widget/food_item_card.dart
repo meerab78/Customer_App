@@ -36,14 +36,14 @@ class FoodItemCard extends StatelessWidget {
         height: 205,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppColors.grey200,
+            color: AppColors.borderLight,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.softShadow05,
+              color: AppColors.shadow,
               blurRadius: 8,
               offset: const Offset(0, 3),
             ),
@@ -239,7 +239,7 @@ class FoodItemCard extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: 110,
-      color: AppColors.grey100,
+      color: AppColors.containerColor4,
       child: Icon(
         Icons.fastfood_rounded,
         size: 42,

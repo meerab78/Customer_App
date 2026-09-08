@@ -18,6 +18,7 @@ class OrderPayloadBuilder {
     double discountPercent = 0,
     int? discountId,
     int? couponId,
+    double walletAmount = 0,
   }) {
     final bool isDelivery = orderType == 'Delivery';
     final int orderTypeId = isDelivery ? 3 : 2;
@@ -29,7 +30,9 @@ class OrderPayloadBuilder {
         : (subTotal * taxPercent) / 100;
 
     final double deliveryCharge = isDelivery ? deliveryFee : 0.0;
-    final double total = subTotal + deliveryCharge - discountAmount;
+    final double totalBeforeWallet = subTotal + deliveryCharge - discountAmount;
+    final double total = totalBeforeWallet - walletAmount;
+    final double cashAmount = total < 0 ? 0 : total;
 
     return {
       "notes": "",
@@ -44,9 +47,9 @@ class OrderPayloadBuilder {
       "tax_percent": taxPercent.toStringAsFixed(2),
       "tax_include": taxInclude ? "1" : "0",
       "delivery_charge": deliveryCharge.toStringAsFixed(2),
-      "total": total.toStringAsFixed(2),
-      "cash_amount": total.toStringAsFixed(2),
-      "wallet_amount": "0",
+      "total": cashAmount.toStringAsFixed(2),
+      "cash_amount": cashAmount.toStringAsFixed(2),
+      "wallet_amount": walletAmount.toStringAsFixed(2),
       "sub_total": subTotal.toStringAsFixed(2),
       "order_type_id": orderTypeId,
       "payment_type_id": 1,
