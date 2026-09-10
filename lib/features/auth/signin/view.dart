@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../cart/controller.dart';
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
@@ -55,6 +56,8 @@ class _LoginScreenState extends State<SignInView> {
     if (!mounted) return;
 
     if (success) {
+      context.read<CartController>().setLoggedInCheckout();
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

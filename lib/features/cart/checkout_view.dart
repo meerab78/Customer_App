@@ -1,8 +1,10 @@
 import 'package:customer_app/core/utils/page_transitions.dart';
+import 'package:customer_app/features/cart/widget/guest_details_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constant/app_constants.dart';
+import '../auth/address/view.dart' show AddressView;
 import '../coupon/controller.dart';
 import '../coupon/coupon_section.dart';
 import '../profile/Wallet/controller.dart' show WalletController;
@@ -47,12 +49,78 @@ class _CheckoutViewState extends State<CheckoutView> {
   // Checkout start hone par addresses load honge
   // Agar address nahi hai to Home address banega
   // Agar order Delivery hai to delivery fee calculate hogi
+  // Future<void> _initAddresses() async {
+  //   final addressManager = context.read<AddressManagerController>();
+  //   final cart = context.read<CartController>();
+  //
+  //   await addressManager.loadAddresses();
+  //   await addressManager.ensureHomeAddress();
+  //
+  //   if (cart.orderType == 'Delivery') {
+  //     _recalcFee();
+  //   }
+  //
+  //   final home = context.read<HomeController>();
+  //   final branchId = home.selectedBranch?.id?.toString() ?? '';
+  //   final userId = await _prefs.getUserId();
+  //   _customerId = userId?.toString() ?? '';
+  //
+  //   if (branchId.isNotEmpty) {
+  //     context.read<CouponController>().loadCoupons(branchId);
+  //   } else {
+  //     debugPrint("Skipping loadCoupons — branchId empty");
+  //   }
+  //   if (AppConstants.enableLoyaltySystem) {
+  //     context.read<WalletController>().loadWalletData();
+  //   }
+  // }
+
+  // Delivery fee calculate karna
+
+  // NEW — Guest ke liye address editor, turant update
+  Future<void> _openGuestAddressEditor() async {
+    final addressManager = context.read<AddressManagerController>();
+
+    final result = await Navigator.push<Map<String, dynamic>>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const AddressView(pickerMode: true),
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    // Turant local (unsaved) selected address update karo — koi API call nahi
+    addressManager.selectAddress(
+      CustomerAddress(
+        addressTypeId: 3,
+        addressType: 'Home',
+        address1: result["address1"] ?? "",
+        latitude: result["latitude"] ?? "",
+        longitude: result["longitude"] ?? "",
+        isDefault: 1,
+      ),
+    );
+
+    _recalcFee();
+  }
   Future<void> _initAddresses() async {
     final addressManager = context.read<AddressManagerController>();
     final cart = context.read<CartController>();
 
-    await addressManager.loadAddresses();
-    await addressManager.ensureHomeAddress();
+    // GUEST + abhi signup nahi hua -> backend address API skip karo
+    // (token nahi hai), sirf local SharedPreferences se address dikhao
+    if (cart.isGuestCheckout && !cart.isGuestLocked) {
+      await addressManager.useLocalAddressForGuest();
+    } else {
+      await addressManager.loadAddresses();
+      await addressManager.ensureHomeAddress();
+      if (!cart.isGuestCheckout) {
+        await cart.prefillLoggedInDetails();
+      }
+    }
+
+
 
     if (cart.orderType == 'Delivery') {
       _recalcFee();
@@ -60,20 +128,36 @@ class _CheckoutViewState extends State<CheckoutView> {
 
     final home = context.read<HomeController>();
     final branchId = home.selectedBranch?.id?.toString() ?? '';
-    final userId = await _prefs.getUserId();
-    _customerId = userId?.toString() ?? '';
 
-    if (branchId.isNotEmpty) {
-      context.read<CouponController>().loadCoupons(branchId);
-    } else {
-      debugPrint("Skipping loadCoupons — branchId empty");
+    // GUEST + abhi signup nahi hua -> customerId khali rahega
+    // (guest signup ke baad token/customer id milega)
+    if (!cart.isGuestCheckout || cart.isGuestLocked) {
+      final userId = await _prefs.getUserId();
+      _customerId = userId?.toString() ?? '';
     }
-    if (AppConstants.enableLoyaltySystem) {
-      context.read<WalletController>().loadWalletData();
+    if (!cart.isGuestCheckout) {
+      if (branchId.isNotEmpty) {
+        context.read<CouponController>().loadCoupons(branchId);
+      } else {
+        debugPrint("Skipping loadCoupons — branchId empty");
+      }
+
+      if (AppConstants.enableLoyaltySystem) {
+        context.read<WalletController>().loadWalletData();
+      }
     }
+    // if (branchId.isNotEmpty) {
+    //   context.read<CouponController>().loadCoupons(branchId);
+    // } else {
+    //   debugPrint("Skipping loadCoupons — branchId empty");
+    // }
+    //
+    // // GUEST + abhi signup nahi hua -> Wallet API bhi skip (token chahiye)
+    // if (AppConstants.enableLoyaltySystem &&
+    //     (!cart.isGuestCheckout || cart.isGuestLocked)) {
+    //   context.read<WalletController>().loadWalletData();
+    // }
   }
-
-  // Delivery fee calculate karna
   void _recalcFee() {
     final addressManager = context.read<AddressManagerController>();
     final cart = context.read<CartController>();
@@ -385,11 +469,83 @@ class _CheckoutViewState extends State<CheckoutView> {
       return;
     }
 
+    // GUEST SIGNUP — sirf guest checkout ke liye, aur sirf agar
+    // abhi tak locked/signed-up nahi hua
+    // GUEST SIGNUP — sirf guest checkout ke liye, aur sirf agar
+    // abhi tak locked/signed-up nahi hua
+    if (cart.isGuestCheckout && !cart.isGuestLocked) {
+      final isValid = cart.validateGuestDetails();
+
+      if (!isValid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Please fill in your name, email and phone number."),
+          ),
+        );
+        return;
+      }
+
+      final signUpSuccess = await cart.guestSignUp();
+
+      if (!mounted) return;
+
+      if (!signUpSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Could not verify guest details. Please try again."),
+          ),
+        );
+        return; // Guest signup fail -> order place NAHI hoga
+      }
+
+      // Ab token mil chuka hai. Agar Delivery hai, to abhi tak jo
+      // local (unsaved) address select thi usko backend par save
+      // karo taake usko ek real delivery_address_id mil jaye.
+      if (cart.orderType == 'Delivery' &&
+          addressManager.selectedAddress != null) {
+
+        final existingAddress = cart.guestUserData?.addresses
+            ?.where((a) => a.addressTypeId == 3)
+            .cast<CustomerAddress?>()
+            .firstWhere((a) => a != null, orElse: () => null);
+
+        if (existingAddress != null && existingAddress.id != null) {
+          // Backend pe already address maujood hai — dobara create mat karo
+          addressManager.selectAddress(existingAddress);
+        } else {
+          final localAddress = addressManager.selectedAddress!;
+          final saved = await addressManager.addEditAddress(
+            addressTypeId: localAddress.addressTypeId ?? 3,
+            address1: localAddress.address1,
+            latitude: localAddress.latitude,
+            longitude: localAddress.longitude,
+            isDefault: 1,
+          );
+
+          if (!mounted) return;
+
+          if (!saved || addressManager.selectedAddress?.id == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("Could not save delivery address. Please try again."),
+              ),
+            );
+            return;
+          }
+        }
+      }
+    }
     setState(() => _isPlacingOrder = true);
 
     try {
-      final userId = await _prefs.getUserId();
-      final customerId = userId?.toString() ?? '';
+      // final userId = await _prefs.getUserId();
+      final String customerId;
+      if (cart.isGuestCheckout && cart.guestUserData?.id != null) {
+        customerId = cart.guestUserData!.id.toString();
+      } else {
+        final userId = await _prefs.getUserId();
+        customerId = userId?.toString() ?? '';
+      }
       final subTotal = _calculateSubtotal(cart);
       final taxPercent = double.tryParse(menuData.taxPercent ?? '0') ?? 0;
       final taxInclude = menuData.taxInclude ?? true;
@@ -570,15 +726,15 @@ class _CheckoutViewState extends State<CheckoutView> {
 
                 // ORDER TYPE
 // ORDER TYPE
-                Text(
-                  'Order Type',
-                  style: getBoldStyle(
-                    fontSize: MyFonts.size19,
-                    color: AppColors.text,
-                  ),
-                ),
+//                 Text(
+//                   'Order Type',
+//                   style: getBoldStyle(
+//                     fontSize: MyFonts.size19,
+//                     color: AppColors.text,
+//                   ),
+//                 ),
 
-                const SizedBox(height: 12),
+                // const SizedBox(height: 12),
 
                 Row(
                   children: [
@@ -606,26 +762,25 @@ class _CheckoutViewState extends State<CheckoutView> {
                     ),
                   ],
                 ),
-                // DELIVERY ADDRESS
+              // DELIVERY ADDRESS
 
-                if (cart.orderType == 'Delivery') ...[
+                const SizedBox(height: 14),
+                // Text(
+                //   'Customer Details',
+                //   style: getBoldStyle(fontSize: MyFonts.size19, color: AppColors.text),
+                // ),
+                const SizedBox(height: 10),
+                GuestDetailsCard(
+                  orderType: cart.orderType,
+                  addressManager: addressManager,
+                  iconForType: _iconForType,
+                  isGuest: cart.isGuestCheckout,        // NEW
+                  onEditAddress: _openGuestAddressEditor,     // guest: map
+                  onManageAddress: _openManageAddress,        // NEW — logged-in: manage screen
+                  onShowAddressList: _showAddressDropdown,    // NEW — logged-in: dropdown
+                ),
 
-                  const SizedBox(height: 24),
-
-                  Text(
-                    'Delivery Address',
-                    style: getBoldStyle(
-                      fontSize: MyFonts.size19,
-                      color: AppColors.text,
-                    ),
-                  ),
-
-                  const SizedBox(height: 10),
-
-                  _deliveryAddressCard(addressManager),
-                ],
-
-                const SizedBox(height: 24),
+                if (!cart.isGuestCheckout) ... [ const SizedBox(height: 24),
                 CouponSection(
                   branchId: context.read<HomeController>().selectedBranch?.id?.toString() ?? '',
                   customerId: _customerId,
@@ -683,7 +838,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                     ),
                   ),
                 ] else
-                  const SizedBox(height: 15),
+                  const SizedBox(height: 15), ],
                 // ORDER SUMMARY
                 Text(
                   'Order Summary',
@@ -1045,6 +1200,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                     onPressed:
                     (_isPlacingOrder ||
                         cart.cartItems.isEmpty ||
+                        addressManager.isLoading ||
                         (cart.orderType == 'Delivery' &&
                             !addressManager.deliveryAvailable))
                         ? null
@@ -1090,10 +1246,38 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   // DELIVERY ADDRESS CARD
   Widget _deliveryAddressCard(
-      AddressManagerController addressManager,
-      ) {
+      AddressManagerController addressManager, {
+        bool isEditable = true,
+      }) {
     final selected = addressManager.selectedAddress;
-
+    if (addressManager.isLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppColors.borderLight),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Fetching your address...',
+              style: getSemiBoldStyle(fontSize: MyFonts.size13, color: AppColors.greyText),
+            ),
+          ],
+        ),
+      );
+    }
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -1185,6 +1369,7 @@ class _CheckoutViewState extends State<CheckoutView> {
           const SizedBox(width: 6),
 
           // Actions
+          if (isEditable)
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -1204,7 +1389,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                   ),
                 ),
               ),
-              if (addressManager.addresses.length > 1) ...[
+              if (addressManager.addresses.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 InkWell(
                   onTap: _showAddressDropdown,

@@ -1,6 +1,7 @@
 import '../../api_service/api_constants.dart';
 import '../../api_service/api_service.dart';
 import '../../core/db/shared_pref.dart';
+import 'model/guest_user_response.dart';
 import 'model/order_history_model.dart';
 
 class OrderRepository {
@@ -37,5 +38,38 @@ class OrderRepository {
     print("PLACE ORDER RESPONSE: $response");
 
     return Map<String, dynamic>.from(response);
+  }
+  Future<GuestUserResponse?> guestSignUp({
+    required String name,
+    required String email,
+    required String phone,
+    required String restaurantId,
+  }) async {
+    final body = {
+      "name": name,
+      "email": email,
+      "restaurant_id": restaurantId,
+      "cell_num": phone,
+    };
+
+    try {
+      print("GUEST SIGNUP REQUEST: $body");
+
+      final response = await _api.postRequest(
+        ApiConstants.guestSignUp,
+        body,
+      );
+
+      print("GUEST SIGNUP RESPONSE: $response");
+
+      if (response is Map<String, dynamic>) {
+        return GuestUserResponse.fromJson(response);
+      }
+
+      return null;
+    } catch (e) {
+      print("GUEST SIGNUP ERROR: $e");
+      return null;
+    }
   }
 }

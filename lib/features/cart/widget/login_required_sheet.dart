@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' show read;
+import 'package:provider/provider.dart' show ReadContext;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
 import '../../auth/signin/view.dart';
 import '../../home/widget/delivery_pickup_card.dart';
 import '../checkout_view.dart';
+import '../controller.dart';
 
 void showLoginRequiredSheet(BuildContext context) {
   showModalBottomSheet(
@@ -78,7 +81,8 @@ void showLoginRequiredSheet(BuildContext context) {
                 title: "Continue as Guest",
                 subtitle: "Checkout without creating an account",
                 onTap: () {
-                  Navigator.pop(context); // sheet close
+                  context.read<CartController>().startGuestCheckout();
+                  Navigator.pop(context);
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -87,8 +91,7 @@ void showLoginRequiredSheet(BuildContext context) {
                   );
                 },
               ),
-
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
             ],
           ),
         ),

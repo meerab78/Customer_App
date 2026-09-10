@@ -11,6 +11,7 @@ import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
+import '../cart/controller.dart' show CartController;
 import 'Loyalty_transactions/controller.dart';
 import 'Loyalty_transactions/loyalty_history_view.dart';
 import 'Wallet/controller.dart';
@@ -84,6 +85,7 @@ class _ProfileScreenState extends State<ProfileView> {
   Future<void> _logout() async {
     await _prefs.clearAuth();
     if (!mounted) return;
+    context.read<CartController>().resetGuestUser();
 
     Navigator.pushAndRemoveUntil(
       context,

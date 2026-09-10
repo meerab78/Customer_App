@@ -24,7 +24,7 @@ class AddressController extends ChangeNotifier {
   final PlaceSearchService _placeService = PlaceSearchService();
   List<dynamic> searchResults = [];
 
-  int _geocodeRequestId = 0; // stale response ignore karne ke liye
+  int _geocodeRequestId = 0;
 
   @override
   void dispose() {

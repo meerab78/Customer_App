@@ -1,3 +1,5 @@
+import '../../auth/address/model/address_model.dart' show CustomerAddress;
+
 class GuestUserResponse {
   GuestUserResponse({
     required this.errorMessage,
@@ -18,9 +20,6 @@ class GuestUserResponse {
       errorMessage: json["ErrorMessage"],
       message: json["Message"],
       success: json["Success"],
-      // IMPORTANT: "Data" kabhi `false` (bool) aata hai jab guest
-      // already exist ho ya validation fail ho — is liye Map hone
-      // par hi parse karo, warna null rakho (crash se bachne ke liye)
       data: (json["Data"] is Map<String, dynamic>)
           ? GuestData.fromJson(json["Data"])
           : null,
@@ -38,8 +37,8 @@ class GuestData {
     required this.cellNum,
     required this.token,
     required this.restaurantName,
-    required this.addresses,
     required this.isGuest,
+    this.addresses,
   });
 
   final int? id;
@@ -49,8 +48,8 @@ class GuestData {
   final String? cellNum;
   final String? token;
   final String? restaurantName;
-  final List<dynamic> addresses;
   final int? isGuest;
+  final List<CustomerAddress>? addresses;
 
   factory GuestData.fromJson(Map<String, dynamic> json) {
     return GuestData(
@@ -61,10 +60,12 @@ class GuestData {
       cellNum: json["cell_num"],
       token: json["token"],
       restaurantName: json["restaurant_name"],
-      addresses: json["addresses"] == null
-          ? []
-          : List<dynamic>.from(json["addresses"]),
       isGuest: json["is_guest"],
+      addresses: (json["addresses"] is List)
+          ? (json["addresses"] as List)
+          .map((e) => CustomerAddress.fromJson(e))
+          .toList()
+          : null,
     );
   }
 }

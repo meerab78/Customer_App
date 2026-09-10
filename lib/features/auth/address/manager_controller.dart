@@ -173,23 +173,31 @@ class AddressManagerController extends ChangeNotifier {
 
         // Address list dobara load karo
         await loadAddresses();
-
-        // Agar saved address default hai
-        // to usko selected address bana do
         if (isDefault == 1) {
-          for (CustomerAddress address in addresses) {
+          CustomerAddress? matched;
+          for (final address in addresses) {
             if (address.addressId == saved.addressId) {
-              selectedAddress = address;
+              matched = address;
               break;
             }
           }
-
-          // Agar list mein address na mile
-          // to saved address select kar do
-          if (selectedAddress == null) {
-            selectedAddress = saved;
-          }
+          selectedAddress = matched ?? saved;   // ✅ ab hamesha overwrite hoga
         }
+        // Agar saved address default hai
+        // to usko selected address bana do
+        // if (isDefault == 1) {
+        //   for (CustomerAddress address in addresses) {
+        //     if (address.addressId == saved.addressId) {
+        //       selectedAddress = address;
+        //       break;
+        //     }
+        //   }
+        //
+        //   // Agar list mein address na mile
+        //   // to saved address select kar do
+        //   if (selectedAddress == null) {
+        //     selectedAddress = saved;
+        //   }
       }
     } catch (e) {
       debugPrint("addEditAddress error: $e");
@@ -260,6 +268,37 @@ class AddressManagerController extends ChangeNotifier {
 
     // Calculation complete
     isCalculatingFee = false;
+
+    notifyListeners();
+  }
+
+  Future<void> useLocalAddressForGuest() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final double? latitude = prefs.getDouble("latitude");
+    final double? longitude = prefs.getDouble("longitude");
+
+    final String address =
+        prefs.getString("address") ??
+            prefs.getString("address_area") ??
+            "";
+
+    if (latitude == null || longitude == null || address.isEmpty) {
+      return; // koi saved address nahi mili
+    }
+
+    if (latitude == 0 && longitude == 0) {
+      return;
+    }
+
+    selectedAddress = CustomerAddress(
+      addressTypeId: 3,
+      addressType: 'Home',
+      address1: address,
+      latitude: latitude.toString(),
+      longitude: longitude.toString(),
+      isDefault: 1,
+    );
 
     notifyListeners();
   }

@@ -33,10 +33,35 @@ class _AddressScreenState extends State<AddressView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AddressController>().getCurrentLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<AddressController>();
+
+      final hasAddress = await provider.hasSavedAddress();
+
+      if (hasAddress) {
+        await provider.loadSavedAddress();
+
+        if (provider.latitude != null &&
+            provider.longitude != null &&
+            provider.mapController != null) {
+          await provider.mapController!.animateCamera(
+            CameraUpdate.newLatLngZoom(
+              LatLng(provider.latitude!, provider.longitude!),
+              17,
+            ),
+          );
+        }
+      } else {
+        await provider.getCurrentLocation();
+      }
     });
   }
+  // void initState() {
+  //   super.initState();
+  //   WidgetsBinding.instance.addPostFrameCallback((_) {
+  //     context.read<AddressController>().getCurrentLocation();
+  //   });
+  // }
 
   @override
   void dispose() {

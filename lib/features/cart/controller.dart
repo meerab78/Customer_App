@@ -2,20 +2,73 @@
 
 import 'package:flutter/material.dart';
 
+import '../../core/constant/app_constants.dart';
+import '../../core/db/shared_pref.dart';
 import '../../core/db/sqflite/controller.dart';
 import '../../core/db/sqflite/model.dart';
 import '../home/model/menu_model.dart' hide MenuVariation;
+import 'model/guest_user_response.dart' show GuestData;
+import 'order_repository.dart';
 
 class CartController extends ChangeNotifier {
   final DbController _dbController;
-
+  final OrderRepository _orderRepository = OrderRepository();
+  final SharedPrefService _prefs = SharedPrefService();
   String orderType = 'Takeaway';
 
 
   List<OrderDetails> cartItems = [];
   bool isLoading = false;
+  bool isGuestCheckout = false;
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  bool nameError = false;
+  bool emailError = false;
+  bool phoneError = false;
+  bool isGuestSigningUp = false;
+  GuestData? guestUserData;
+
+  // Login successful hone par guest flags clear karo
+  void setLoggedInCheckout() {
+    isGuestCheckout = false;
+    guestUserData = null;
+    nameController.clear();
+    emailController.clear();
+    phoneController.clear();
+    nameError = false;
+    emailError = false;
+    phoneError = false;
+    notifyListeners();
+  }
+
+
+  bool get isGuestLocked => guestUserData != null;
   int get totalItemCount {
     return cartItems.fold(0, (sum, item) => sum + (item.quantity ?? 1));
+  }
+
+  // Logged-in user ka saved data fields mein daal do (editable rahenge)
+  Future<void> prefillLoggedInDetails() async {
+    final name = await _prefs.getName();
+    final email = await _prefs.getEmail();
+    final phone = await _prefs.getPhone();
+
+    nameController.text = name ?? '';
+    emailController.text = email ?? '';
+    phoneController.text = phone ?? '';
+
+    notifyListeners();
+  }
+
+  // NEW — live validation check
+  bool get isGuestDetailsValid {
+    final nameValid = nameController.text.trim().isNotEmpty;
+    final emailValid =
+    RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(emailController.text.trim());
+    final phoneValid = phoneController.text.trim().length == 11 &&
+        phoneController.text.trim().startsWith('03');
+    return nameValid && emailValid && phoneValid;
   }
 
   CartController({
@@ -342,5 +395,139 @@ class CartController extends ChangeNotifier {
       );
     }
   }
+  // ============ GUEST CHECKOUT METHODS ============
 
+  void startGuestCheckout() {
+    isGuestCheckout = true;
+    notifyListeners();
+  }
+
+  bool validateGuestDetails() {
+    nameError = nameController.text.trim().isEmpty;
+
+    emailError = emailController.text.trim().isEmpty ||
+        !RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(emailController.text.trim());
+
+    phoneError = phoneController.text.trim().length != 11 ||
+        !phoneController.text.trim().startsWith('03');
+
+    notifyListeners();
+
+    return !nameError && !emailError && !phoneError;
+  }
+
+  void onGuestNameChanged(String value) {
+    if (nameError && value.trim().isNotEmpty) {
+      nameError = false;
+    }
+    notifyListeners();
+  }
+
+  void onGuestEmailChanged(String value) {
+    if (emailError &&
+        value.isNotEmpty &&
+        RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+      emailError = false;
+    }
+    notifyListeners();
+  }
+
+  void onGuestPhoneChanged(String value) {
+    if (phoneError && value.length == 11 && value.startsWith('03')) {
+      phoneError = false;
+    }
+    notifyListeners();
+  }
+
+  Future<bool> guestSignUp() async {
+    isGuestSigningUp = true;
+    notifyListeners();
+
+    try {
+      final response = await _orderRepository.guestSignUp(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        phone: phoneController.text.trim(),
+        restaurantId: AppConstants.restaurantId,
+      );
+
+      if (response == null || response.success != true) {
+        return false;
+      }
+
+      // CASE 1: naya token mila (naya guest)
+      // if (response.data?.token != null) {
+      //   await _prefs.saveToken(response.data!.token!);
+      //   guestUserData = response.data;
+      //   notifyListeners();
+      //   return true;
+      // }
+
+      // CASE 2: Data:false aaya (guest already exist karta hai) —
+      // agar pehle se koi token save hai to wahi reuse karo
+      // CASE 1: naya token mila (naya guest)
+      if (response.data?.token != null) {
+        await _prefs.saveToken(response.data!.token!);
+        if (response.data?.customerId != null) {
+          await _prefs.saveUserData(
+            userId: response.data!.id ?? 0,
+            customerId: response.data!.customerId!,
+            name: response.data!.name ?? nameController.text.trim(),
+            email: response.data!.email ?? emailController.text.trim(),
+            phone: response.data!.cellNum ?? phoneController.text.trim(),
+            restaurantId: int.tryParse(AppConstants.restaurantId) ?? 0,
+            restaurantName: response.data!.restaurantName ?? '',
+          );
+        }
+
+        guestUserData = response.data;
+        notifyListeners();
+        return true;
+      }
+      final existingToken = await _prefs.getToken();
+
+      if (existingToken != null && existingToken.isNotEmpty) {
+        guestUserData = GuestData(
+          id: null,
+          customerId: null,
+          name: nameController.text.trim(),
+          email: emailController.text.trim(),
+          cellNum: phoneController.text.trim(),
+          token: existingToken,
+          restaurantName: null,
+          isGuest: 1,
+        );
+        notifyListeners();
+        return true;
+      }
+
+      // Na naya token mila, na purana koi save hai -> fail
+      return false;
+    } finally {
+      isGuestSigningUp = false;
+      notifyListeners();
+    }
+  }
+
+  // "Clear" button dabane par — dobara naye details se try karne ke liye
+  void resetGuestUser() {
+    guestUserData = null;
+    nameController.clear();
+    emailController.clear();
+    phoneController.clear();
+    nameError = false;
+    emailError = false;
+    phoneError = false;
+    notifyListeners();
+  }
+
+  // ==================================================
+
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
 }

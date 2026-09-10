@@ -1,8 +1,4 @@
 import '../../core/db/sqflite/model.dart';
-
-/// Cart + address + branch/tax data ko exact `place_order` JSON payload mein
-/// convert karta hai. Pure static builder hai -- kisi controller/repository.dart
-/// se independent, taake reuse/test karna aasan rahe.
 class OrderPayloadBuilder {
   static Map<String, dynamic> build({
     required List<OrderDetails> cartItems,
@@ -23,16 +19,22 @@ class OrderPayloadBuilder {
     final bool isDelivery = orderType == 'Delivery';
     final int orderTypeId = isDelivery ? 3 : 2;
 
-    // tax_include is API mein hamesha true hota hai, lekin formula dono
-    // cases handle karta hai taake future-proof rahe.
     final double taxAmount = taxInclude
         ? (subTotal * taxPercent) / (100 + taxPercent)
         : (subTotal * taxPercent) / 100;
 
     final double deliveryCharge = isDelivery ? deliveryFee : 0.0;
     final double totalBeforeWallet = subTotal + deliveryCharge - discountAmount;
-    final double total = totalBeforeWallet - walletAmount;
-    final double cashAmount = total < 0 ? 0 : total;
+    final double remainingAfterWallet = totalBeforeWallet - walletAmount;
+    final double cashAmount = remainingAfterWallet < 0 ? 0 : remainingAfterWallet;
+    final int paymentTypeId;
+    if (walletAmount <= 0) {
+      paymentTypeId = 1;
+    } else if (walletAmount >= totalBeforeWallet) {
+      paymentTypeId = 10;
+    } else {
+      paymentTypeId = 5;
+    }
 
     return {
       "notes": "",
@@ -47,12 +49,12 @@ class OrderPayloadBuilder {
       "tax_percent": taxPercent.toStringAsFixed(2),
       "tax_include": taxInclude ? "1" : "0",
       "delivery_charge": deliveryCharge.toStringAsFixed(2),
-      "total": cashAmount.toStringAsFixed(2),
+      "total": totalBeforeWallet.toStringAsFixed(2),
       "cash_amount": cashAmount.toStringAsFixed(2),
       "wallet_amount": walletAmount.toStringAsFixed(2),
       "sub_total": subTotal.toStringAsFixed(2),
       "order_type_id": orderTypeId,
-      "payment_type_id": 1,
+      "payment_type_id": paymentTypeId,
       "delivery_address_id": isDelivery
           ? (int.tryParse(deliveryAddressId ?? '') ?? 0)
           : 0,
