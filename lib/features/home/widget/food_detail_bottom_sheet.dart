@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/utils/order_type_price.dart' show pickOrderTypePrice;
 import '../../../core/utils/page_transitions.dart' show PageTransitions;
 import '../model/menu_model.dart';
 import '../variation_view.dart';
@@ -29,21 +30,37 @@ void showFoodDetailBottomSheet(
     builder: (sheetContext) {
       return StatefulBuilder(
         builder: (sheetContext, setState) {
-          final double basePrice = double.tryParse(food.price ?? '0') ?? 0;
+          final orderType = sheetContext.read<CartController>().orderType;
+
+          final double basePrice = pickOrderTypePrice(
+            orderType: orderType,
+            dinePrice: food.price,
+            takeawayPrice: food.takeAwayPrice,
+            deliveryPrice: food.deliveryPrice,
+          );
 
           final double variationExtra = selectedVariation != null
-              ? double.tryParse(selectedVariation!.price ?? '0') ?? 0
+              ? pickOrderTypePrice(
+            orderType: orderType,
+            dinePrice: selectedVariation!.price,
+            takeawayPrice: selectedVariation!.takeAwayPrice,
+            deliveryPrice: selectedVariation!.deliveryPrice,
+          )
               : 0;
 
           double choicesExtra = 0;
           if (selectedVariation != null) {
             for (final group in selectedVariation!.choiceGroups) {
               for (final choice in group.choices) {
-                choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+                choicesExtra += pickOrderTypePrice(
+                  orderType: orderType,
+                  dinePrice: choice.price,
+                  takeawayPrice: choice.takeAwayPrice,
+                  deliveryPrice: choice.deliveryPrice,
+                );
               }
             }
           }
-
           final double selectedPrice = basePrice + variationExtra + choicesExtra;
           final double total = selectedPrice * quantity;
           return Stack(

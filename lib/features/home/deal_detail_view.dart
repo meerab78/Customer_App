@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
+import '../../core/utils/order_type_price.dart';
 import '../cart/controller.dart';
 import 'model/menu_model.dart';
 import 'widget/deal_item_card.dart';
@@ -32,7 +33,6 @@ class _DealDetailViewState extends State<DealDetailView> {
     dealItems = List<Menu>.from(
       widget.food.dealMenuDetails,
     );
-
     itemCompletion = List<bool>.filled(
       dealItems.length,
       false,
@@ -61,14 +61,29 @@ class _DealDetailViewState extends State<DealDetailView> {
   }
 
   double get totalDealPrice {
-    double total = 0;
+    final basePrice = double.tryParse(widget.food.price ?? '0') ?? 0;
+    double extra = 0;
+
     for (final item in dealItems) {
-      final itemPrice =
-          double.tryParse(item.price ?? '0') ?? 0;
-      final quantity = item.quantity ?? 1;
-      total += itemPrice * quantity;
+      // Direct choices
+      for (final group in item.choiceGroup) {
+        for (final choice in group.choices) {
+          extra += double.tryParse(choice.price ?? '0') ?? 0;
+        }
+      }
+      // Variation ke andar wali NESTED choices — pehle yeh miss ho rahi thi
+      if (item.menuVariation != null) {
+        for (final group in item.menuVariation!.choiceGroups) {
+          for (final choice in group.choices) {
+            extra += double.tryParse(choice.price ?? '0') ?? 0;
+          }
+        }
+      }
+      // NOTE: item.menuVariation!.price yahan JAAN-BUJH KAR add nahi ki —
+      // deal ki fixed price mein variation ki apni base cost shamil hai.
     }
-    return total;
+
+    return basePrice + extra;
   }
 // ADD DEAL TO CART
   Future<void> _addDealToCart() async {
@@ -84,17 +99,50 @@ class _DealDetailViewState extends State<DealDetailView> {
       return;
     }
 
-    final finalPrice = totalDealPrice;
+    final orderType = context.read<CartController>().orderType;
+
+    double totalDealPriceFor(String type) {
+      final basePrice = pickOrderTypePrice(
+        orderType: type,
+        dinePrice: widget.food.price,
+        takeawayPrice: widget.food.takeAwayPrice,
+        deliveryPrice: widget.food.deliveryPrice,
+      );
+
+      double extra = 0;
+      for (final item in dealItems) {
+        for (final group in item.choiceGroup) {
+          for (final choice in group.choices) {
+            extra += pickOrderTypePrice(
+              orderType: type,
+              dinePrice: choice.price,
+              takeawayPrice: choice.takeAwayPrice,
+              deliveryPrice: choice.deliveryPrice,
+            );
+          }
+        }
+        if (item.menuVariation != null) {
+          for (final group in item.menuVariation!.choiceGroups) {
+            for (final choice in group.choices) {
+              extra += pickOrderTypePrice(
+                orderType: type,
+                dinePrice: choice.price,
+                takeawayPrice: choice.takeAwayPrice,
+                deliveryPrice: choice.deliveryPrice,
+              );
+            }
+          }
+        }
+      }
+      return basePrice + extra;
+    }
 
     final updatedDeal = widget.food.copyWith(
       isDeal: true,
-
-      price: finalPrice.toString(),
-      takeAwayPrice: finalPrice.toString(),
-      deliveryPrice: finalPrice.toString(),
-
+      price: totalDealPriceFor('DineIn').toString(),
+      takeAwayPrice: totalDealPriceFor('Takeaway').toString(),
+      deliveryPrice: totalDealPriceFor('Delivery').toString(),
       dealMenuDetails: dealItems,
-
       menuVariation: null,
       choiceGroup: [],
     );
@@ -113,53 +161,6 @@ class _DealDetailViewState extends State<DealDetailView> {
           (route) => route.isFirst,
     );
   }
-  // Future<void> _addDealToCart() async {
-  //   if (!isDealComplete) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text(
-  //           'Please complete all required selections.',
-  //         ),
-  //       ),
-  //     );
-  //
-  //     return;
-  //   }
-  //
-  //   final finalPrice = totalDealPrice;
-  //   // UPDATED DEAL
-  //   final updatedDeal = widget.food.copyWith(
-  //     isDeal: true,
-  //
-  //     price: finalPrice.toString(),
-  //     takeAwayPrice: finalPrice.toString(),
-  //     deliveryPrice: finalPrice.toString(),
-  //
-  //     // Deal ki customization yahan rahegi
-  //     dealMenuDetails: dealItems,
-  //
-  //     // Deal ke liye variation nahi hoga
-  //     menuVariation: null,
-  //
-  //     // Deal ke direct choices bhi nahi
-  //     choiceGroup: [],
-  //   );
-  //   await context.read<CartController>().addToCart(
-  //     updatedDeal,
-  //     1,
-  //   );
-  //
-  //   if (!mounted) return;
-  //
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(
-  //       content: Text(
-  //         '${widget.food.name ?? 'Deal'} added to cart ✓',
-  //       ),
-  //       duration: const Duration(seconds: 2),
-  //     ),
-  //   );
-  // }
 
   int get _completedCount =>
       itemCompletion.where((completed) => completed).length;
@@ -343,10 +344,12 @@ class _DealDetailViewState extends State<DealDetailView> {
 
                   onItemUpdated:
                       (updatedItem) {
+                    debugPrint('BEFORE total: $totalDealPrice');
                     setState(() {
                       dealItems[index] =
                           updatedItem;
                     });
+                    debugPrint('AFTER total: $totalDealPrice');
                   },
 
                   onCompletionChanged:

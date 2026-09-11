@@ -170,24 +170,28 @@ class MenuVariation {
     required this.id,
     required this.name,
     required this.price,
+    this.takeawayPrice,
+    this.deliveryPrice,
     required this.note,
   });
 
   final String? id;
   final String? name;
   final String? price;
+  final String? takeawayPrice;
+  final String? deliveryPrice;
   final String? note;
 
   MenuVariation copyWith({
-    String? id,
-    String? name,
-    String? price,
-    String? note,
+    String? id, String? name, String? price,
+    String? takeawayPrice, String? deliveryPrice, String? note,
   }) {
     return MenuVariation(
       id: id ?? this.id,
       name: name ?? this.name,
       price: price ?? this.price,
+      takeawayPrice: takeawayPrice ?? this.takeawayPrice,
+      deliveryPrice: deliveryPrice ?? this.deliveryPrice,
       note: note ?? this.note,
     );
   }
@@ -197,21 +201,18 @@ class MenuVariation {
       id: json["id"]?.toString(),
       name: json["name"],
       price: json["price"]?.toString(),
+      takeawayPrice: json["takeaway_price"]?.toString(),
+      deliveryPrice: json["delivery_price"]?.toString(),
       note: json["note"],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
-        "price": price,
-        "note": note,
-      };
-
-  @override
-  String toString() {
-    return "$id, $name, $price, $note, ";
-  }
+    "id": id, "name": name, "price": price,
+    "takeaway_price": takeawayPrice,
+    "delivery_price": deliveryPrice,
+    "note": note,
+  };
 }
 
 class OrderDetailChoice {
@@ -219,6 +220,8 @@ class OrderDetailChoice {
     required this.choiceId,
     required this.choiceName,
     required this.price,
+    this.takeawayPrice,
+    this.deliveryPrice,
     required this.choiceGroupId,
     this.choiceGroupName,
   });
@@ -226,20 +229,22 @@ class OrderDetailChoice {
   final int? choiceId;
   final String? choiceName;
   final String? price;
+  final String? takeawayPrice;
+  final String? deliveryPrice;
   final String? choiceGroupId;
   final String? choiceGroupName;
 
   OrderDetailChoice copyWith({
-    int? choiceId,
-    String? choiceName,
-    String? price,
-    String? choiceGroupId,
-    String? choiceGroupName,
+    int? choiceId, String? choiceName, String? price,
+    String? takeawayPrice, String? deliveryPrice,
+    String? choiceGroupId, String? choiceGroupName,
   }) {
     return OrderDetailChoice(
       choiceId: choiceId ?? this.choiceId,
       choiceName: choiceName ?? this.choiceName,
       price: price ?? this.price,
+      takeawayPrice: takeawayPrice ?? this.takeawayPrice,
+      deliveryPrice: deliveryPrice ?? this.deliveryPrice,
       choiceGroupId: choiceGroupId ?? this.choiceGroupId,
       choiceGroupName: choiceGroupName ?? this.choiceGroupName,
     );
@@ -250,23 +255,18 @@ class OrderDetailChoice {
       choiceId: json["choice_id"] ?? json["id"],
       choiceName: json["choice_name"] ?? json["name"],
       price: json["price"]?.toString(),
+      takeawayPrice: json["takeaway_price"]?.toString(),
+      deliveryPrice: json["delivery_price"]?.toString(),
       choiceGroupId: json["choice_group_id"]?.toString(),
       choiceGroupName: json["choice_group_name"],
     );
   }
 
   Map<String, dynamic> toJson() => {
-        "choice_id": choiceId,
-        "choice_name": choiceName,
-        "price": price,
-        "choice_group_id": choiceGroupId,
-        "choice_group_name": choiceGroupName,
-      };
-
-  @override
-  String toString() {
-    return "$choiceId, $choiceName, $price, $choiceGroupId, $choiceGroupName, ";
-  }
+    "choice_id": choiceId, "choice_name": choiceName, "price": price,
+    "takeaway_price": takeawayPrice, "delivery_price": deliveryPrice,
+    "choice_group_id": choiceGroupId, "choice_group_name": choiceGroupName,
+  };
 }
 
 dynamic _decodeJson(dynamic value) {

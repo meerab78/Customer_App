@@ -6,6 +6,7 @@ import '../../core/constant/app_constants.dart';
 import '../../core/db/shared_pref.dart';
 import '../../core/db/sqflite/controller.dart';
 import '../../core/db/sqflite/model.dart';
+import '../../core/utils/order_type_price.dart';
 import '../home/model/menu_model.dart' hide MenuVariation;
 import 'model/guest_user_response.dart' show GuestData;
 import 'order_repository.dart';
@@ -103,6 +104,7 @@ class CartController extends ChangeNotifier {
     final isDeal = food.isDeal == true;
 
     return OrderDetails(
+
       menuId: food.id?.toString() ?? food.menuId,
       menuName: food.name,
       price: food.price,
@@ -119,10 +121,12 @@ class CartController extends ChangeNotifier {
             ),
       orderDetailChoice: isDeal ? [] : _choicesFromMenu(food),
       dealDetails: isDeal ? _dealDetailsFromMenu(food) : [],
+
     );
   }
 
   List<OrderDetailChoice> _choicesFromMenu(Menu food) {
+
     final groups = food.menuVariation?.choiceGroups.isNotEmpty == true
         ? food.menuVariation!.choiceGroups
         : food.choiceGroup;
@@ -138,6 +142,8 @@ class CartController extends ChangeNotifier {
             price: choice.price,
             choiceGroupId: group.id?.toString(),
             choiceGroupName: group.name,
+            takeawayPrice: choice.takeAwayPrice,
+            deliveryPrice: choice.deliveryPrice,
           ),
         );
       }
@@ -157,11 +163,13 @@ class CartController extends ChangeNotifier {
         menuVariation: item.menuVariation == null
             ? null
             : MenuVariation(
-                id: item.menuVariation!.id?.toString(),
-                name: item.menuVariation!.name,
-                price: item.menuVariation!.price,
-                note: null,
-              ),
+          id: item.menuVariation!.id?.toString(),
+          name: item.menuVariation!.name,
+          price: item.menuVariation!.price,
+          takeawayPrice: item.menuVariation!.takeAwayPrice,
+          deliveryPrice: item.menuVariation!.deliveryPrice,
+          note: null,
+        ),
         orderDetailChoice: _choicesFromDealItem(item),
         dealDetails: [],
       );
@@ -181,6 +189,8 @@ class CartController extends ChangeNotifier {
               price: choice.price,
               choiceGroupId: group.id?.toString(),
               choiceGroupName: group.name,
+              takeawayPrice: choice.takeAwayPrice,
+              deliveryPrice: choice.deliveryPrice,
             ),
           );
         }
@@ -210,14 +220,21 @@ class CartController extends ChangeNotifier {
     Menu food,
     int quantity,
   ) async {
-    final selectedPrice = food.isDeal == true
+    final dine = food.isDeal == true
         ? double.tryParse(food.price ?? '0') ?? 0
-        : getSelectedPrice(food);
+        : _computeSelectedPrice(food, 'DineIn');
+    final takeaway = food.isDeal == true
+        ? double.tryParse(food.takeAwayPrice ?? food.price ?? '0') ?? 0
+        : _computeSelectedPrice(food, 'Takeaway');
+    final delivery = food.isDeal == true
+        ? double.tryParse(food.deliveryPrice ?? food.price ?? '0') ?? 0
+        : _computeSelectedPrice(food, 'Delivery');
+
     final newItem = _toOrderDetails(food).copyWith(
       quantity: quantity,
-      price: selectedPrice.toString(),
-      takeawayPrice: selectedPrice.toString(),
-      deliveryPrice: selectedPrice.toString(),
+      price: dine.toString(),
+      takeawayPrice: takeaway.toString(),
+      deliveryPrice: delivery.toString(),
     );
 
     final index = cartItems.indexWhere(
@@ -322,42 +339,74 @@ class CartController extends ChangeNotifier {
   }
 
   // GET SELECTED PRICE
-  double getSelectedPrice(Menu food) {
-    final basePrice = double.tryParse(food.price ?? '0') ?? 0;
+  double getSelectedPrice(Menu food) => _computeSelectedPrice(food, orderType);
 
-    double variationPrice = 0;
+  double _computeSelectedPrice(Menu food, String type) {
+    double total;
+    List<ChoiceGroup> relevantGroups;
 
     if (food.menuVariation != null) {
-      variationPrice =
-          double.tryParse(food.menuVariation!.price ?? '0') ?? 0;
+      // Variation base price ko REPLACE karti hai, add nahi
+      total = pickOrderTypePrice(
+        orderType: type,
+        dinePrice: food.menuVariation!.price,
+        takeawayPrice: food.menuVariation!.takeAwayPrice,
+        deliveryPrice: food.menuVariation!.deliveryPrice,
+      );
+      relevantGroups = food.menuVariation!.choiceGroups; // nested choices
+    } else {
+      total = pickOrderTypePrice(
+        orderType: type,
+        dinePrice: food.price,
+        takeawayPrice: food.takeAwayPrice,
+        deliveryPrice: food.deliveryPrice,
+      );
+      relevantGroups = food.choiceGroup; // direct choices
     }
 
-    double choicesPrice = 0;
-
-    for (final group in food.choiceGroup) {
+    for (final group in relevantGroups) {
       for (final choice in group.choices) {
-        choicesPrice += double.tryParse(choice.price ?? '0') ?? 0;
+        total += pickOrderTypePrice(
+          orderType: type,
+          dinePrice: choice.price,
+          takeawayPrice: choice.takeAwayPrice,
+          deliveryPrice: choice.deliveryPrice,
+        );
       }
     }
-
-    final finalPrice = basePrice + variationPrice + choicesPrice;
-
-    return finalPrice;
+    return total;
   }
 
   double _orderPrice(OrderDetails item) {
-    final basePrice = double.tryParse(item.price ?? '0') ?? 0;
+    double basePrice;
+    List<OrderDetailChoice> relevantChoices;
 
-    final variationPrice =
-        double.tryParse(item.menuVariation?.price ?? '0') ?? 0;
-
-    double choicesPrice = 0;
-
-    for (final choice in item.orderDetailChoice) {
-      choicesPrice += double.tryParse(choice.price ?? '0') ?? 0;
+    if (item.menuVariation != null) {
+      basePrice = pickOrderTypePrice(
+        orderType: orderType,
+        dinePrice: item.menuVariation!.price,
+        takeawayPrice: item.menuVariation!.takeawayPrice,
+        deliveryPrice: item.menuVariation!.deliveryPrice,
+      );
+    } else {
+      basePrice = pickOrderTypePrice(
+        orderType: orderType,
+        dinePrice: item.price,
+        takeawayPrice: item.takeawayPrice,
+        deliveryPrice: item.deliveryPrice,
+      );
     }
 
-    return basePrice + variationPrice + choicesPrice;
+    double choicesPrice = 0;
+    for (final choice in item.orderDetailChoice) {
+      choicesPrice += pickOrderTypePrice(
+        orderType: orderType,
+        dinePrice: choice.price,
+        takeawayPrice: choice.takeawayPrice,
+        deliveryPrice: choice.deliveryPrice,
+      );
+    }
+    return basePrice + choicesPrice;
   }
 
   // CHANGE ORDER TYPE
@@ -454,18 +503,6 @@ class CartController extends ChangeNotifier {
       if (response == null || response.success != true) {
         return false;
       }
-
-      // CASE 1: naya token mila (naya guest)
-      // if (response.data?.token != null) {
-      //   await _prefs.saveToken(response.data!.token!);
-      //   guestUserData = response.data;
-      //   notifyListeners();
-      //   return true;
-      // }
-
-      // CASE 2: Data:false aaya (guest already exist karta hai) —
-      // agar pehle se koi token save hai to wahi reuse karo
-      // CASE 1: naya token mila (naya guest)
       if (response.data?.token != null) {
         await _prefs.saveToken(response.data!.token!);
         if (response.data?.customerId != null) {
@@ -521,7 +558,6 @@ class CartController extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ==================================================
 
   @override
   void dispose() {

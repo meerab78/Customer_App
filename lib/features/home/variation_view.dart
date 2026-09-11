@@ -1,10 +1,14 @@
 
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' show read;
+import 'package:provider/provider.dart' show ReadContext;
 
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_paddings.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
+import '../../core/utils/order_type_price.dart';
+import '../cart/controller.dart';
 import 'model/menu_model.dart';
 import 'widget/variation_selector.dart';
 class VariationView extends StatefulWidget {
@@ -135,52 +139,38 @@ class _VariationViewState extends State<VariationView> {
   }
   // FINAL PRICE
   double get selectedPrice {
-    final basePrice =
-        double.tryParse(widget.food.price ?? '0') ?? 0;
+    final orderType = context.read<CartController>().orderType;
 
-    double variationPrice = 0;
+    double total;
 
     if (selectedVariation != null) {
-      variationPrice =
-          double.tryParse(
-            selectedVariation!.price ?? '0',
-          ) ??
-              0;
+      // Variation base price ko REPLACE karti hai, item price nahi add hota
+      total = pickOrderTypePrice(
+        orderType: orderType,
+        dinePrice: selectedVariation!.price,
+        takeawayPrice: selectedVariation!.takeAwayPrice,
+        deliveryPrice: selectedVariation!.deliveryPrice,
+      );
+    } else {
+      // Variation nahi hai to item ki apni price
+      total = pickOrderTypePrice(
+        orderType: orderType,
+        dinePrice: widget.food.price,
+        takeawayPrice: widget.food.takeAwayPrice,
+        deliveryPrice: widget.food.deliveryPrice,
+      );
     }
-
-    double choicesPrice = 0;
 
     for (final choices in selectedChoices.values) {
       for (final choice in choices) {
-        choicesPrice +=
-            double.tryParse(
-              choice.price ?? '0',
-            ) ??
-                0;
+        total += pickOrderTypePrice(
+          orderType: orderType,
+          dinePrice: choice.price,
+          takeawayPrice: choice.takeAwayPrice,
+          deliveryPrice: choice.deliveryPrice,
+        );
       }
     }
-
-    final total =
-        basePrice +
-            variationPrice +
-            choicesPrice;
-
-    debugPrint(
-      '========== VARIATION VIEW PRICE ==========',
-    );
-    debugPrint('Food: ${widget.food.name}');
-    debugPrint('Food Base Price: $basePrice');
-    debugPrint(
-      'Selected Variation: ${selectedVariation?.name}',
-    );
-    debugPrint(
-      'Selected Variation Price: $variationPrice',
-    );
-    debugPrint('Choices Price: $choicesPrice');
-    debugPrint('TOTAL: $total');
-    debugPrint(
-      '==========================================',
-    );
     return total;
   }
   // VALIDATION

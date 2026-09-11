@@ -26,215 +26,128 @@ class DealItemCard extends StatefulWidget {
 class _DealItemCardState extends State<DealItemCard> {
   bool isExpanded = false;
   MenuVariation? selectedVariation;
-  double? _originalBasePrice;
   final Map<int, List<MenuVariation>> selectedChoices = {};
+  late Menu _originalItem;
+
   @override
   void initState() {
     super.initState();
-
-    _originalBasePrice =
-        double.tryParse(
-          widget.item.price ?? '0',
-        ) ??
-            0;
-
+    _originalItem = widget.item;
     _initializeExistingSelection();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (hasCustomization) {
+        widget.onItemUpdated?.call(_buildUpdatedItem());
+      }
+      widget.onCompletionChanged?.call(!hasCustomization || isValid);
+    });
   }
-// EXISTING SELECTION LOAD KARO
-  void _initializeExistingSelection() {
-    // EXISTING SELECTED VARIATION
-    if (widget.item.menuVariation != null) {
-      final existingVariation = widget.item.menuVariation!;
 
-      for (final variation in widget.item.menuVariations) {
+  @override
+  void didUpdateWidget(covariant DealItemCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.item.id != widget.item.id) {
+      _originalItem = widget.item;
+      selectedVariation = null;
+      selectedChoices.clear();
+      _initializeExistingSelection();
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (hasCustomization) {
+          widget.onItemUpdated?.call(_buildUpdatedItem());
+        }
+        widget.onCompletionChanged?.call(!hasCustomization || isValid);
+      });
+    }
+  }
+
+  void _initializeExistingSelection() {
+    if (_originalItem.menuVariation != null) {
+      final existingVariation = _originalItem.menuVariation!;
+      for (final variation in _originalItem.menuVariations) {
         if (variation.id == existingVariation.id) {
           selectedVariation = variation;
           break;
         }
       }
-
-      // Fallback
       selectedVariation ??= existingVariation;
-
-      // Original base price se variation aur choices ki price nikal dein
-      // (kyunke widget.item.price total ho sakta hai)
-      final variationExtra =
-          double.tryParse(existingVariation.price ?? '0') ?? 0;
-
-      double choicesExtra = 0;
-      for (final group in existingVariation.choiceGroups) {
-        for (final choice in group.choices) {
-          choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
-        }
-      }
-
-      _originalBasePrice =
-          (_originalBasePrice ?? 0) - variationExtra - choicesExtra;
     }
   }
 
-// CHOICES LOAD KARNE KA HELPER
-  void _initializeChoices(List<ChoiceGroup> groups) {
+  void _loadSelectedChoicesFromGroups(List<ChoiceGroup> groups) {
     for (final group in groups) {
-      final groupId = group.id;
-
-      if (groupId == null) continue;
+      if (group.id == null) continue;
+      if (group.choices.isNotEmpty) {
+        selectedChoices[group.id!] = List<MenuVariation>.from(group.choices);
+      }
     }
   }
 
-  @override
-  void didUpdateWidget(
-      covariant DealItemCard oldWidget,
-      ) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.item.id != widget.item.id) {
-      _originalBasePrice =
-          double.tryParse(
-            widget.item.price ?? '0',
-          ) ??
-              0;
-
-      selectedVariation = null;
-      selectedChoices.clear();
-      _initializeExistingSelection();
-    }
-  }
-  double get basePrice {
-    return _originalBasePrice ?? 0;
-  }
   double get finalPrice {
-    double total = basePrice;
-
-    // Main variation ki EXTRA price
-    if (selectedVariation != null) {
-      total +=
-          double.tryParse(
-            selectedVariation!.price ?? '0',
-          ) ??
-              0;
-    }
-
-    // Selected choices ki EXTRA prices
+    double total = 0;
     for (final choices in selectedChoices.values) {
       for (final choice in choices) {
-        total +=
-            double.tryParse(
-              choice.price ?? '0',
-            ) ??
-                0;
+        total += double.tryParse(choice.price ?? '0') ?? 0;
       }
     }
-
     return total;
   }
-// CUSTOMIZATION AVAILABLE?
 
   bool get hasCustomization {
-    return widget.item.menuVariations.isNotEmpty ||
-        widget.item.choiceGroup.isNotEmpty ||
-        widget.item.menuVariation != null;
+    return _originalItem.menuVariations.isNotEmpty ||
+        _originalItem.choiceGroup.isNotEmpty ||
+        _originalItem.menuVariation != null;
   }
-// CHOICE GROUPS
+
   List<ChoiceGroup> get choiceGroups {
     final groups = <ChoiceGroup>[];
-
-    groups.addAll(widget.item.choiceGroup);
-
+    groups.addAll(_originalItem.choiceGroup);
     if (selectedVariation != null) {
-      groups.addAll(
-        selectedVariation!.choiceGroups,
-      );
-    } else if (widget.item.menuVariation != null) {
-      groups.addAll(
-        widget.item.menuVariation!.choiceGroups,
-      );
+      groups.addAll(selectedVariation!.choiceGroups);
+    } else if (_originalItem.menuVariation != null) {
+      groups.addAll(_originalItem.menuVariation!.choiceGroups);
     }
-
     return groups;
   }
-// VALIDATION
-  bool get isValid {
-    // CHOICE GROUP VALIDATION
 
+  bool get isValid {
     for (final group in choiceGroups) {
       final groupId = group.id;
-      if (groupId == null) {
-        continue;
-      }
-      final selectedCount =
-          selectedChoices[groupId]?.length ?? 0;
-      final minChoices =
-          group.minChoices ?? 0;
-      final maxChoices =
-          group.maxChoices ?? 0;
+      if (groupId == null) continue;
+      final selectedCount = selectedChoices[groupId]?.length ?? 0;
+      final minChoices = group.minChoices ?? 0;
+      final maxChoices = group.maxChoices ?? 0;
       if (minChoices == 0) {
-        if (maxChoices > 0 &&
-            selectedCount > maxChoices) {
-          return false;
-        }
-
+        if (maxChoices > 0 && selectedCount > maxChoices) return false;
         continue;
       }
-      // REQUIRED
-      if (selectedCount < minChoices) {
-        return false;
-      }
-      // MAXIMUM
-      if (maxChoices > 0 &&
-          selectedCount > maxChoices) {
-        return false;
-      }
+      if (selectedCount < minChoices) return false;
+      if (maxChoices > 0 && selectedCount > maxChoices) return false;
     }
-
     return true;
   }
-// SELECT MAIN VARIATION
 
-  void _selectVariation(
-      MenuVariation variation,
-      ) {
+  void _selectVariation(MenuVariation variation) {
     setState(() {
       selectedVariation = variation;
-
-// Variation change hone par
-// old choices clear.
       selectedChoices.clear();
     });
   }
 
-
-// SELECT / UNSELECT CHOICE
-
-  void _toggleChoice(
-      ChoiceGroup group,
-      MenuVariation choice,
-      ) {
+  void _toggleChoice(ChoiceGroup group, MenuVariation choice) {
     final groupId = group.id;
-
     if (groupId == null) return;
 
-    final selected = List<MenuVariation>.from(
-      selectedChoices[groupId] ?? [],
-    );
-
-    final alreadySelected = selected.any(
-          (item) => item.id == choice.id,
-    );
+    final selected = List<MenuVariation>.from(selectedChoices[groupId] ?? []);
+    final alreadySelected = selected.any((item) => item.id == choice.id);
 
     if (alreadySelected) {
-      selected.removeWhere(
-            (item) => item.id == choice.id,
-      );
+      selected.removeWhere((item) => item.id == choice.id);
     } else {
-      final maxChoices =
-          group.maxChoices ?? 0;
-
-      if (maxChoices > 0 &&
-          selected.length >= maxChoices) {
-        return;
-      }
-
+      final maxChoices = group.maxChoices ?? 0;
+      if (maxChoices > 0 && selected.length >= maxChoices) return;
       selected.add(choice);
     }
 
@@ -243,57 +156,37 @@ class _DealItemCardState extends State<DealItemCard> {
     });
   }
 
-// EXPAND / COLLAPSE
-
   void _toggleExpanded() {
     if (!hasCustomization) return;
-
     setState(() {
       isExpanded = !isExpanded;
     });
   }
 
-  // BUILD UPDATED ITEM
   Menu _buildUpdatedItem() {
-    // Direct choices sirf parent Menu ke choiceGroup mein jayengi
-    final directGroups = widget.item.choiceGroup.map((group) {
+    final directGroups = _originalItem.choiceGroup.map((group) {
       final selected = selectedChoices[group.id] ?? [];
-
-      return group.copyWith(
-        choices: selected,
-      );
+      return group.copyWith(choices: selected);
     }).toList();
 
     MenuVariation? finalVariation;
-
     if (selectedVariation != null) {
-      // Variation ke choices sirf variation ke andar jayengi
-      final variationGroups =
-      selectedVariation!.choiceGroups.map((group) {
+      final variationGroups = selectedVariation!.choiceGroups.map((group) {
         final selected = selectedChoices[group.id] ?? [];
-
-        return group.copyWith(
-          choices: selected,
-        );
+        return group.copyWith(choices: selected);
       }).toList();
 
       finalVariation = selectedVariation!.copyWith(
-        price: finalPrice.toString(),
-        takeAwayPrice: selectedVariation!.takeAwayPrice,
-        deliveryPrice: selectedVariation!.deliveryPrice,
         choiceGroups: variationGroups,
       );
     }
 
-    return widget.item.copyWith(
-      price: finalPrice.toString(),
+    return _originalItem.copyWith(
       menuVariation: finalVariation,
-
-      // Sirf direct choices
       choiceGroup: directGroups,
     );
   }
-// IMAGE
+
   Widget _image() {
     final url = widget.item.imageUrl ?? '';
 
@@ -304,9 +197,7 @@ class _DealItemCardState extends State<DealItemCard> {
     return Image.network(
       url,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) {
-        return _placeholder();
-      },
+      errorBuilder: (_, __, ___) => _placeholder(),
     );
   }
 
@@ -316,67 +207,61 @@ class _DealItemCardState extends State<DealItemCard> {
       child: Icon(
         Icons.fastfood_outlined,
         color: AppColors.tertiary,
+        size: 24,
       ),
     );
   }
 
-// BUILD
-
   @override
   Widget build(BuildContext context) {
-    // UI-only flag — purely derived from existing getters,
-    // used just to color the status chip below.
     final bool isReady = !hasCustomization || isValid;
 
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 14,
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isExpanded
-              ? AppColors.primary
-              : AppColors.borderColorGrey,
+          color: isExpanded ? AppColors.primary : AppColors.borderColorGrey,
           width: isExpanded ? 1.4 : 1,
         ),
         boxShadow: [
           BoxShadow(
             color: AppColors.softShadow04,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // ITEM HEADER
           InkWell(
             onTap: _toggleExpanded,
-            borderRadius:
-            BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  // COMPACT IMAGE SIZE (56x56 instead of 75x75)
                   Stack(
+                    clipBehavior: Clip.none,
                     children: [
                       ClipRRect(
-                        borderRadius:
-                        BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(12),
                         child: SizedBox(
-                          width: 75,
-                          height: 75,
+                          width: 56,
+                          height: 56,
                           child: _image(),
                         ),
                       ),
                       Positioned(
-                        right: -4,
-                        top: -4,
+                        right: -3,
+                        top: -3,
                         child: Container(
-                          padding: const EdgeInsets.all(4),
+                          padding: const EdgeInsets.all(3),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isReady
@@ -384,14 +269,14 @@ class _DealItemCardState extends State<DealItemCard> {
                                 : AppColors.tertiary,
                             border: Border.all(
                               color: AppColors.card,
-                              width: 2,
+                              width: 1.5,
                             ),
                           ),
                           child: Icon(
                             isReady
                                 ? Icons.check_rounded
                                 : Icons.edit_rounded,
-                            size: 11,
+                            size: 10,
                             color: AppColors.white,
                           ),
                         ),
@@ -399,41 +284,38 @@ class _DealItemCardState extends State<DealItemCard> {
                     ],
                   ),
 
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
 
                   Expanded(
                     child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                widget.item.name ??
-                                    'Item',
+                                widget.item.name ?? 'Item',
                                 style: getBoldStyle(
-                                  fontSize: MyFonts.size16,
+                                  fontSize: MyFonts.size15,
                                   color: AppColors.text,
                                 ),
                               ),
                             ),
+                            const SizedBox(width: 6),
                             Container(
-                              padding: const EdgeInsets
-                                  .symmetric(
+                              padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
-                                vertical: 3,
+                                vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.tertiary
-                                    .withOpacity(0.12),
-                                borderRadius:
-                                BorderRadius.circular(8),
+                                color: AppColors.tertiary.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(6),
                               ),
                               child: Text(
                                 'x${widget.item.quantity ?? 1}',
                                 style: getBoldStyle(
-                                  fontSize: MyFonts.size13,
+                                  fontSize: MyFonts.size12,
                                   color: AppColors.tertiary,
                                 ),
                               ),
@@ -441,27 +323,20 @@ class _DealItemCardState extends State<DealItemCard> {
                           ],
                         ),
 
-                        const SizedBox(height: 6),
-
-                        Text(
-                          'Rs ${finalPrice.toStringAsFixed(0)}',
-                          style: getBoldStyle(
-                            fontSize: MyFonts.size15,
-                            color:
-                            AppColors.primary,
-                          ),
-                        ),
-// SELECTED CHOICES
-                        ...selectedChoices.entries.expand(
-                              (entry) {
-                            final choices = entry.value;
-
-                            return choices.map(
-                                  (choice) => Padding(
-                                padding: const EdgeInsets.only(top: 3),
+                        if (hasCustomization && selectedVariation != null) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.sell_outlined,
+                                size: 11,
+                                color: AppColors.grey500,
+                              ),
+                              const SizedBox(width: 4),
+                              Flexible(
                                 child: Text(
-                                  '• ${choice.name ?? ''}',
-                                  maxLines: 1,
+                                  '${selectedVariation!.name ?? ''} comes with this deal',
                                   overflow: TextOverflow.ellipsis,
                                   style: getRegularStyle(
                                     fontSize: MyFonts.size12,
@@ -469,13 +344,30 @@ class _DealItemCardState extends State<DealItemCard> {
                                   ),
                                 ),
                               ),
-                            );
-                          },
+                            ],
+                          ),
+                        ],
+
+                        // SELECTED CHOICES LIST
+                        ...selectedChoices.entries.expand(
+                              (entry) => entry.value.map(
+                                (choice) => Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text(
+                                '• ${choice.name ?? ''}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: getRegularStyle(
+                                  fontSize: MyFonts.size12,
+                                  color: AppColors.grey500,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
 
                         if (hasCustomization) ...[
-                          const SizedBox(height: 6),
-
+                          const SizedBox(height: 4),
                           Row(
                             children: [
                               Text(
@@ -486,19 +378,16 @@ class _DealItemCardState extends State<DealItemCard> {
                                     : 'Tap to customize'),
                                 style: getRegularStyle(
                                   fontSize: MyFonts.size12,
-                                  color:
-                                  AppColors.primary,
+                                  color: AppColors.primary,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: 3),
                               AnimatedRotation(
                                 turns: isExpanded ? 0.5 : 0,
-                                duration: const Duration(
-                                  milliseconds: 200,
-                                ),
+                                duration: const Duration(milliseconds: 200),
                                 child: Icon(
                                   Icons.keyboard_arrow_down,
-                                  size: 16,
+                                  size: 15,
                                   color: AppColors.primary,
                                 ),
                               ),
@@ -512,80 +401,51 @@ class _DealItemCardState extends State<DealItemCard> {
               ),
             ),
           ),
-// EXPANDED CUSTOMIZATION
 
+          // EXPANDED CUSTOMIZATION SECTION
           AnimatedCrossFade(
             duration: const Duration(milliseconds: 220),
             crossFadeState: (isExpanded && hasCustomization)
                 ? CrossFadeState.showFirst
                 : CrossFadeState.showSecond,
             firstChild: Padding(
-              padding:
-              const EdgeInsets.fromLTRB(
-                14,
-                0,
-                14,
-                14,
-              ),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Column(
                 children: [
                   Divider(color: AppColors.divider),
-
-                  const SizedBox(height: 8),
-
+                  const SizedBox(height: 6),
                   VariationSelector(
-                    variations:
-                    widget.item.menuVariations,
-                    choiceGroups:
-                    choiceGroups,
-                    selectedVariation:
-                    selectedVariation,
-                    selectedChoices:
-                    selectedChoices,
-                    onVariationSelected:
-                    _selectVariation,
-                    onChoiceSelected:
-                    _toggleChoice,
+                    variations: _originalItem.menuVariations,
+                    choiceGroups: choiceGroups,
+                    selectedVariation: selectedVariation,
+                    selectedChoices: selectedChoices,
+                    onVariationSelected: _selectVariation,
+                    onChoiceSelected: _toggleChoice,
                   ),
-
                   const SizedBox(height: 8),
 
-// DONE BUTTON
+                  // DONE BUTTON
                   SizedBox(
                     width: double.infinity,
-                    height: 46,
+                    height: 44,
                     child: ElevatedButton(
                       onPressed: isValid
                           ? () {
-                        final updatedItem =
-                        _buildUpdatedItem();
-
-                        widget.onItemUpdated?.call(
-                          updatedItem,
-                        );
-
+                        final updatedItem = _buildUpdatedItem();
+                        widget.onItemUpdated?.call(updatedItem);
                         widget.onCompletionChanged?.call(true);
-
                         setState(() {
                           isExpanded = false;
                         });
                       }
                           : null,
-                      style:
-                      ElevatedButton.styleFrom(
-                        backgroundColor:
-                        AppColors.primary,
-                        disabledBackgroundColor:
-                        AppColors.grey300,
-                        foregroundColor:
-                        AppColors.white,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        disabledBackgroundColor: AppColors.grey300,
+                        foregroundColor: AppColors.white,
                         elevation: 0,
-                        shape:
-                        RoundedRectangleBorder(
-                          borderRadius:
-                          BorderRadius.circular(
-                            13,
-                          ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                       child: Text(
@@ -593,10 +453,8 @@ class _DealItemCardState extends State<DealItemCard> {
                             ? 'Done - Rs ${finalPrice.toStringAsFixed(0)}'
                             : 'Complete Selection',
                         style: getBoldStyle(
-                          fontSize:
-                          MyFonts.size14,
-                          color:
-                          AppColors.white,
+                          fontSize: MyFonts.size14,
+                          color: AppColors.white,
                         ),
                       ),
                     ),
