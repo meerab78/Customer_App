@@ -49,8 +49,7 @@ class VariationSelector extends StatelessWidget {
 
           ...variations.map(
                 (variation) {
-              final isSelected =
-                  selectedVariation?.id == variation.id;
+              final isSelected = selectedVariation?.id == variation.id;
 
               return _VariationTile(
                 variation: variation,
@@ -69,8 +68,7 @@ class VariationSelector extends StatelessWidget {
               (group) {
             return _ChoiceGroupWidget(
               group: group,
-              selectedChoices:
-              selectedChoices[group.id] ?? [],
+              selectedChoices: selectedChoices[group.id] ?? [],
               onChoiceSelected: (choice) {
                 onChoiceSelected(
                   group,
@@ -99,6 +97,8 @@ class _VariationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -110,13 +110,15 @@ class _VariationTile extends StatelessWidget {
         ),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.primary.withOpacity(0.06)
-              : AppColors.card,
+              ? AppColors.primary.withOpacity(0.12)
+              : (isDark ? AppColors.card : AppColors.card),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
                 ? AppColors.primary
-                : AppColors.borderLight,
+                : (isDark
+                ? Colors.white.withOpacity(0.12)
+                : (AppColors.borderLight ?? Colors.grey.shade300)),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -128,7 +130,7 @@ class _VariationTile extends StatelessWidget {
                   : Icons.radio_button_off,
               color: isSelected
                   ? AppColors.primary
-                  : AppColors.grey,
+                  : (isDark ? Colors.grey.shade400 : AppColors.grey),
             ),
 
             const SizedBox(width: 10),
@@ -158,7 +160,6 @@ class _VariationTile extends StatelessWidget {
 }
 
 // CHOICE GROUP
-
 class _ChoiceGroupWidget extends StatelessWidget {
   final ChoiceGroup group;
   final List<MenuVariation> selectedChoices;
@@ -173,14 +174,21 @@ class _ChoiceGroupWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final minChoices = group.minChoices ?? 0;
     final maxChoices = group.maxChoices ?? 0;
+
+    // Title text cleaning (removing stray trailing characters like n1)
+    final cleanTitle = (group.name ?? 'Select Choice')
+        .replaceAll(RegExp(r'[\r\n]+'), ' ')
+        .replaceAll(RegExp(r'n\d+'), '')
+        .trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          group.name ?? 'Select Choice',
+          cleanTitle,
           style: getBoldStyle(
             fontSize: MyFonts.size17,
             color: AppColors.text,
@@ -195,7 +203,7 @@ class _ChoiceGroupWidget extends StatelessWidget {
               : 'Select at least $minChoices',
           style: getRegularStyle(
             fontSize: MyFonts.size12,
-            color: AppColors.greyText,
+            color: isDark ? Colors.grey.shade400 : AppColors.greyText,
           ),
         ),
 
@@ -220,13 +228,16 @@ class _ChoiceGroupWidget extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.primary.withOpacity(0.08)
-                      : AppColors.containerColor2,
+                      ? AppColors.primary.withOpacity(0.12)
+                      : (isDark ? AppColors.card : AppColors.card),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.primary.withOpacity(0.3)
-                        : Colors.transparent,
+                        ? AppColors.primary
+                        : (isDark
+                        ? Colors.white.withOpacity(0.12)
+                        : Colors.grey.shade300),
+                    width: isSelected ? 1.5 : 1,
                   ),
                 ),
                 child: Row(
@@ -237,7 +248,7 @@ class _ChoiceGroupWidget extends StatelessWidget {
                           : Icons.check_box_outline_blank,
                       color: isSelected
                           ? AppColors.primary
-                          : AppColors.grey,
+                          : (isDark ? Colors.grey.shade400 : AppColors.grey),
                     ),
 
                     const SizedBox(width: 10),

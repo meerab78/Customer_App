@@ -26,14 +26,14 @@ class DeliveryPickupCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: AppColors.grey200,
+            color: AppColors.borderLight,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.softShadow05,
+              color: AppColors.shadow,
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -67,7 +67,7 @@ class DeliveryPickupCard extends StatelessWidget {
                     subtitle,
                     style: getRegularStyle(
                       fontSize: MyFonts.size13,
-                      color: AppColors.grey600,
+                      color: AppColors.greyText,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
@@ -78,7 +78,7 @@ class DeliveryPickupCard extends StatelessWidget {
             Icon(
               Icons.arrow_forward_ios,
               size: 18,
-              color: AppColors.grey,
+              color: AppColors.greyText,
             ),
           ],
         ),
@@ -86,5 +86,3 @@ class DeliveryPickupCard extends StatelessWidget {
     );
   }
 }
-
-

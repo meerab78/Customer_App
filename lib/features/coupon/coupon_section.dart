@@ -89,16 +89,16 @@ class _CouponSectionState extends State<CouponSection> {
       builder: (context, coupon, _) {
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
             color: AppColors.card,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.borderLight),
             boxShadow: [
               BoxShadow(
                 color: AppColors.shadow,
-                blurRadius: 16,
-                offset: const Offset(0, 5),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -113,13 +113,13 @@ class _CouponSectionState extends State<CouponSection> {
                       _mode == _CouponMode.selectVoucher
                           ? 'Select Voucher'
                           : 'Type Coupon code',
-                      style: getBoldStyle(fontSize: MyFonts.size17, color: AppColors.text),
+                      style: getBoldStyle(fontSize: MyFonts.size15, color: AppColors.text),
                     ),
                   ),
                   _tabIcons(),
                 ],
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
 
               if (_mode == _CouponMode.selectVoucher)
                 _voucherList(coupon)
@@ -127,15 +127,15 @@ class _CouponSectionState extends State<CouponSection> {
                 _codeInput(coupon),
 
               if (coupon.errorMessage != null) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(Icons.error_outline_rounded, size: 14, color: AppColors.error),
-                    const SizedBox(width: 6),
+                    Icon(Icons.error_outline_rounded, size: 13, color: AppColors.error),
+                    const SizedBox(width: 5),
                     Expanded(
                       child: Text(
                         coupon.errorMessage!,
-                        style: getSemiBoldStyle(fontSize: MyFonts.size12, color: AppColors.error),
+                        style: getSemiBoldStyle(fontSize: MyFonts.size11, color: AppColors.error),
                       ),
                     ),
                   ],
@@ -151,10 +151,10 @@ class _CouponSectionState extends State<CouponSection> {
   // ---- TAB ICONS (top right) ----
   Widget _tabIcons() {
     return Container(
-      padding: const EdgeInsets.all(3),
+      padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: AppColors.background,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
@@ -163,7 +163,7 @@ class _CouponSectionState extends State<CouponSection> {
             selected: _mode == _CouponMode.selectVoucher,
             onTap: () => setState(() => _mode = _CouponMode.selectVoucher),
           ),
-          const SizedBox(width: 3),
+          const SizedBox(width: 2),
           _tabIconButton(
             icon: Icons.local_offer_outlined,
             selected: _mode == _CouponMode.typeCode,
@@ -182,16 +182,16 @@ class _CouponSectionState extends State<CouponSection> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36,
-        height: 32,
+        width: 32,
+        height: 28,
         decoration: BoxDecoration(
           color: selected ? AppColors.card : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(8),
           border: selected ? Border.all(color: AppColors.borderLight) : null,
         ),
         child: Icon(
           icon,
-          size: 17,
+          size: 15,
           color: selected ? AppColors.primary : AppColors.greyText,
         ),
       ),
@@ -202,7 +202,7 @@ class _CouponSectionState extends State<CouponSection> {
   Widget _voucherList(CouponController coupon) {
     if (coupon.isLoading) {
       return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
+        padding: EdgeInsets.symmetric(vertical: 16),
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
@@ -210,31 +210,32 @@ class _CouponSectionState extends State<CouponSection> {
     if (coupon.coupons.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
         decoration: BoxDecoration(
           color: AppColors.background,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
-            Icon(Icons.local_offer_outlined, size: 18, color: AppColors.greyText.withOpacity(0.6)),
-            const SizedBox(width: 10),
+            Icon(Icons.local_offer_outlined, size: 16, color: AppColors.greyText.withOpacity(0.6)),
+            const SizedBox(width: 8),
             Text(
               'No vouchers available',
-              style: getRegularStyle(fontSize: MyFonts.size13, color: AppColors.greyText),
+              style: getRegularStyle(fontSize: MyFonts.size12, color: AppColors.greyText),
             ),
           ],
         ),
       );
     }
 
+    // Height compact kar di 80px par
     return SizedBox(
-      height: 135,
+      height: 80,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         itemCount: coupon.coupons.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final c = coupon.coupons[index];
           final isApplied = coupon.appliedCoupon?.couponCode == c.couponCode;
@@ -244,14 +245,12 @@ class _CouponSectionState extends State<CouponSection> {
     );
   }
 
-
-  // ---- Horizontal voucher card (clean style) ----
+  // ---- Compact Ticket-Style Voucher Card ----
   Widget _voucherCard(CouponController coupon, Coupon c, bool isApplied) {
     final discountText = c.isPercentage
-        ? '${c.discountValue.toStringAsFixed(0)}%\nOFF'
-        : 'Rs ${c.discountValue.toStringAsFixed(0)}\nOFF';
+        ? '${c.discountValue.toStringAsFixed(0)}%'
+        : 'Rs ${c.discountValue.toStringAsFixed(0)}';
 
-    // Valid date format
     String validDate = '';
     if (c.validTill != null) {
       try {
@@ -266,121 +265,114 @@ class _CouponSectionState extends State<CouponSection> {
       onTap: isApplied
           ? () => coupon.removeCoupon()
           : () => _applyListCoupon(c.couponCode),
-      child: Container(
-        width: 240,
-        decoration: BoxDecoration(
-          color: isApplied
-              ? AppColors.primary.withOpacity(0.85)
-              : AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: isApplied
-              ? null
-              : Border.all(color: AppColors.borderLight),
-        ),
-        child: Row(
-          children: [
-            // LEFT: discount value
-            Container(
-              width: 80,
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                color: isApplied
-                    ? AppColors.primary
-                    : AppColors.primary.withOpacity(0.10),
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(15),
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  discountText,
-                  textAlign: TextAlign.center,
-                  style: getExtraBoldStyle(
-                    fontSize: MyFonts.size15,
-                    color: isApplied ? AppColors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-
-            // RIGHT: info
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Name
-                    Text(
-                      c.discountName ?? c.couponCode,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: getBoldStyle(
-                        fontSize: MyFonts.size14,
-                        color: isApplied ? AppColors.white : AppColors.text,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-
-                    // Min spend
-                    if (c.minOrderAmount > 0)
-                      Text(
-                        'Min. spend Rs. ${c.minOrderAmount.toStringAsFixed(0)}',
-                        style: getRegularStyle(
-                          fontSize: MyFonts.size11,
-                          color: isApplied
-                              ? AppColors.white.withOpacity(0.8)
-                              : AppColors.greyText,
-                        ),
-                      ),
-
-                    // Applied badge OR Apply text
-                    const SizedBox(height: 8),
-                    Row(
+      child: ClipPath(
+        clipper: TicketClipper(),
+        child: Container(
+          width: 230, // Reduced width
+          color: isApplied ? AppColors.primary : AppColors.primary, // Clean solid/themed background
+          child: Stack(
+            children: [
+              Row(
+                children: [
+                  // LEFT SIDE: Discount Rate
+                  SizedBox(
+                    width: 75,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 5,
+                        Text(
+                          discountText,
+                          style: getExtraBoldStyle(
+                            fontSize: MyFonts.size15,
+                            color: AppColors.white,
                           ),
-                          decoration: BoxDecoration(
-                            color: isApplied
-                                ? AppColors.white.withOpacity(0.2)
-                                : AppColors.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            isApplied ? 'APPLIED' : 'APPLY',
-                            style: getBoldStyle(
-                              fontSize: MyFonts.size10,
-                              color: isApplied
-                                  ? AppColors.white
-                                  : AppColors.white,
-                            ),
+                        ),
+                        Text(
+                          'OFF',
+                          style: getBoldStyle(
+                            fontSize: MyFonts.size11,
+                            color: AppColors.white.withOpacity(0.9),
                           ),
                         ),
                       ],
                     ),
+                  ),
 
-                    // Valid until
-                    if (validDate.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Text(
-                        validDate,
-                        style: getRegularStyle(
-                          fontSize: MyFonts.size9,
-                          color: isApplied
-                              ? AppColors.white.withOpacity(0.7)
-                              : AppColors.greyText,
-                        ),
+                  // DASHED VERTICAL DIVIDER
+                  CustomPaint(
+                    size: const Size(1, double.infinity),
+                    painter: DashedLinePainter(
+                      color: AppColors.white.withOpacity(0.4),
+                    ),
+                  ),
+
+                  // RIGHT SIDE: Voucher Info + Button
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  c.discountName ?? c.couponCode,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: getBoldStyle(
+                                    fontSize: MyFonts.size12,
+                                    color: AppColors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              // Small Compact Apply Badge
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isApplied ? AppColors.white : AppColors.white.withOpacity(0.25),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  isApplied ? 'APPLIED' : 'APPLY',
+                                  style: getBoldStyle(
+                                    fontSize: MyFonts.size9,
+                                    color: isApplied ? AppColors.primary : AppColors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (c.minOrderAmount > 0) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Min. spend Rs. ${c.minOrderAmount.toStringAsFixed(0)}',
+                              style: getRegularStyle(
+                                fontSize: MyFonts.size9,
+                                color: AppColors.white.withOpacity(0.85),
+                              ),
+                            ),
+                          ],
+                          if (validDate.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              validDate,
+                              style: getRegularStyle(
+                                fontSize: MyFonts.size8,
+                                color: AppColors.white.withOpacity(0.75),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
-                    ],
-                  ],
-                ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -394,10 +386,10 @@ class _CouponSectionState extends State<CouponSection> {
       children: [
         Expanded(
           child: Container(
-            height: 52,
+            height: 44,
             decoration: BoxDecoration(
               color: AppColors.background,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: _codeError ? AppColors.error : AppColors.borderLight,
                 width: _codeError ? 1.4 : 1,
@@ -405,18 +397,18 @@ class _CouponSectionState extends State<CouponSection> {
             ),
             child: hasApplied
                 ? InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               onTap: () => coupon.removeCoupon(),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.local_offer_outlined, size: 17, color: AppColors.greyText.withOpacity(0.6)),
-                    const SizedBox(width: 10),
+                    Icon(Icons.local_offer_outlined, size: 16, color: AppColors.greyText.withOpacity(0.6)),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Remove selected voucher',
-                        style: getRegularStyle(fontSize: MyFonts.size13, color: AppColors.greyText),
+                        style: getRegularStyle(fontSize: MyFonts.size12, color: AppColors.greyText),
                       ),
                     ),
                   ],
@@ -429,34 +421,34 @@ class _CouponSectionState extends State<CouponSection> {
               onChanged: (_) {
                 if (_codeError) setState(() => _codeError = false);
               },
-              style: getRegularStyle(fontSize: MyFonts.size14, color: AppColors.text),
+              style: getRegularStyle(fontSize: MyFonts.size13, color: AppColors.text),
               decoration: InputDecoration(
                 hintText: "Enter coupon code",
-                hintStyle: getRegularStyle(fontSize: MyFonts.size13, color: AppColors.greyText),
-                prefixIcon: Icon(Icons.local_offer_outlined, size: 18, color: AppColors.greyText),
+                hintStyle: getRegularStyle(fontSize: MyFonts.size12, color: AppColors.greyText),
+                prefixIcon: Icon(Icons.local_offer_outlined, size: 16, color: AppColors.greyText),
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         SizedBox(
-          height: 52,
+          height: 44,
           child: TextButton(
             onPressed: coupon.isValidating
                 ? null
                 : (hasApplied ? () => coupon.removeCoupon() : _applyManualCode),
             child: coupon.isValidating
                 ? const SizedBox(
-              width: 16,
-              height: 16,
+              width: 14,
+              height: 14,
               child: CircularProgressIndicator(strokeWidth: 2),
             )
                 : Text(
               hasApplied ? 'Remove' : 'Apply',
               style: getBoldStyle(
-                fontSize: MyFonts.size14,
+                fontSize: MyFonts.size13,
                 color: hasApplied ? AppColors.error : AppColors.primary,
               ),
             ),
@@ -465,4 +457,75 @@ class _CouponSectionState extends State<CouponSection> {
       ],
     );
   }
+}
+
+// Compact Ticket Shape Clipper
+class TicketClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    double radius = 10;
+    double cutoutRadius = 6; // Smaller notch size
+    Path path = Path();
+
+    path.moveTo(radius, 0);
+    path.lineTo(size.width - radius, 0);
+    path.quadraticBezierTo(size.width, 0, size.width, radius);
+
+    // Right Cutout Notch
+    path.lineTo(size.width, size.height / 2 - cutoutRadius);
+    path.arcToPoint(
+      Offset(size.width, size.height / 2 + cutoutRadius),
+      radius: Radius.circular(cutoutRadius),
+      clockwise: false,
+    );
+    path.lineTo(size.width, size.height - radius);
+
+    path.quadraticBezierTo(size.width, size.height, size.width - radius, size.height);
+    path.lineTo(radius, size.height);
+    path.quadraticBezierTo(0, size.height, 0, size.height - radius);
+
+    // Left Cutout Notch
+    path.lineTo(0, size.height / 2 + cutoutRadius);
+    path.arcToPoint(
+      Offset(0, size.height / 2 - cutoutRadius),
+      radius: Radius.circular(cutoutRadius),
+      clockwise: false,
+    );
+    path.lineTo(0, radius);
+
+    path.quadraticBezierTo(0, 0, radius, 0);
+
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+}
+
+// Dashed Line Painter
+class DashedLinePainter extends CustomPainter {
+  final Color color;
+
+  DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    double dashHeight = 3, dashSpace = 3, startY = 6;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+
+    while (startY < size.height - 6) {
+      canvas.drawLine(
+        Offset(0, startY),
+        Offset(0, startY + dashHeight),
+        paint,
+      );
+      startY += dashHeight + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

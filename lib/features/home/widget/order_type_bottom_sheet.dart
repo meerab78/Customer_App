@@ -1,5 +1,4 @@
-﻿
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:http/http.dart' show read;
 import 'package:provider/provider.dart' show ReadContext;
 import '../../../core/theme/app_colors.dart';
@@ -8,6 +7,7 @@ import '../../../core/theme/textfont_styles.dart';
 import '../../cart/controller.dart';
 import '../branch_view.dart';
 import 'delivery_pickup_card.dart';
+
 void showOrderTypeBottomSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
@@ -18,9 +18,9 @@ void showOrderTypeBottomSheet(BuildContext context) {
     builder: (_) {
       return Container(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: const BorderRadius.vertical(
             top: Radius.circular(28),
           ),
         ),
@@ -34,7 +34,7 @@ void showOrderTypeBottomSheet(BuildContext context) {
                   width: 50,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: AppColors.grey300,
+                    color: AppColors.borderLight,
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
@@ -51,7 +51,7 @@ void showOrderTypeBottomSheet(BuildContext context) {
               Text(
                 "Select how you'd like to receive your order.",
                 style: getRegularStyle(
-                  color: AppColors.grey600,
+                  color: AppColors.greyText,
                 ),
               ),
               const SizedBox(height: 18),
@@ -88,6 +88,3 @@ void showOrderTypeBottomSheet(BuildContext context) {
     },
   );
 }
-
-
-

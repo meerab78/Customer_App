@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿
+import 'package:flutter/material.dart';
 
 import 'model/menu_model.dart';
 import '../../core/theme/app_colors.dart';
@@ -52,21 +53,21 @@ class CategoryItemsView extends StatelessWidget {
         ),
       )
           : GridView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: items.length,
 
         gridDelegate:
         const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,
-          mainAxisSpacing: 14,
-          childAspectRatio: 0.78,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.94, // Fixed: Spikes compact height to remove bottom gap
         ),
 
         itemBuilder: (context, index) {
           final food = items[index];
 
-           return FoodItemCard(
+          return FoodItemCard(
             food: food,
           );
         },
@@ -74,7 +75,3 @@ class CategoryItemsView extends StatelessWidget {
     );
   }
 }
-
-
-
-

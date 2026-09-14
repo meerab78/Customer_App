@@ -35,6 +35,7 @@ class _ProfileScreenState extends State<ProfileView> {
   String _email = '';
   String? _dateOfBirth;
   String? _gender;
+  bool _isGuest = false;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _ProfileScreenState extends State<ProfileView> {
     final email = await _prefs.getEmail();
     final dateOfBirth = await _prefs.getDateOfBirth();
     final gender = await _prefs.getGender();
+    final isGuest = await _prefs.getIsGuest();
 
     if (!mounted) return;
 
@@ -62,6 +64,7 @@ class _ProfileScreenState extends State<ProfileView> {
       _email = email ?? '';
       _dateOfBirth = dateOfBirth;
       _gender = gender;
+      _isGuest = isGuest;
     });
   }
 
@@ -279,7 +282,7 @@ class _ProfileScreenState extends State<ProfileView> {
                         const SizedBox(height: 16),
 
                         Text(
-                          _name.isEmpty ? 'User' : _name,
+                          _isGuest ? 'Guest' : (_name.isEmpty ? 'User' : _name),
                           style: getExtraBoldStyle(
                             fontSize: MyFonts.size20,
                             color: AppColors.white,
@@ -289,7 +292,7 @@ class _ProfileScreenState extends State<ProfileView> {
                         const SizedBox(height: 4),
 
                         Text(
-                          _email,
+                          _isGuest ? 'Login to view your profile' : _email,
                           style: getRegularStyle(
                             fontSize: MyFonts.size13,
                             color: AppColors.white.withOpacity(0.85),
@@ -441,8 +444,16 @@ class _ProfileScreenState extends State<ProfileView> {
                             Switch(
                               value: isDark,
                               activeColor: AppColors.primary,
-                              onChanged: (val) {
-                                ThemeService.instance.toggleTheme();
+                              onChanged: (val) async {
+                                await ThemeService.instance.toggleTheme();
+                                if (!context.mounted) return;
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  PageTransitions.slideFromRight(
+                                    const BaseView(initialIndex: 0),
+                                  ),
+                                      (route) => false,
+                                );
                               },
                             ),
                           ],

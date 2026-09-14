@@ -1,10 +1,8 @@
-﻿
-
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../constant/app_constants.dart';
+import '../db/shared_pref.dart';
 
 class ThemeService extends ChangeNotifier {
-  // Singleton pattern
   static final ThemeService instance = ThemeService._internal();
 
   factory ThemeService() {
@@ -13,6 +11,8 @@ class ThemeService extends ChangeNotifier {
 
   ThemeService._internal();
 
+  final SharedPrefService _prefs = SharedPrefService();
+
   // Initialize with the constant. If null, default to system,
   // but Splash will overwrite this immediately anyway.
   ThemeMode themeMode = AppConstants.currentTheme ?? ThemeMode.light;
@@ -20,21 +20,21 @@ class ThemeService extends ChangeNotifier {
   bool get isDarkMode {
     return themeMode == ThemeMode.dark;
   }
-
-  void toggleTheme() {
-    // STRICT TOGGLE: Only swap between Light and Dark.
-    // Never set to .system here.
+  Future<void> toggleTheme() async {
     if (themeMode == ThemeMode.dark) {
       themeMode = ThemeMode.light;
     } else {
       themeMode = ThemeMode.dark;
     }
 
-    // Keep the constant in sync so other logic works
     AppConstants.currentTheme = themeMode;
 
-    // This triggers the INSTANT UI update in main.dart
+    // Instant UI update
     notifyListeners();
+
+    await _prefs.saveThemeMode(
+      themeMode == ThemeMode.dark ? "dark" : "light",
+    );
   }
 
   // Called by Splash Screen to set the initial state
@@ -43,5 +43,14 @@ class ThemeService extends ChangeNotifier {
     AppConstants.currentTheme = mode;
     notifyListeners();
   }
-}
 
+  Future<void> loadSavedTheme() async {
+    final saved = await _prefs.getThemeMode();
+
+    if (saved == "dark") {
+      setTheme(ThemeMode.dark);
+    } else if (saved == "light") {
+      setTheme(ThemeMode.light);
+    }
+  }
+}

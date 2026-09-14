@@ -36,6 +36,7 @@ class _CheckoutViewState extends State<CheckoutView> {
   bool _isPlacingOrder = false;
   String _customerId = '';
   bool _useWallet = false;
+  bool _isActuallyGuest = false;
 
   @override
   void initState() {
@@ -43,39 +44,12 @@ class _CheckoutViewState extends State<CheckoutView> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initAddresses();
+
+    });
+    _prefs.getIsGuest().then((value) {
+      if (mounted) setState(() => _isActuallyGuest = value);
     });
   }
-
-  // Checkout start hone par addresses load honge
-  // Agar address nahi hai to Home address banega
-  // Agar order Delivery hai to delivery fee calculate hogi
-  // Future<void> _initAddresses() async {
-  //   final addressManager = context.read<AddressManagerController>();
-  //   final cart = context.read<CartController>();
-  //
-  //   await addressManager.loadAddresses();
-  //   await addressManager.ensureHomeAddress();
-  //
-  //   if (cart.orderType == 'Delivery') {
-  //     _recalcFee();
-  //   }
-  //
-  //   final home = context.read<HomeController>();
-  //   final branchId = home.selectedBranch?.id?.toString() ?? '';
-  //   final userId = await _prefs.getUserId();
-  //   _customerId = userId?.toString() ?? '';
-  //
-  //   if (branchId.isNotEmpty) {
-  //     context.read<CouponController>().loadCoupons(branchId);
-  //   } else {
-  //     debugPrint("Skipping loadCoupons — branchId empty");
-  //   }
-  //   if (AppConstants.enableLoyaltySystem) {
-  //     context.read<WalletController>().loadWalletData();
-  //   }
-  // }
-
-  // Delivery fee calculate karna
 
   // NEW — Guest ke liye address editor, turant update
   Future<void> _openGuestAddressEditor() async {
@@ -146,17 +120,6 @@ class _CheckoutViewState extends State<CheckoutView> {
         context.read<WalletController>().loadWalletData();
       }
     }
-    // if (branchId.isNotEmpty) {
-    //   context.read<CouponController>().loadCoupons(branchId);
-    // } else {
-    //   debugPrint("Skipping loadCoupons — branchId empty");
-    // }
-    //
-    // // GUEST + abhi signup nahi hua -> Wallet API bhi skip (token chahiye)
-    // if (AppConstants.enableLoyaltySystem &&
-    //     (!cart.isGuestCheckout || cart.isGuestLocked)) {
-    //   context.read<WalletController>().loadWalletData();
-    // }
   }
   void _recalcFee() {
     final addressManager = context.read<AddressManagerController>();
@@ -595,47 +558,86 @@ class _CheckoutViewState extends State<CheckoutView> {
         // success dialog dikhao
         await showDialog(
           context: context,
-          builder: (_) => AlertDialog(
+          builder: (_) => Dialog(
+            backgroundColor: AppColors.card,
+            elevation: 8,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(24),
             ),
-            title: Text(
-              'Order Placed',
-              style: getBoldStyle(
-                fontSize: MyFonts.size18,
-                color: AppColors.text,
-              ),
-            ),
-            content: Text(
-              'Your order has been placed successfully.',
-              style: getRegularStyle(
-                fontSize: MyFonts.size14,
-                color: AppColors.greyText,
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(
-                  'OK',
-                  style: getSemiBoldStyle(
-                    fontSize: MyFonts.size14,
-                    color: AppColors.primary,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Modern Success Icon Badge
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.check_circle_rounded,
+                      size: 36,
+                      color: AppColors.primary,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 16),
+
+                  // Title
+                  Text(
+                    'Order Placed!',
+                    textAlign: TextAlign.center,
+                    style: getBoldStyle(
+                      fontSize: MyFonts.size18,
+                      color: AppColors.text,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // Content Message
+                  Text(
+                    'Your order has been placed successfully.',
+                    textAlign: TextAlign.center,
+                    style: getRegularStyle(
+                      fontSize: MyFonts.size13,
+                      color: AppColors.greyText,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Compact Modern Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 44,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        'OK',
+                        style: getBoldStyle(
+                          fontSize: MyFonts.size14,
+                          color: AppColors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         );
 
         if (!mounted) return;
-
-        // dialog ke OK ke baad -> Order History screen pe le jao
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const OrderHistoryView()),
-        );
-      }else {
+        Navigator.popUntil(context, (route) => route.isFirst);
+      } else {
         final errorMsg = response['ErrorMessage']?.toString() ??
             response['Message']?.toString() ??
             "Failed to place order. Please try again.";
@@ -779,66 +781,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                   onManageAddress: _openManageAddress,        // NEW — logged-in: manage screen
                   onShowAddressList: _showAddressDropdown,    // NEW — logged-in: dropdown
                 ),
-
-                if (!cart.isGuestCheckout) ... [ const SizedBox(height: 24),
-                CouponSection(
-                  branchId: context.read<HomeController>().selectedBranch?.id?.toString() ?? '',
-                  customerId: _customerId,
-                  subtotal: subtotal,
-                  cartItems: cart.cartItems,
-                  orderTypeId: cart.orderType == 'Delivery' ? 3 : 2,
-                  deliveryFee: cart.orderType == 'Delivery' ? addressManager.deliveryFee : 0,
-                ),
-                const SizedBox(height: 16),
-                if (AppConstants.enableLoyaltySystem && walletController.walletAmount > 0) ...[
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    margin: const EdgeInsets.only(bottom: 24),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.borderLight),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.08),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary, size: 17),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Use wallet balance',
-                                style: getSemiBoldStyle(fontSize: MyFonts.size13, color: AppColors.text),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Rs ${walletController.walletAmount.toStringAsFixed(0)} available',
-                                style: getRegularStyle(fontSize: MyFonts.size11, color: AppColors.greyText),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Switch(
-                          value: _useWallet,
-                          activeColor: AppColors.primary,
-                          onChanged: (val) {
-                            setState(() => _useWallet = val);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ] else
-                  const SizedBox(height: 15), ],
+                SizedBox(height: 10,),
                 // ORDER SUMMARY
                 Text(
                   'Order Summary',
@@ -1185,8 +1128,66 @@ class _CheckoutViewState extends State<CheckoutView> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-
+                const SizedBox(height: 15),
+                if (!cart.isGuestCheckout && !_isActuallyGuest) ... [ const SizedBox(height: 8),
+                  CouponSection(
+                    branchId: context.read<HomeController>().selectedBranch?.id?.toString() ?? '',
+                    customerId: _customerId,
+                    subtotal: subtotal,
+                    cartItems: cart.cartItems,
+                    orderTypeId: cart.orderType == 'Delivery' ? 3 : 2,
+                    deliveryFee: cart.orderType == 'Delivery' ? addressManager.deliveryFee : 0,
+                  ),
+                  const SizedBox(height: 17),
+                  if (AppConstants.enableLoyaltySystem && walletController.walletAmount > 0) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      margin: const EdgeInsets.only(bottom: 24),
+                      decoration: BoxDecoration(
+                        color: AppColors.card,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.borderLight),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(Icons.account_balance_wallet_rounded, color: AppColors.primary, size: 17),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Use wallet balance',
+                                  style: getSemiBoldStyle(fontSize: MyFonts.size13, color: AppColors.text),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  'Rs ${walletController.walletAmount.toStringAsFixed(0)} available',
+                                  style: getRegularStyle(fontSize: MyFonts.size11, color: AppColors.greyText),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: _useWallet,
+                            activeColor: AppColors.primary,
+                            onChanged: (val) {
+                              setState(() => _useWallet = val);
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else
+                    const SizedBox(height: 15), ],
 
                 // PLACE ORDER
                 SizedBox(

@@ -30,34 +30,23 @@ class _DealDetailViewState extends State<DealDetailView> {
   void initState() {
     super.initState();
 
-    dealItems = List<Menu>.from(
-      widget.food.dealMenuDetails,
-    );
-    itemCompletion = List<bool>.filled(
-      dealItems.length,
-      false,
-    );
+    dealItems = List<Menu>.from(widget.food.dealMenuDetails);
+    itemCompletion = List<bool>.filled(dealItems.length, false);
 
-    // Jis item mein customization nahi hai
-    // wo already complete hai
     for (int i = 0; i < dealItems.length; i++) {
       final item = dealItems[i];
-
-      final hasCustomization =
-          item.menuVariations.isNotEmpty ||
-              item.choiceGroup.isNotEmpty ||
-              item.menuVariation != null;
+      final hasCustomization = item.menuVariations.isNotEmpty ||
+          item.choiceGroup.isNotEmpty ||
+          item.menuVariation != null;
 
       if (!hasCustomization) {
         itemCompletion[i] = true;
       }
     }
   }
-// CHECK REQUIRED CUSTOMIZATIONS
+
   bool get isDealComplete {
-    return itemCompletion.every(
-          (completed) => completed,
-    );
+    return itemCompletion.every((completed) => completed);
   }
 
   double get totalDealPrice {
@@ -65,13 +54,11 @@ class _DealDetailViewState extends State<DealDetailView> {
     double extra = 0;
 
     for (final item in dealItems) {
-      // Direct choices
       for (final group in item.choiceGroup) {
         for (final choice in group.choices) {
           extra += double.tryParse(choice.price ?? '0') ?? 0;
         }
       }
-      // Variation ke andar wali NESTED choices — pehle yeh miss ho rahi thi
       if (item.menuVariation != null) {
         for (final group in item.menuVariation!.choiceGroups) {
           for (final choice in group.choices) {
@@ -79,27 +66,20 @@ class _DealDetailViewState extends State<DealDetailView> {
           }
         }
       }
-      // NOTE: item.menuVariation!.price yahan JAAN-BUJH KAR add nahi ki —
-      // deal ki fixed price mein variation ki apni base cost shamil hai.
     }
 
     return basePrice + extra;
   }
-// ADD DEAL TO CART
+
   Future<void> _addDealToCart() async {
     if (!isDealComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'Please complete all required selections.',
-          ),
+          content: Text('Please complete all required selections.'),
         ),
       );
-
       return;
     }
-
-    final orderType = context.read<CartController>().orderType;
 
     double totalDealPriceFor(String type) {
       final basePrice = pickOrderTypePrice(
@@ -147,339 +127,194 @@ class _DealDetailViewState extends State<DealDetailView> {
       choiceGroup: [],
     );
 
-    await context.read<CartController>().addToCart(
-      updatedDeal,
-      1,
-    );
+    await context.read<CartController>().addToCart(updatedDeal, 1);
 
     if (!mounted) return;
-
-    // DEAL ADD HO GAYA
-    // Ab Home screen par wapas jao
-    Navigator.popUntil(
-      context,
-          (route) => route.isFirst,
-    );
-  }
-
-  int get _completedCount =>
-      itemCompletion.where((completed) => completed).length;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor:
-      AppColors.background,
-
-// APP BAR
-      appBar: AppBar(
-        backgroundColor:
-        AppColors.background,
-        elevation: 0,
-        iconTheme: IconThemeData(
-          color: AppColors.textColor,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.primary,
+        duration: const Duration(seconds: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: Text(
-          widget.food.name ??
-              'Deal Details',
-          style: getBoldStyle(
-            fontSize: MyFonts.size21,
-            color: AppColors.text,
-          ),
-        ),
-      ),
-
-// DEAL ITEMS
-      body: dealItems.isEmpty
-          ? Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        margin: const EdgeInsets.all(16),
+        content: Row(
           children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 48,
-              color: AppColors.grey400,
+            const Icon(
+              Icons.check_circle_outline_rounded,
+              color: AppColors.white,
+              size: 20,
             ),
-            const SizedBox(height: 12),
-            Text(
-              'No items found in this deal',
-              style: getRegularStyle(
-                color:
-                AppColors.greyText,
-                fontSize:
-                MyFonts.size15,
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '${widget.food.name ?? 'Item'} added to cart',
+                style: getMediumStyle(
+                  fontSize: MyFonts.size14,
+                  color: AppColors.white,
+                ),
               ),
             ),
           ],
         ),
-      )
-          : Column(
-        children: [
+      ),
+    );
 
-          // PROGRESS HEADER (display only — reads existing
-          Padding(
-            padding: const EdgeInsets.fromLTRB(
-              16, 4, 16, 12,
-            ),
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.card,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(
-                  color: AppColors.borderColorGrey,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.softShadow05,
-                    blurRadius: 14,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: BoxDecoration(
-                          color: AppColors.tertiary
-                              .withOpacity(0.15),
-                          borderRadius:
-                          BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          Icons.local_offer_rounded,
-                          color: AppColors.tertiary,
-                          size: 21,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment:
-                          CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Customize your deal',
-                              style: getBoldStyle(
-                                fontSize: MyFonts.size14,
-                                color: AppColors.text,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '$_completedCount of ${dealItems.length} items ready',
-                              style: getRegularStyle(
-                                fontSize: MyFonts.size12,
-                                color: AppColors.greyText,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(
-                        'Rs ${totalDealPrice.toStringAsFixed(0)}',
-                        style: getExtraBoldStyle(
-                          fontSize: MyFonts.size16,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: dealItems.isEmpty
-                          ? 0
-                          : _completedCount /
-                          dealItems.length,
-                      minHeight: 6,
-                      backgroundColor: AppColors.grey200,
-                      valueColor: AlwaysStoppedAnimation(
-                        isDealComplete
-                            ? AppColors.success
-                            : AppColors.tertiary,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+    Navigator.popUntil(context, (route) => route.isFirst);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Dish Detail',
+          style: getBoldStyle(
+            fontSize: MyFonts.size18,
+            color: AppColors.primary,
           ),
-
-          Expanded(
-            child: ListView.builder(
-              padding:
-              const EdgeInsets.fromLTRB(
-                16, 0, 16, 16,
+        ),
+      ),
+      body: dealItems.isEmpty
+          ? Center(
+        child: Text(
+          'No items found in this deal',
+          style: getRegularStyle(
+            color: AppColors.greyText,
+            fontSize: MyFonts.size15,
+          ),
+        ),
+      )
+          : SingleChildScrollView(
+        padding: const EdgeInsets.only(bottom: 110),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.food.imageUrl != null &&
+                widget.food.imageUrl!.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    widget.food.imageUrl!,
+                    height: 180,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
+                ),
               ),
 
-              itemCount:
-              dealItems.length,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Text(
+                widget.food.name ?? 'Deal Items',
+                style: getExtraBoldStyle(
+                  fontSize: MyFonts.size18,
+                  color: AppColors.text,
+                ),
+              ),
+            ),
 
-              itemBuilder:
-                  (context, index) {
-                final item =
-                dealItems[index];
-
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: dealItems.length,
+              itemBuilder: (context, index) {
                 return DealItemCard(
-                  key: ValueKey(
-                    '${item.id}_$index',
-                  ),
-
-                  item: item,
-
-                  onItemUpdated:
-                      (updatedItem) {
-                    debugPrint('BEFORE total: $totalDealPrice');
+                  key: ValueKey('${dealItems[index].id}_$index'),
+                  item: dealItems[index],
+                  onItemUpdated: (updatedItem) {
                     setState(() {
-                      dealItems[index] =
-                          updatedItem;
+                      dealItems[index] = updatedItem;
                     });
-                    debugPrint('AFTER total: $totalDealPrice');
                   },
-
-                  onCompletionChanged:
-                      (completed) {
+                  onCompletionChanged: (completed) {
                     setState(() {
-                      itemCompletion[index] =
-                          completed;
+                      itemCompletion[index] = completed;
                     });
                   },
                 );
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
-// ADD DEAL BUTTON
-
-
       bottomNavigationBar: dealItems.isEmpty
           ? null
           : Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: AppColors.card,
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(22),
-            topRight: Radius.circular(22),
-          ),
           boxShadow: [
             BoxShadow(
               color: AppColors.softShadow07,
-              blurRadius: 18,
-              offset: const Offset(0, -5),
+              blurRadius: 10,
+              offset: const Offset(0, -3),
             ),
           ],
         ),
         child: SafeArea(
-          top: false,
-          child: Padding(
-            padding:
-            const EdgeInsets.fromLTRB(
-              16,
-              14,
-              16,
-              14,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total:',
+                    style: getRegularStyle(
+                      fontSize: MyFonts.size12,
+                      color: AppColors.greyText,
+                    ),
+                  ),
+                  Text(
+                    'PKR ${totalDealPrice.toStringAsFixed(2)}',
+                    style: getExtraBoldStyle(
+                      fontSize: MyFonts.size16,
+                      color: AppColors.text,
+                    ),
+                  ),
+                ],
+              ),
 
-            child: SizedBox(
-              height: 58,
-              width: double.infinity,
-
-              child: ElevatedButton(
-                onPressed:
-                isDealComplete
-                    ? _addDealToCart
-                    : null,
-
-                style:
-                ElevatedButton.styleFrom(
-                  backgroundColor:
-                  AppColors.primary,
-
-                  disabledBackgroundColor:
-                  AppColors.grey300,
-
-                  foregroundColor:
-                  AppColors.white,
-
-                  elevation: 0,
-
-                  shape:
-                  RoundedRectangleBorder(
-                    borderRadius:
-                    BorderRadius.circular(
-                      16,
+              SizedBox(
+                height: 46,
+                child: ElevatedButton(
+                  onPressed: isDealComplete ? _addDealToCart : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    disabledBackgroundColor: AppColors.grey300,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                  ),
+                  child: Text(
+                    isDealComplete
+                        ? 'Add to Cart'
+                        : 'Complete Selection',
+                    style: getBoldStyle(
+                      fontSize: MyFonts.size14,
+                      color: AppColors.white,
                     ),
                   ),
                 ),
-
-                child: Row(
-                  mainAxisAlignment:
-                  MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      isDealComplete
-                          ? Icons.shopping_bag_rounded
-                          : Icons.error_outline_rounded,
-                      color: AppColors.white,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      mainAxisAlignment:
-                      MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          isDealComplete
-                              ? 'Add Deal to Cart'
-                              : 'Complete Required Selections',
-
-                          style:
-                          getExtraBoldStyle(
-                            fontSize:
-                            MyFonts.size14,
-                            color:
-                            AppColors.white,
-                          ),
-                        ),
-
-                        const SizedBox(
-                          height: 2,
-                        ),
-
-                        Text(
-                          'Rs ${totalDealPrice.toStringAsFixed(0)}',
-
-                          style:
-                          getBoldStyle(
-                            fontSize:
-                            MyFonts.size13,
-                            color:
-                            AppColors.white
-                                .withOpacity(0.85),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
               ),
-            ),
+            ],
           ),
         ),
       ),

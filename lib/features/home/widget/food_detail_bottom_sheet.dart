@@ -160,6 +160,7 @@ void showFoodDetailBottomSheet(
                             )
                                 : food,
                             quantity: quantity,
+                            unitPrice: selectedPrice,
                             total: total,
                             isAddEnabled:
                             !hasCustomization ||
@@ -198,6 +199,38 @@ void showFoodDetailBottomSheet(
 
                               if (sheetContext.mounted) {
                                 Navigator.pop(sheetContext);
+                              }
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
+                                    content: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle_outline_rounded,
+                                          color: AppColors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            '${food.name ?? 'Item'} added to cart',
+                                            style: TextStyle(
+                                              color: AppColors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
                               }
                             },
                           ),

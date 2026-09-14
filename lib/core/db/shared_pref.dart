@@ -10,6 +10,7 @@ class SharedPrefService {
   static const String latitudeKey = "latitude";
   static const String longitudeKey = "longitude";
   static const String isDefaultKey = "isDefault";
+  static const String isGuestKey = "is_guest";
 
   static const String userIdKey = "user_id";
   static const String customerIdKey = "customer_id";
@@ -21,6 +22,19 @@ class SharedPrefService {
 
   static const String dateOfBirthKey = "date_of_birth";
   static const String genderKey = "gender";
+
+  static const String themeModeKey = "theme_mode";
+
+  //  Theme save/load
+  Future<void> saveThemeMode(String mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(themeModeKey, mode);
+  }
+
+  Future<String?> getThemeMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(themeModeKey);
+  }
 
   // AUTH
 
@@ -193,5 +207,16 @@ class SharedPrefService {
 
     await prefs.remove(dateOfBirthKey);
     await prefs.remove(genderKey);
+    await prefs.remove(isGuestKey);
+  }
+
+  Future<void> saveIsGuest(bool isGuest) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(isGuestKey, isGuest);
+  }
+
+  Future<bool> getIsGuest() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(isGuestKey) ?? false;
   }
 }

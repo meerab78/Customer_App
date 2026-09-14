@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/db/shared_pref.dart' show SharedPrefService;
 import '../base/view.dart';
 import '../auth/signin/view.dart';
 import 'view.dart';
@@ -27,11 +28,12 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
     final prefs = await SharedPreferences.getInstance();
 
     final token = prefs.getString('token');
+    final isGuest = await SharedPrefService().getIsGuest();
 
     if (!mounted) return;
 
     setState(() {
-      _isLoggedIn = token != null && token.isNotEmpty;
+      _isLoggedIn = (token != null && token.isNotEmpty) && !isGuest;
       _isCheckingLogin = false;
     });
   }
@@ -46,17 +48,18 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+    final isGuest = await SharedPrefService().getIsGuest();
 
     if (!mounted) return;
 
-    if (token != null && token.isNotEmpty) {
+    if (token != null && token.isNotEmpty && !isGuest) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) =>
-           BaseView(
-            initialIndex: 0,
-          ),
+              BaseView(
+                initialIndex: 0,
+              ),
         ),
       );
     } else {

@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' show read;
 import 'package:provider/provider.dart' show ReadContext;
@@ -18,11 +20,11 @@ void showLoginRequiredSheet(BuildContext context) {
     backgroundColor: AppColors.transparent,
     builder: (_) {
       return Container(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-        decoration: const BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(28),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 14), // Compact padding
+        decoration: BoxDecoration(
+          color: AppColors.card, // Theme aware surface background
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(20), // Slightly reduced corner radius
           ),
         ),
         child: SafeArea(
@@ -32,30 +34,31 @@ void showLoginRequiredSheet(BuildContext context) {
             children: [
               Center(
                 child: Container(
-                  width: 50,
-                  height: 5,
+                  width: 36,
+                  height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.grey300,
+                    color: AppColors.divider, // Dynamic handle color for dark/light theme
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 10),
               Text(
                 "Login Required",
                 style: getBoldStyle(
-                  fontSize: MyFonts.size22,
-                  color: AppColors.text,
+                  fontSize: MyFonts.size18, // Reduced font size for compact feel
+                  color: AppColors.text, // Theme aware text color
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 "Login to track your order, or continue as a guest.",
                 style: getRegularStyle(
-                  color: AppColors.grey600,
+                  fontSize: MyFonts.size12,
+                  color: AppColors.greyText, // Dynamic grey text for better dark mode readability
                 ),
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
 
               // LOGIN OPTION
               DeliveryPickupCard(
@@ -73,7 +76,7 @@ void showLoginRequiredSheet(BuildContext context) {
                 },
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // GUEST OPTION
               DeliveryPickupCard(
@@ -91,7 +94,7 @@ void showLoginRequiredSheet(BuildContext context) {
                   );
                 },
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 4),
             ],
           ),
         ),

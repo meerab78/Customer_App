@@ -515,6 +515,8 @@ class CartController extends ChangeNotifier {
             restaurantId: int.tryParse(AppConstants.restaurantId) ?? 0,
             restaurantName: response.data!.restaurantName ?? '',
           );
+          await _prefs.saveIsGuest(true);
+
         }
 
         guestUserData = response.data;
@@ -534,6 +536,7 @@ class CartController extends ChangeNotifier {
           restaurantName: null,
           isGuest: 1,
         );
+        await _prefs.saveIsGuest(true);
         notifyListeners();
         return true;
       }

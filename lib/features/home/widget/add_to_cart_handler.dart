@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/app_colors.dart';
 import '../deal_detail_view.dart';
 import '../model/menu_model.dart';
 import '../variation_view.dart';
@@ -86,10 +87,33 @@ Future<void> handleAddToCart(
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(
-        '${food.name ?? 'Item'} added to cart',
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.primary,
+      duration: const Duration(seconds: 2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
       ),
-      duration: const Duration(seconds: 1),
+      margin: const EdgeInsets.all(16),
+      content: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_outline_rounded,
+            color: AppColors.white,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '${food.name ?? 'Item'} added to cart',
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -127,14 +151,35 @@ Future<void> _openVariationView(
 
   if (!context.mounted) return;
 
-  ScaffoldMessenger.of(context).hideCurrentSnackBar();
-
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(
-        '${food.name ?? 'Item'} added to cart ✓',
-      ),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.primary,
       duration: const Duration(seconds: 2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      margin: const EdgeInsets.all(16),
+      content: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_outline_rounded,
+            color: AppColors.white,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '${food.name ?? 'Item'} added to cart',
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
 }

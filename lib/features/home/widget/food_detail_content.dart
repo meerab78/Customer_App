@@ -10,12 +10,14 @@ class FoodDetailContent extends StatelessWidget {
   final int quantity;
   final double total;
   final ValueChanged<int> onQuantityChanged;
+  final double unitPrice;
   final VoidCallback onAddToCart;
   final bool isAddEnabled;
 
   const FoodDetailContent({
     super.key,
     required this.food,
+    required this.unitPrice,
     required this.quantity,
     required this.total,
     required this.onQuantityChanged,
@@ -62,7 +64,7 @@ class FoodDetailContent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Rs ${food.price ?? '0'}',
+      'Rs ${unitPrice.toStringAsFixed(0)}',
                 style: getExtraBoldStyle(
                   fontSize: MyFonts.size15,
                   color: AppColors.primary,

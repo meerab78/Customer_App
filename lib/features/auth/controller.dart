@@ -99,7 +99,7 @@ class AuthController extends ChangeNotifier {
         restaurantId: data['restaurant_id'],
         restaurantName: data['restaurant_name'],
       );
-
+      await _sharedPrefService.saveIsGuest(false);
       _isLoading = false;
       notifyListeners();
 

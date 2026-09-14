@@ -28,6 +28,7 @@ class MyHttpOverrides extends HttpOverrides {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
+  await ThemeService.instance.loadSavedTheme();
   runApp(const MyApp());
 }
 

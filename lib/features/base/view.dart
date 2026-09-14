@@ -1,4 +1,5 @@
 ﻿
+import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_theme.dart' show ThemeService;
 import '../cart/order_history_view.dart';
 import '../search/view.dart';
@@ -52,13 +53,13 @@ class _BaseViewState
   Future<void> _checkLogin() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+    final isGuest = await SharedPrefService().getIsGuest();
     if (!mounted) return;
     setState(() {
-      _isLoggedIn = token != null && token.isNotEmpty;
+      _isLoggedIn = (token != null && token.isNotEmpty) && !isGuest;
       _isCheckingLogin = false;
     });
   }
-
   // Bottom navigation tab change
   void _onTabTapped(int index) {
     setState(() {
