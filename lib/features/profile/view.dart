@@ -12,6 +12,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
 import '../cart/controller.dart' show CartController;
+import '../home/widget/order_type_bottom_sheet.dart';
 import 'Loyalty_transactions/controller.dart';
 import 'Loyalty_transactions/loyalty_history_view.dart';
 import 'Wallet/controller.dart';
@@ -371,15 +372,6 @@ class _ProfileScreenState extends State<ProfileView> {
                       );
                     },
                   ),
-
-                  ProfileOptionTile(
-                    title: 'Discount Voucher',
-                    icon: Icons.discount_outlined,
-                    onTap: () {
-                      // Discount voucher
-                    },
-                  ),
-
                   ProfileOptionTile(
                     title: 'Manage Address',
                     icon: Icons.location_on,
@@ -390,6 +382,14 @@ class _ProfileScreenState extends State<ProfileView> {
                       );
                     },
                   ),
+                  if (!_isGuest)
+                    ProfileOptionTile(
+                      title: 'Manage Order Type',
+                      icon: Icons.swap_horiz_rounded,
+                      onTap: () {
+                        showOrderTypeBottomSheet(context);
+                      },
+                    ),
 
                   const SizedBox(height: 24),
 

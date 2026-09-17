@@ -4,6 +4,7 @@ import 'package:customer_app/features/home/widget/special_deals_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import 'controller.dart';
@@ -44,7 +45,7 @@ class _HomeScreenState extends State<HomeView> {
       context.read<HomeController>().loadHomeData();
     });
 
-    _showOrderType();
+    _checkAndShowOrderType();
   }
 
   @override
@@ -54,8 +55,11 @@ class _HomeScreenState extends State<HomeView> {
     super.dispose();
   }
 
-  void _showOrderType() {
+  void _checkAndShowOrderType() {
     if (_orderTypeShown) return;
+
+    final home = context.read<HomeController>();
+    if (home.orderTypeAsked) return; // is session mein already pouch chuke
 
     _orderTypeShown = true;
 

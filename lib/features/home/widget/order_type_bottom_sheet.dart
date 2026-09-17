@@ -1,99 +1,12 @@
-﻿// import 'package:flutter/material.dart';
-// import 'package:http/http.dart' show read;
-// import 'package:provider/provider.dart' show ReadContext;
-// import '../../../core/theme/app_colors.dart';
-// import '../../../core/theme/fonts_manager.dart';
-// import '../../../core/theme/textfont_styles.dart';
-// import '../../cart/controller.dart';
-// import '../branch_view.dart';
-// import 'delivery_pickup_card.dart';
-//
-// void showOrderTypeBottomSheet(BuildContext context) {
-//   showModalBottomSheet(
-//     context: context,
-//     isDismissible: false,
-//     enableDrag: false,
-//     isScrollControlled: true,
-//     backgroundColor: AppColors.transparent,
-//     builder: (_) {
-//       return Container(
-//         padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-//         decoration: BoxDecoration(
-//           color: AppColors.card,
-//           borderRadius: const BorderRadius.vertical(
-//             top: Radius.circular(28),
-//           ),
-//         ),
-//         child: SafeArea(
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               Center(
-//                 child: Container(
-//                   width: 50,
-//                   height: 5,
-//                   decoration: BoxDecoration(
-//                     color: AppColors.borderLight,
-//                     borderRadius: BorderRadius.circular(20),
-//                   ),
-//                 ),
-//               ),
-//               const SizedBox(height: 14),
-//               Text(
-//                 "Choose Order Type",
-//                 style: getBoldStyle(
-//                   fontSize: MyFonts.size22,
-//                   color: AppColors.text,
-//                 ),
-//               ),
-//               const SizedBox(height: 6),
-//               Text(
-//                 "Select how you'd like to receive your order.",
-//                 style: getRegularStyle(
-//                   color: AppColors.greyText,
-//                 ),
-//               ),
-//               const SizedBox(height: 18),
-//               DeliveryPickupCard(
-//                 icon: Icons.delivery_dining,
-//                 title: "Delivery",
-//                 subtitle: "Deliver food to your address",
-//                 onTap: () {
-//                   context.read<CartController>().changeOrderType('Delivery');
-//                   Navigator.pop(context);
-//                 },
-//               ),
-//               const SizedBox(height: 10),
-//               DeliveryPickupCard(
-//                 icon: Icons.storefront,
-//                 title: "Pickup",
-//                 subtitle: "Collect from restaurant branch",
-//                 onTap: () {
-//                   context.read<CartController>().changeOrderType('Takeaway');
-//                   Navigator.pop(context);
-//                   Navigator.push(
-//                     context,
-//                     MaterialPageRoute(
-//                       builder: (_) => const BranchView(),
-//                     ),
-//                   );
-//                 },
-//               ),
-//               const SizedBox(height: 8),
-//             ],
-//           ),
-//         ),
-//       );
-//     },
-//   );
-// }
+﻿
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
+import '../../base/controller.dart';
 import '../../cart/controller.dart';
 import '../controller.dart';
 import '../branch_view.dart';
@@ -101,7 +14,6 @@ import 'delivery_pickup_card.dart';
 
 void showOrderTypeBottomSheet(BuildContext context) {
   bool isSelecting = false;
-
   showModalBottomSheet(
     context: context,
     isDismissible: false,
@@ -130,7 +42,12 @@ void showOrderTypeBottomSheet(BuildContext context) {
             if (!sheetContext.mounted) return;
 
             sheetContext.read<CartController>().changeOrderType('Takeaway');
+            home.orderTypeAsked = true;
             Navigator.pop(sheetContext);
+            if (context.mounted) {
+              context.read<BaseTabController>().changeTab(0);
+            }
+
             if (home.selectedBranch == null) {
               Navigator.push(
                 context,
@@ -138,6 +55,17 @@ void showOrderTypeBottomSheet(BuildContext context) {
                   builder: (_) => const BranchView(),
                 ),
               );
+            } else {
+              await home.getMenu(home.selectedBranch!.id.toString());
+            }
+            if (home.selectedBranch == null) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const BranchView(),
+                ),
+              );
+
             } else {
               // Menu bhi naye branch ke hisaab se load karo
               await home.getMenu(home.selectedBranch!.id.toString());
@@ -205,8 +133,15 @@ void showOrderTypeBottomSheet(BuildContext context) {
                       if (!sheetContext.mounted) return;
 
                       sheetContext.read<CartController>().changeOrderType('Delivery');
+                      home.orderTypeAsked = true;
                       Navigator.pop(sheetContext);
+                      if (context.mounted) {
+                        context.read<BaseTabController>().changeTab(0);
+                      }
 
+                      if (home.selectedBranch != null) {
+                        await home.getMenu(home.selectedBranch!.id.toString());
+                      }
                       if (home.selectedBranch != null) {
                         await home.getMenu(home.selectedBranch!.id.toString());
                       }

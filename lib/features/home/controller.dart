@@ -13,6 +13,7 @@ class HomeController extends ChangeNotifier {
   final MenuRepository _menuRepository = MenuRepository();
   final LocationService _locationService = LocationService();
   bool isLoading = false;
+  bool orderTypeAsked = false;
   BranchModel? branchModel;
   MenuModel? menuModel;
   Branch? selectedBranch;
