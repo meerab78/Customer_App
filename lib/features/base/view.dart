@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'dart:io';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
@@ -140,11 +140,43 @@ class _BaseViewState
 
         final safeIndex = selectedIndex.clamp(0, screens.length - 1);
 
-        return Scaffold(
-          body: IndexedStack(
-            index: safeIndex,
-            children: screens,
-          ),
+        return PopScope(
+            canPop: false,
+          onPopInvoked: (didPop) async {
+              if (didPop) return;
+
+              if (safeIndex != 0) {
+                context.read<BaseTabController>().changeTab(0);
+                return;
+              }
+
+              final shouldExit = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Exit App'),
+                  content: const Text('Are you sure you want to exit?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      child: const Text('Exit'),
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldExit == true) {
+                exit(0);
+              }
+            },
+            child: Scaffold(
+              body: IndexedStack(
+                index: safeIndex,
+                children: screens,
+              ),
           bottomNavigationBar: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 12,
@@ -204,6 +236,7 @@ class _BaseViewState
               ),
             ),
           ),
+        ),
         );
       },
     );

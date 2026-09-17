@@ -56,6 +56,7 @@ class _LoginScreenState extends State<SignInView> {
     if (!mounted) return;
 
     if (success) {
+      provider.resetState();
       context.read<CartController>().setLoggedInCheckout();
 
       Navigator.pushReplacement(
@@ -286,6 +287,9 @@ class _LoginScreenState extends State<SignInView> {
                                         builder: (_) => const SignUpView(),
                                       ),
                                     );
+                                    if (!mounted) return;
+                                    _emailController.clear();
+                                    _passwordController.clear();
                                   },
                               ),
                             ],

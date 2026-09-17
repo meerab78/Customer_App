@@ -1248,7 +1248,9 @@ class _CheckoutViewState extends State<CheckoutView> {
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  'Rs ${walletController.walletAmount.toStringAsFixed(0)} available',
+                                  cart.useWallet
+                                      ? 'Rs ${(walletController.walletAmount - walletApplied).toStringAsFixed(0)} remaining after use'
+                                      : 'Rs ${walletController.walletAmount.toStringAsFixed(0)} available',
                                   style: getRegularStyle(fontSize: MyFonts.size11, color: AppColors.greyText),
                                 ),
                               ],

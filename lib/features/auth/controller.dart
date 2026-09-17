@@ -302,6 +302,13 @@ class AuthController extends ChangeNotifier {
     return await _sharedPrefService.getRestaurantId();
   }
 
+  void resetState() {
+    _isLoading = false;
+    _errorMessage = null;
+    _signupResponse = null;
+    notifyListeners();
+  }
+
 // Clear error message
   void clearError() {
     _errorMessage = null;

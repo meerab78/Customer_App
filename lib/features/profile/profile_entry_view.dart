@@ -18,6 +18,7 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
   bool _isCheckingLogin = true;
   bool _isLoggedIn = false;
 
+
   @override
   void initState() {
     super.initState();

@@ -16,11 +16,13 @@ import '../../core/theme/textfont_styles.dart';
 class OrderHistoryView extends StatefulWidget {
   const OrderHistoryView({super.key});
 
+
   @override
   State<OrderHistoryView> createState() => _OrderHistoryViewState();
 }
 
 class _OrderHistoryViewState extends State<OrderHistoryView> {
+  late OrderController _orderController;
   @override
   void initState() {
     super.initState();
@@ -29,10 +31,14 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
       context.read<OrderController>().startHistoryPolling();
     });
   }
-
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _orderController = context.read<OrderController>();
+  }
   @override
   void dispose() {
-    context.read<OrderController>().stopHistoryPolling();
+    _orderController.stopHistoryPolling();
     super.dispose();
   }
 

@@ -9,6 +9,7 @@ class ApiConstants {
   static const String getOrderHistory = "${baseUrlV2}get_order_history";
   static const String getCouponsByUserId = "${baseUrlV1}GetCouponsByUserId";
   static const String getValidateCoupon  = "${baseUrlV1}GetValidateCoupon";
+  static const String updateCustomer = "${baseUrlV2}update_customer";
   static const String baseUrlV2Root =
       "https://admin.cherryberryrms.com/v2/api/";
   static const String validatePromotion =

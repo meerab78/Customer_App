@@ -46,6 +46,10 @@ class _OtpScreenState extends State<OtpView> {
 
     if (!mounted) return;
 
+    if (success) {
+      provider.resetState();
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

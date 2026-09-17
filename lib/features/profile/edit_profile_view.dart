@@ -1,6 +1,11 @@
 ﻿
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:date_picker_plus/date_picker_plus.dart';
+import 'package:http/http.dart' as http;
+import '../../api_service/api_constants.dart';
+import '../../api_service/api_service.dart';
 import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
@@ -8,6 +13,8 @@ import '../../core/theme/textfont_styles.dart';
 import '../../core/shared/widgets/custom_button.dart';
 import '../../core/shared/widgets/custom_text_field.dart';
 import 'package:easy_date_timeline/easy_date_timeline.dart';
+
+import 'model/UpdateCustomerResponse.dart';
 
 class EditProfileView extends StatefulWidget {
   final String name;
@@ -46,7 +53,21 @@ class _EditProfileScreenState extends State<EditProfileView> {
     super.dispose();
   }
   Future<void> _selectDate() async {
-    DateTime? selectedDate;
+    DateTime initialFocus = DateTime(2000);
+
+    // agar pehle se date selected hai to usi se shuru karo
+    if (_dateOfBirth != null) {
+      final parts = _dateOfBirth!.split('-');
+      if (parts.length == 3) {
+        initialFocus = DateTime(
+          int.parse(parts[0]),
+          int.parse(parts[1]),
+          int.parse(parts[2]),
+        );
+      }
+    }
+
+    DateTime? selectedDate = initialFocus;
 
     await showModalBottomSheet(
       context: context,
@@ -58,73 +79,79 @@ class _EditProfileScreenState extends State<EditProfileView> {
         ),
       ),
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  decoration: BoxDecoration(
-                    color: AppColors.borderLight,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-
-                Text(
-                  'Select Date of Birth',
-                  style: getBoldStyle(
-                    fontSize: MyFonts.size20,
-                    color: AppColors.text,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                EasyDateTimeLinePicker(
-                  firstDate: DateTime(1950),
-                  lastDate: DateTime.now(),
-                  focusedDate: DateTime(2000),
-                  onDateChange: (date) {
-                    selectedDate = date;
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (selectedDate == null) return;
-
-                      Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Drag handle
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: AppColors.borderLight,
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: Text(
-                      'Select Date',
+
+                    Text(
+                      'Select Date of Birth',
                       style: getBoldStyle(
-                        color: AppColors.white,
-                        fontSize: MyFonts.size15,
+                        fontSize: MyFonts.size20,
+                        color: AppColors.text,
                       ),
                     ),
-                  ),
+
+                    const SizedBox(height: 20),
+
+                    EasyDateTimeLinePicker(
+                      firstDate: DateTime(1950),
+                      lastDate: DateTime.now(),
+                      focusedDate: selectedDate,
+                      onDateChange: (date) {
+                        setModalState(() {
+                          selectedDate = date;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (selectedDate == null) return;
+
+                          Navigator.pop(context);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: Text(
+                          'Select Date',
+                          style: getBoldStyle(
+                            color: AppColors.white,
+                            fontSize: MyFonts.size15,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );
@@ -133,37 +160,65 @@ class _EditProfileScreenState extends State<EditProfileView> {
 
     setState(() {
       _dateOfBirth =
-      '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}';
+      '${selectedDate!.year.toString().padLeft(4, '0')}-'
+          '${selectedDate!.month.toString().padLeft(2, '0')}-'
+          '${selectedDate!.day.toString().padLeft(2, '0')}';
     });
   }
 
   Future<void> _saveProfile() async {
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your name'),
-        ),
+        const SnackBar(content: Text('Please enter your name')),
       );
       return;
     }
 
     final prefs = SharedPrefService();
+    final customerId = await prefs.getCustomerId();
+    final token = await prefs.getToken();
 
-    await prefs.saveProfileDetails(
-      name: _nameController.text.trim(),
-      dateOfBirth: _dateOfBirth,
-      gender: _selectedGender,
-    );
+    try {
+      final response = await ApiService().postRequest(
+        ApiConstants.updateCustomer,
+        {
+          "customer_id": customerId,
+          "name": _nameController.text.trim(),
+          "date_birth": _dateOfBirth ?? "",
+          "gender": _selectedGender ?? "",
+        },
 
-    if (!mounted) return;
+        token: token,
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated successfully'),
-      ),
-    );
+      final data = UpdateCustomerResponse.fromJson(response);
 
-    Navigator.pop(context, true);
+      if (data.success == true) {
+        await prefs.saveProfileDetails(
+          name: _nameController.text.trim(),
+          dateOfBirth: _dateOfBirth,
+          gender: _selectedGender,
+        );
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data.message.isNotEmpty ? data.message : 'Profile updated successfully')),
+        );
+
+        Navigator.pop(context, true);
+      } else {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data.errorMessage.isNotEmpty ? data.errorMessage : 'Update failed')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Something went wrong: $e')),
+      );
+    }
   }
 
 

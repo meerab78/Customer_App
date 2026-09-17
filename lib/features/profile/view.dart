@@ -11,6 +11,7 @@ import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
+import '../auth/splash/view.dart';
 import '../cart/controller.dart' show CartController;
 import '../home/widget/order_type_bottom_sheet.dart';
 import 'Loyalty_transactions/controller.dart';
@@ -86,10 +87,13 @@ class _ProfileScreenState extends State<ProfileView> {
     }
   }
 
-  Future<void> _logout() async {
+  Future<void> _performLogout() async {
     await _prefs.clearAuth();
     if (!mounted) return;
-    context.read<CartController>().resetGuestUser();
+
+    final cart = context.read<CartController>();
+    await cart.clearCart();
+    cart.resetGuestUser();
 
     Navigator.pushAndRemoveUntil(
       context,
@@ -98,9 +102,32 @@ class _ProfileScreenState extends State<ProfileView> {
           initialIndex: 0,
         ),
       ),
-
           (route) => false,
     );
+  }
+
+  Future<void> _confirmLogout() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      await _performLogout();
+    }
   }
 
   Future<void> _deleteAccount() async {
@@ -450,7 +477,7 @@ class _ProfileScreenState extends State<ProfileView> {
                                 Navigator.pushAndRemoveUntil(
                                   context,
                                   PageTransitions.slideFromRight(
-                                    const BaseView(initialIndex: 0),
+                                    const SplashView(),
                                   ),
                                       (route) => false,
                                 );
@@ -483,7 +510,7 @@ class _ProfileScreenState extends State<ProfileView> {
                   ProfileOptionTile(
                     title: 'Logout',
                     icon: Icons.logout_rounded,
-                    onTap: _logout,
+                    onTap: _confirmLogout,
                   ),
                 ],
               ),
