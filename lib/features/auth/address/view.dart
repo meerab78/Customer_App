@@ -10,13 +10,16 @@ import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
 
 import '../../base/view.dart';
+import 'model/address_model.dart' show CustomerAddress;
 
 class AddressView extends StatefulWidget {
   // pickerMode = true  -> address module se khula hai, result return karega
   // pickerMode = false -> purana launch flow, BaseView pe jayega
   final bool pickerMode;
+  final CustomerAddress? initialAddress;
 
-  const AddressView({super.key, this.pickerMode = false});
+  const AddressView({super.key, this.pickerMode = false,
+    this.initialAddress, });
 
   @override
   State<AddressView> createState() => _AddressScreenState();
@@ -35,13 +38,29 @@ class _AddressScreenState extends State<AddressView> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final provider = context.read<AddressController>();
+      if (widget.initialAddress != null) {
+        final addr = widget.initialAddress!;
+        final lat = double.tryParse(addr.latitude);
+        final lng = double.tryParse(addr.longitude);
 
+        provider.selectedAddress = addr.address1;
+        provider.latitude = lat;
+        provider.longitude = lng;
+        provider.notifyListeners();
+
+        if (mounted && lat != null && lng != null && provider.mapController != null) { // FIXED — mounted check
+          await provider.mapController!.animateCamera(
+            CameraUpdate.newLatLngZoom(LatLng(lat, lng), 17),
+          );
+        }
+        return;
+      }
       final hasAddress = await provider.hasSavedAddress();
 
       if (hasAddress) {
         await provider.loadSavedAddress();
 
-        if (provider.latitude != null &&
+        if (mounted && provider.latitude != null && // FIXED — mounted check
             provider.longitude != null &&
             provider.mapController != null) {
           await provider.mapController!.animateCamera(
@@ -56,12 +75,6 @@ class _AddressScreenState extends State<AddressView> {
       }
     });
   }
-  // void initState() {
-  //   super.initState();
-  //   WidgetsBinding.instance.addPostFrameCallback((_) {
-  //     context.read<AddressController>().getCurrentLocation();
-  //   });
-  // }
 
   @override
   void dispose() {

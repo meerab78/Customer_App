@@ -29,7 +29,32 @@ class CartController extends ChangeNotifier {
   bool phoneError = false;
   bool isGuestSigningUp = false;
   GuestData? guestUserData;
+  //  CHECKOUT SCREEN STATE
+  bool isPlacingOrder = false;
+  bool useWallet = false;
+  bool isActuallyGuest = false;
+  String checkoutCustomerId = '';
 
+
+  void setPlacingOrder(bool value) {
+    isPlacingOrder = value;
+    notifyListeners();
+  }
+
+  void setUseWallet(bool value) {
+    useWallet = value;
+    notifyListeners();
+  }
+
+  void setIsActuallyGuest(bool value) {
+    isActuallyGuest = value;
+    notifyListeners();
+  }
+
+  void setCheckoutCustomerId(String value) {
+    checkoutCustomerId = value;
+    notifyListeners();
+  }
   // Login successful hone par guest flags clear karo
   void setLoggedInCheckout() {
     isGuestCheckout = false;
@@ -47,6 +72,14 @@ class CartController extends ChangeNotifier {
   bool get isGuestLocked => guestUserData != null;
   int get totalItemCount {
     return cartItems.fold(0, (sum, item) => sum + (item.quantity ?? 1));
+  }
+
+  Future<void> triggerGuestSignUpIfValid() async {
+    if (!isGuestCheckout || isGuestLocked || isGuestSigningUp) return;
+    if (orderType != 'Delivery') return;
+    if (!isGuestDetailsValid) return;
+
+    await guestSignUp();
   }
 
   // Logged-in user ka saved data fields mein daal do (editable rahenge)
@@ -336,6 +369,21 @@ class CartController extends ChangeNotifier {
   Future<void> clearCart() async {
     await _dbController.clearCart();
     await loadCart();
+    // Order complete ya cart clear hone pe guest state reset
+    guestUserData = null;
+    isActuallyGuest = false;
+    checkoutCustomerId = '';
+    useWallet = false;
+
+    nameController.clear();
+    emailController.clear();
+    phoneController.clear();
+    nameError = false;
+    emailError = false;
+    phoneError = false;
+
+    notifyListeners();
+
   }
 
   // GET SELECTED PRICE
@@ -448,6 +496,14 @@ class CartController extends ChangeNotifier {
 
   void startGuestCheckout() {
     isGuestCheckout = true;
+    guestUserData = null;
+    nameController.clear();
+    emailController.clear();
+    phoneController.clear();
+    nameError = false;
+    emailError = false;
+    phoneError = false;
+
     notifyListeners();
   }
 
@@ -470,6 +526,7 @@ class CartController extends ChangeNotifier {
       nameError = false;
     }
     notifyListeners();
+    triggerGuestSignUpIfValid(); // NEW
   }
 
   void onGuestEmailChanged(String value) {
@@ -479,6 +536,7 @@ class CartController extends ChangeNotifier {
       emailError = false;
     }
     notifyListeners();
+    triggerGuestSignUpIfValid(); // NEW
   }
 
   void onGuestPhoneChanged(String value) {
@@ -486,6 +544,7 @@ class CartController extends ChangeNotifier {
       phoneError = false;
     }
     notifyListeners();
+    triggerGuestSignUpIfValid(); // NEW
   }
 
   Future<bool> guestSignUp() async {
@@ -506,19 +565,9 @@ class CartController extends ChangeNotifier {
       if (response.data?.token != null) {
         await _prefs.saveToken(response.data!.token!);
         if (response.data?.customerId != null) {
-          await _prefs.saveUserData(
-            userId: response.data!.id ?? 0,
-            customerId: response.data!.customerId!,
-            name: response.data!.name ?? nameController.text.trim(),
-            email: response.data!.email ?? emailController.text.trim(),
-            phone: response.data!.cellNum ?? phoneController.text.trim(),
-            restaurantId: int.tryParse(AppConstants.restaurantId) ?? 0,
-            restaurantName: response.data!.restaurantName ?? '',
-          );
+          await _prefs.saveCustomerIdOnly(response.data!.customerId!);
           await _prefs.saveIsGuest(true);
-
         }
-
         guestUserData = response.data;
         notifyListeners();
         return true;
@@ -540,16 +589,12 @@ class CartController extends ChangeNotifier {
         notifyListeners();
         return true;
       }
-
-      // Na naya token mila, na purana koi save hai -> fail
       return false;
     } finally {
       isGuestSigningUp = false;
       notifyListeners();
     }
   }
-
-  // "Clear" button dabane par — dobara naye details se try karne ke liye
   void resetGuestUser() {
     guestUserData = null;
     nameController.clear();

@@ -350,7 +350,7 @@ class _GuestDetailsCardState extends State<GuestDetailsCard> {
       children: [
         Expanded(
           child: InkWell(
-            onTap: canEdit ? onTapAction : null,
+            onTap: (canEdit && !addressManager.isSaving) ? onTapAction : null, // FIXED — saving ke dauran tap disabled
             borderRadius: BorderRadius.circular(14),
             child: Container(
               width: double.infinity,
@@ -370,7 +370,16 @@ class _GuestDetailsCardState extends State<GuestDetailsCard> {
                       color: AppColors.primary.withOpacity(.10),
                       borderRadius: BorderRadius.circular(11),
                     ),
-                    child: Icon(
+                    child: addressManager.isSaving // FIXED — spinner jab save ho raha ho
+                        ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
+                    )
+                        : Icon(
                       selected != null
                           ? widget.iconForType(selected.addressTypeId)
                           : Icons.location_on_outlined,
@@ -381,9 +390,11 @@ class _GuestDetailsCardState extends State<GuestDetailsCard> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      selected != null
+                      addressManager.isSaving
+                          ? 'Saving address...' // FIXED
+                          : (selected != null
                           ? selected.address1
-                          : 'Tap to select delivery address',
+                          : 'Tap to select delivery address'),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: getRegularStyle(
@@ -413,7 +424,6 @@ class _GuestDetailsCardState extends State<GuestDetailsCard> {
           ),
         ),
 
-        // Arrow — sirf logged-in ke liye, jab saved addresses hon
         if (!widget.isGuest && addressManager.addresses.isNotEmpty) ...[
           const SizedBox(width: 8),
           InkWell(

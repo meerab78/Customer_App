@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import 'order_history_controller.dart' show OrderController;
 import 'order_repository.dart';
 import 'model/order_history_model.dart';
 import '../../core/db/shared_pref.dart';
@@ -9,21 +11,10 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
 import '../../core/theme/textfont_styles.dart';
 
-class OrderDetailsView extends StatefulWidget {
+class OrderDetailsView extends StatelessWidget {
   final OrderHistory order;
 
   const OrderDetailsView({super.key, required this.order});
-
-  @override
-  State<OrderDetailsView> createState() => _OrderDetailsViewState();
-}
-
-class _OrderDetailsViewState extends State<OrderDetailsView> {
-  final OrderRepository _repo = OrderRepository();
-  final SharedPrefService _prefs = SharedPrefService();
-
-  late OrderHistory _order;
-  Timer? _pollTimer;
 
   final List<String> steps = const [
     "Received",
@@ -32,48 +23,6 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
     "Out for Delivery",
     "Delivered",
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    _order = widget.order;
-
-    _pollTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
-      _refreshOrder();
-    });
-  }
-
-  @override
-  void dispose() {
-    _pollTimer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _refreshOrder() async {
-    try {
-      String restaurantId = "1248";
-      int? savedId = await _prefs.getRestaurantId();
-      if (savedId != null) {
-        restaurantId = savedId.toString();
-      }
-
-      List<OrderHistory> orders =
-      await _repo.getOrderHistory(restaurantId);
-
-      for (int i = 0; i < orders.length; i++) {
-        if (orders[i].id == _order.id) {
-          if (mounted) {
-            setState(() {
-              _order = orders[i];
-            });
-          }
-          break;
-        }
-      }
-    } catch (e) {
-      print("Order detail refresh error: $e");
-    }
-  }
 
   int _currentStep(String status) {
     String s = status.toLowerCase();
@@ -131,54 +80,60 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    bool isDelivered = _order.orderStatus.toLowerCase() == "delivered";
+    return ChangeNotifierProvider.value(
+      value: context.read<OrderController>()..startDetailPolling(order),
+      child: Consumer<OrderController>(
+        builder: (context, ctrl, _) {
+          final currentOrder = ctrl.selectedOrder ?? order;
+          bool isDelivered = currentOrder.orderStatus.toLowerCase() == "delivered";
 
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        surfaceTintColor: Colors.transparent,
-        centerTitle: false,
-
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-
-        title: Text(
-          'Details',
-          style: getExtraBoldStyle(
-            fontSize: MyFonts.size24,
-            color: AppColors.text,
-          ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 30),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _statusCard(isDelivered),
-            const SizedBox(height: 14),
-            _orderInfoCard(),
-            const SizedBox(height: 14),
-            _itemsCard(),
-            const SizedBox(height: 14),
-            _paymentCard(),
-          ],
-        ),
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: AppColors.background,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              surfaceTintColor: Colors.transparent,
+              centerTitle: false,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+              title: Text(
+                'Details',
+                style: getExtraBoldStyle(
+                  fontSize: MyFonts.size24,
+                  color: AppColors.text,
+                ),
+              ),
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 30),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _statusCard(currentOrder, isDelivered),
+                  const SizedBox(height: 14),
+                  _orderInfoCard(currentOrder),
+                  const SizedBox(height: 14),
+                  _itemsCard(currentOrder),
+                  const SizedBox(height: 14),
+                  _paymentCard(currentOrder),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   // ---------------- 1. STATUS CARD ----------------
-  Widget _statusCard(bool isDelivered) {
-    Color color = _statusColor(_order.orderStatus);
-    IconData icon = _statusIcon(_order.orderStatus);
+  Widget _statusCard(OrderHistory order, bool isDelivered) {
+    Color color = _statusColor(order.orderStatus);
+    IconData icon = _statusIcon(order.orderStatus);
 
     return Container(
       width: double.infinity,
@@ -223,7 +178,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _order.orderStatus,
+                      order.orderStatus,
                       style: getExtraBoldStyle(
                         fontSize: MyFonts.size17,
                         color: color,
@@ -239,15 +194,15 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             const SizedBox(height: 22),
             Container(height: 1, color: AppColors.borderLight),
             const SizedBox(height: 22),
-            _progressTracker(),
+            _progressTracker(order),
           ],
         ],
       ),
     );
   }
 
-  Widget _progressTracker() {
-    int current = _currentStep(_order.orderStatus);
+  Widget _progressTracker(OrderHistory order) {
+    int current = _currentStep(order.orderStatus);
 
     return Column(
       children: [
@@ -324,9 +279,9 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   }
 
   // ---------------- 2. ORDER INFO CARD ----------------
-  Widget _orderInfoCard() {
+  Widget _orderInfoCard(OrderHistory order) {
     bool isDelivery =
-    _order.orderTypeName.toLowerCase().contains("deliv");
+    order.orderTypeName.toLowerCase().contains("deliv");
 
     return _cardWrapper(
       icon: Icons.receipt_long_rounded,
@@ -334,19 +289,19 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
       child: Column(
         children: [
           _infoRow(Icons.tag_rounded, 'Order ID',
-              _order.orderId ?? '${_order.id ?? ''}'),
+              order.orderId ?? '${order.id ?? ''}'),
           _infoRow(
               isDelivery
                   ? Icons.delivery_dining_rounded
                   : Icons.shopping_bag_rounded,
               'Type',
-              _order.orderTypeName),
+              order.orderTypeName),
           _infoRow(Icons.access_time_rounded, 'Date & Time',
-              _order.formattedDateTime),
-          if (isDelivery && _order.deliveryAddress != null)
+              order.formattedDateTime),
+          if (isDelivery && order.deliveryAddress != null)
             _infoRow(Icons.location_on_rounded, 'Address',
-                _order.deliveryAddress!),
-          _infoRow(Icons.payments_rounded, 'Payment', _order.paymentType,
+                order.deliveryAddress!),
+          _infoRow(Icons.payments_rounded, 'Payment', order.paymentType,
               isLast: true),
         ],
       ),
@@ -354,15 +309,15 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   }
 
   // ---------------- 3. ITEMS CARD ----------------
-  Widget _itemsCard() {
+  Widget _itemsCard(OrderHistory order) {
     return _cardWrapper(
       icon: Icons.fastfood_rounded,
       title: 'Your Items',
       child: Column(
-        children: List.generate(_order.items.length, (i) {
-          OrderHistoryItem item = _order.items[i];
+        children: List.generate(order.items.length, (i) {
+          OrderHistoryItem item = order.items[i];
           int qty = double.tryParse(item.quantity)?.toInt() ?? 1;
-          bool isLast = i == _order.items.length - 1;
+          bool isLast = i == order.items.length - 1;
 
           return Padding(
             padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
@@ -428,19 +383,19 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
   }
 
   // ---------------- 4. PAYMENT SUMMARY ----------------
-  Widget _paymentCard() {
+  Widget _paymentCard(OrderHistory order) {
     bool isDelivery =
-    _order.orderTypeName.toLowerCase().contains("deliv");
+    order.orderTypeName.toLowerCase().contains("deliv");
 
-    double discount = double.tryParse(_order.discountAmount) ?? 0;
+    double discount = double.tryParse(order.discountAmount) ?? 0;
 
     return _cardWrapper(
       icon: Icons.account_balance_wallet_rounded,
       title: 'Payment Summary',
       child: Column(
         children: [
-          _payRow('Subtotal', 'PKR ${_order.subTotal}'),
-          _payRow('Tax (${_order.taxPercent}%)', 'PKR ${_order.taxAmount}'),
+          _payRow('Subtotal', 'PKR ${order.subTotal}'),
+          _payRow('Tax (${order.taxPercent}%)', 'PKR ${order.taxAmount}'),
 
           // NEW — Discount row (sirf jab discount > 0 ho)
           if (discount > 0)
@@ -451,7 +406,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
             ),
 
           if (isDelivery)
-            _payRow('Delivery Fee', 'PKR ${_order.deliveryCharge}'),
+            _payRow('Delivery Fee', 'PKR ${order.deliveryCharge}'),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 10),
             child: Container(height: 1, color: AppColors.borderLight),
@@ -467,7 +422,7 @@ class _OrderDetailsViewState extends State<OrderDetailsView> {
                 ),
               ),
               Text(
-                'PKR ${_order.total}',   // already discount-minus final hai
+                'PKR ${order.total}',   // already discount-minus final hai
                 style: getExtraBoldStyle(
                   fontSize: MyFonts.size19,
                   color: AppColors.primary,

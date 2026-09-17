@@ -1,5 +1,5 @@
-﻿
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../theme/app_colors.dart';
 
 class CustomTextField extends StatelessWidget {
@@ -11,6 +11,7 @@ class CustomTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final bool obscureText;
   final VoidCallback? onVisibilityTap;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -22,6 +23,7 @@ class CustomTextField extends StatelessWidget {
     this.validator,
     this.obscureText = false,
     this.onVisibilityTap,
+    this.inputFormatters,
   });
 
   @override
@@ -32,6 +34,7 @@ class CustomTextField extends StatelessWidget {
       textInputAction: textInputAction,
       obscureText: obscureText,
       validator: validator,
+      inputFormatters: inputFormatters,
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(prefixIcon),
@@ -66,6 +69,3 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
-
-
-

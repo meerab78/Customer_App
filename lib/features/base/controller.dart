@@ -1,2 +1,12 @@
-﻿/// Placeholder controller for base module.
-class BaseController {}
+﻿import 'package:flutter/foundation.dart';
+class BaseTabController extends ChangeNotifier {
+  int _selectedIndex = 0;
+
+  int get selectedIndex => _selectedIndex;
+
+  void changeTab(int index) {
+    if (_selectedIndex == index) return;
+    _selectedIndex = index;
+    notifyListeners();
+  }
+}

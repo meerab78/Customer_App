@@ -1,9 +1,11 @@
 
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 import 'order_detail_view.dart';
+import 'order_history_controller.dart';
 import 'order_repository.dart';
 import 'model/order_history_model.dart';
 import '../../core/db/shared_pref.dart';
@@ -19,73 +21,19 @@ class OrderHistoryView extends StatefulWidget {
 }
 
 class _OrderHistoryViewState extends State<OrderHistoryView> {
-  final OrderRepository _repo = OrderRepository();
-  final SharedPrefService _prefs = SharedPrefService();
-
-  bool _isLoading = true;
-  List<OrderHistory> _orders = [];
-  Timer? _pollTimer;
-
   @override
   void initState() {
     super.initState();
-    _loadOrders();
-
-// Har 15 second me status refresh karo
-    _pollTimer = Timer.periodic(
-      const Duration(seconds: 15),
-          (timer) {
-        _loadOrders(silent: true);
-      },
-    );
+    // build ke bahar, sirf ek dafa
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<OrderController>().startHistoryPolling();
+    });
   }
 
   @override
   void dispose() {
-    _pollTimer?.cancel();
+    context.read<OrderController>().stopHistoryPolling();
     super.dispose();
-  }
-
-// Orders load karna
-  Future<void> _loadOrders({bool silent = false}) async {
-    if (silent == false) {
-      setState(() {
-        _isLoading = true;
-      });
-    }
-
-    try {
-      String restaurantId = "1248";
-
-      int? savedId = await _prefs.getRestaurantId();
-
-      if (savedId != null) {
-        restaurantId = savedId.toString();
-      }
-
-      List<OrderHistory> orders =
-      await _repo.getOrderHistory(restaurantId);
-
-// Latest order upar dikhane ke liye sort
-      orders.sort(
-            (a, b) => b.orderDate.compareTo(a.orderDate),
-      );
-
-      if (mounted) {
-        setState(() {
-          _orders = orders;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      print("Order history error: $e");
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
   }
 
 // Status ke hisaab se color
@@ -124,62 +72,52 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-        centerTitle: false,
-        title: Text(
-          'ORDERS',
-          style: getExtraBoldStyle(
-            fontSize: MyFonts.size22,
-            color: AppColors.primary,
-          ),
-        ),
-      ),
-
-      body: _buildBody(),
-    );
-  }
-
-// ============================================================
-// BODY
-// ============================================================
-
-  Widget _buildBody() {
-// Skeleton while API is loading
-    if (_isLoading) {
-      return _buildSkeleton();
-    }
-
-    if (_orders.isEmpty) {
-      return _emptyState();
-    }
-
-    return RefreshIndicator(
-      color: AppColors.primary,
-      onRefresh: _loadOrders,
-      child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(
-          16,
-          8,
-          16,
-          30,
-        ),
-        itemCount: _orders.length,
-        itemBuilder: (context, index) {
-          return _orderCard(_orders[index]);
+    return ChangeNotifierProvider.value(
+      value: context.read<OrderController>(),
+      child: Consumer<OrderController>(
+        builder: (context, ctrl, _) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: AppColors.background,
+              elevation: 0,
+              centerTitle: false,
+              title: Text(
+                'ORDERS',
+                style: getExtraBoldStyle(
+                  fontSize: MyFonts.size22,
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+            body: _buildBody(ctrl),
+          );
         },
       ),
     );
   }
 
-// ============================================================
+// BODY
+  Widget _buildBody(OrderController ctrl) {
+    if (ctrl.isLoadingHistory) {
+      return _buildSkeleton();
+    }
+    if (ctrl.orders.isEmpty) {
+      return _emptyState();
+    }
+    return RefreshIndicator(
+      color: AppColors.primary,
+      onRefresh: ctrl.loadOrders,
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 30),
+        itemCount: ctrl.orders.length,
+        itemBuilder: (context, index) {
+          return _orderCard(context, ctrl.orders[index]);
+        },
+      ),
+    );
+  }
 // SKELETON
-// ============================================================
-
   Widget _buildSkeleton() {
     return Skeletonizer(
       enabled: true,
@@ -344,7 +282,7 @@ class _OrderHistoryViewState extends State<OrderHistoryView> {
 // ORDER CARD
 // ============================================================
 
-  Widget _orderCard(OrderHistory order) {
+  Widget _orderCard(BuildContext context,OrderHistory order) {
     Color statusColor =
     _statusColor(order.orderStatus);
 

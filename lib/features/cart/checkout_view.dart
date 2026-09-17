@@ -33,38 +33,79 @@ class _CheckoutViewState extends State<CheckoutView> {
   // NEW: order placement state
   final OrderRepository _orderRepository = OrderRepository();
   final SharedPrefService _prefs = SharedPrefService();
-  bool _isPlacingOrder = false;
-  String _customerId = '';
-  bool _useWallet = false;
-  bool _isActuallyGuest = false;
+  late final CartController _cartController;
+
 
   @override
   void initState() {
     super.initState();
-
+    _cartController = context.read<CartController>();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initAddresses();
 
     });
     _prefs.getIsGuest().then((value) {
-      if (mounted) setState(() => _isActuallyGuest = value);
+      if (mounted) context.read<CartController>().setIsActuallyGuest(value);
     });
+    _cartController.addListener(_onCartChangedForEarlyAddress);
   }
 
-  // NEW — Guest ke liye address editor, turant update
-  Future<void> _openGuestAddressEditor() async {
+  @override
+  void dispose() {
+    _cartController.removeListener(_onCartChangedForEarlyAddress);
+    if (_cartController.cartItems.isNotEmpty && _cartController.isGuestCheckout) {
+      _cartController.isGuestCheckout = false;
+      _cartController.guestUserData = null;
+      _cartController.isActuallyGuest = false;
+    }
+
+    super.dispose();
+  }
+  Future<void> _syncGuestHomeAddress() async {
+    final cart = _cartController;
     final addressManager = context.read<AddressManagerController>();
 
+    if (cart.orderType != 'Delivery') return;
+    if (!cart.isGuestCheckout || !cart.isGuestLocked) return;
+    if (addressManager.selectedAddress?.id != null) return; // already saved
+    if (addressManager.isSaving) return;
+
+    // Guest signup response mein already Home address maujood ho sakta hai
+    // (returning guest by phone/email) — dobara create karne ki bajaye
+    // wahi use kar lo
+    final existingHome = cart.guestUserData?.addresses
+        ?.where((a) => a.addressTypeId == 3)
+        .cast<CustomerAddress?>()
+        .firstWhere((a) => a != null, orElse: () => null);
+
+    if (existingHome != null && existingHome.id != null) {
+      addressManager.selectAddress(existingHome);
+      return;
+    }
+
+    await addressManager.persistSelectedAddressIfNeeded();
+  }
+
+  void _onCartChangedForEarlyAddress() {
+    if (!mounted) return;
+    _syncGuestHomeAddress();
+  }
+
+
+  Future<void> _openGuestAddressEditor() async {
+    final addressManager = context.read<AddressManagerController>();
+    final cart = _cartController;
+    await cart.triggerGuestSignUpIfValid();
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
-        builder: (_) => const AddressView(pickerMode: true),
+        builder: (_) => AddressView(pickerMode: true,
+          initialAddress: addressManager.selectedAddress, ),
       ),
     );
 
     if (result == null || !mounted) return;
 
-    // Turant local (unsaved) selected address update karo — koi API call nahi
     addressManager.selectAddress(
       CustomerAddress(
         addressTypeId: 3,
@@ -77,6 +118,9 @@ class _CheckoutViewState extends State<CheckoutView> {
     );
 
     _recalcFee();
+
+    // NEW — agar guest already signed up hai, naya address abhi save karo
+    await _syncGuestHomeAddress();
   }
   Future<void> _initAddresses() async {
     final addressManager = context.read<AddressManagerController>();
@@ -107,7 +151,7 @@ class _CheckoutViewState extends State<CheckoutView> {
     // (guest signup ke baad token/customer id milega)
     if (!cart.isGuestCheckout || cart.isGuestLocked) {
       final userId = await _prefs.getUserId();
-      _customerId = userId?.toString() ?? '';
+      context.read<CartController>().setCheckoutCustomerId(userId?.toString() ?? '');
     }
     if (!cart.isGuestCheckout) {
       if (branchId.isNotEmpty) {
@@ -431,11 +475,6 @@ class _CheckoutViewState extends State<CheckoutView> {
       );
       return;
     }
-
-    // GUEST SIGNUP — sirf guest checkout ke liye, aur sirf agar
-    // abhi tak locked/signed-up nahi hua
-    // GUEST SIGNUP — sirf guest checkout ke liye, aur sirf agar
-    // abhi tak locked/signed-up nahi hua
     if (cart.isGuestCheckout && !cart.isGuestLocked) {
       final isValid = cart.validateGuestDetails();
 
@@ -473,11 +512,24 @@ class _CheckoutViewState extends State<CheckoutView> {
             .firstWhere((a) => a != null, orElse: () => null);
 
         if (existingAddress != null && existingAddress.id != null) {
-          // Backend pe already address maujood hai — dobara create mat karo
           addressManager.selectAddress(existingAddress);
         } else {
           final localAddress = addressManager.selectedAddress!;
+
+          // Pehle server se addresses load karo
+          await addressManager.loadAddresses();
+
+          // Existing Home address dhoondo
+          String? existingAddressId;
+          for (final a in addressManager.addresses) {
+            if (a.addressTypeId == (localAddress.addressTypeId ?? 3)) {
+              existingAddressId = a.addressId;
+              break;
+            }
+          }
+
           final saved = await addressManager.addEditAddress(
+            addressId: existingAddressId,
             addressTypeId: localAddress.addressTypeId ?? 3,
             address1: localAddress.address1,
             latitude: localAddress.latitude,
@@ -486,6 +538,16 @@ class _CheckoutViewState extends State<CheckoutView> {
           );
 
           if (!mounted) return;
+
+          if (addressManager.selectedAddress?.id == null) {
+            for (final addr in addressManager.addresses) {
+              if (addr.latitude == localAddress.latitude &&
+                  addr.longitude == localAddress.longitude) {
+                addressManager.selectAddress(addr);
+                break;
+              }
+            }
+          }
 
           if (!saved || addressManager.selectedAddress?.id == null) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -498,7 +560,23 @@ class _CheckoutViewState extends State<CheckoutView> {
         }
       }
     }
-    setState(() => _isPlacingOrder = true);
+    if (cart.orderType == 'Delivery' && cart.isGuestCheckout) {
+      if (addressManager.selectedAddress?.id == null) {
+        await addressManager.persistSelectedAddressIfNeeded();
+      }
+
+      if (!mounted) return;
+
+      if (addressManager.selectedAddress?.id == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Could not save delivery address. Please try again."),
+          ),
+        );
+        return;
+      }
+    }
+    context.read<CartController>().setPlacingOrder(true);
 
     try {
       // final userId = await _prefs.getUserId();
@@ -518,7 +596,7 @@ class _CheckoutViewState extends State<CheckoutView> {
       final walletCtrl = context.read<WalletController>();
       double deliveryCharges = cart.orderType == 'Delivery' ? addressManager.deliveryFee : 0;
       double subtotalAfterDiscount = subTotal + deliveryCharges - couponCtrl.discountAmount;
-      double walletToApply = (_useWallet && AppConstants.enableLoyaltySystem)
+      double walletToApply = (context.read<CartController>().useWallet && AppConstants.enableLoyaltySystem)
           ? (walletCtrl.walletAmount > subtotalAfterDiscount
           ? subtotalAfterDiscount
           : walletCtrl.walletAmount)
@@ -655,7 +733,7 @@ class _CheckoutViewState extends State<CheckoutView> {
       );
     }
 
-    if (mounted) setState(() => _isPlacingOrder = false);
+    if (mounted) context.read<CartController>().setPlacingOrder(false);
   }
 
   @override
@@ -706,7 +784,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 //  NEW — wallet calculation
           final walletController = context.watch<WalletController>();
           final subtotalAfterDiscount = subtotal + deliveryCharges - discount;
-          final walletApplied = (_useWallet && AppConstants.enableLoyaltySystem)
+          final walletApplied = (cart.useWallet && AppConstants.enableLoyaltySystem)
               ? (walletController.walletAmount > subtotalAfterDiscount
               ? subtotalAfterDiscount
               : walletController.walletAmount)
@@ -1129,10 +1207,10 @@ class _CheckoutViewState extends State<CheckoutView> {
                   ),
                 ),
                 const SizedBox(height: 15),
-                if (!cart.isGuestCheckout && !_isActuallyGuest) ... [ const SizedBox(height: 8),
+                if (!cart.isGuestCheckout && !cart.isActuallyGuest) ...[ const SizedBox(height: 8),
                   CouponSection(
                     branchId: context.read<HomeController>().selectedBranch?.id?.toString() ?? '',
-                    customerId: _customerId,
+                    customerId: cart.checkoutCustomerId,
                     subtotal: subtotal,
                     cartItems: cart.cartItems,
                     orderTypeId: cart.orderType == 'Delivery' ? 3 : 2,
@@ -1177,10 +1255,10 @@ class _CheckoutViewState extends State<CheckoutView> {
                             ),
                           ),
                           Switch(
-                            value: _useWallet,
+                            value: cart.useWallet,
                             activeColor: AppColors.primary,
                             onChanged: (val) {
-                              setState(() => _useWallet = val);
+                              cart.setUseWallet(val);
                             },
                           ),
                         ],
@@ -1199,7 +1277,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                     // CHANGED: Delivery area se bahar ho, cart khaali ho,
                     // ya order already place ho raha ho to button disabled
                     onPressed:
-                    (_isPlacingOrder ||
+                    (cart.isPlacingOrder ||
                         cart.cartItems.isEmpty ||
                         addressManager.isLoading ||
                         (cart.orderType == 'Delivery' &&
@@ -1217,7 +1295,7 @@ class _CheckoutViewState extends State<CheckoutView> {
                       ),
                     ),
 
-                    child: _isPlacingOrder
+                    child: cart.isPlacingOrder
                         ? const SizedBox(
                       height: 22,
                       width: 22,

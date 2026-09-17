@@ -57,8 +57,8 @@ class DealsView extends StatelessWidget {
         const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,
-          mainAxisSpacing: 14,
-          childAspectRatio: 0.78,
+          mainAxisSpacing: 12,
+          mainAxisExtent: 200,
         ),
 
         itemBuilder: (context, index) {

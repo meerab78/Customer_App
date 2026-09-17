@@ -22,7 +22,9 @@ Future<void> handleFoodTap(
         ),
       ),
     );
-
+    if (context.mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
     return;
   }
 // NORMAL ITEM
@@ -77,7 +79,6 @@ Future<void> handleAddToCart(
 
     return;
   }
-
   await context.read<CartController>().addToCart(
     food,
     1,
@@ -116,6 +117,9 @@ Future<void> handleAddToCart(
       ),
     ),
   );
+  if (context.mounted) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 }
 
 Future<void> _openVariationView(
@@ -149,6 +153,7 @@ Future<void> _openVariationView(
     1,
   );
 
+  // if (!context.mounted) return;
   if (!context.mounted) return;
 
   ScaffoldMessenger.of(context).showSnackBar(
@@ -182,4 +187,8 @@ Future<void> _openVariationView(
       ),
     ),
   );
+
+  if (context.mounted) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 }

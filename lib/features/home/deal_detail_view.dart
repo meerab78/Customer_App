@@ -72,6 +72,7 @@ class _DealDetailViewState extends State<DealDetailView> {
   }
 
   Future<void> _addDealToCart() async {
+    if (!mounted) return;
     if (!isDealComplete) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

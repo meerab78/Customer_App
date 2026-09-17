@@ -1,5 +1,4 @@
 ﻿
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -15,11 +14,13 @@ import 'add_to_cart_handler.dart';
 class FoodItemCard extends StatelessWidget {
   final Menu food;
   final VoidCallback? onTap;
+  final String? categoryImageUrl;
 
   const FoodItemCard({
     super.key,
     required this.food,
     this.onTap,
+    this.categoryImageUrl,
   });
 
   bool get hasCustomization =>
@@ -36,104 +37,117 @@ class FoodItemCard extends StatelessWidget {
       deliveryPrice: food.deliveryPrice,
     );
 
-    return Align(
-      alignment: Alignment.topCenter, // Stretch overflow handle karega
-      child: InkWell(
-        onTap: onTap ??
-                () {
-              handleFoodTap(context, food);
-            },
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 155,
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: AppColors.borderLight.withOpacity(0.6),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.shadow.withOpacity(0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Price ke niche extra gap khatam
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // IMAGE SECTION
-              Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                    child: _foodImage(),
-                  ),
-                  Positioned(
-                    right: 6,
-                    bottom: 6,
-                    child: Consumer<CartController>(
-                      builder: (context, cart, _) {
-                        final cartItem = cart.simpleCartItem(food);
-                        if (cartItem == null) {
-                          return _addButton(context);
-                        }
-                        return _quantityButton(context, cart, cartItem);
-                      },
-                    ),
-                  ),
-                ],
-              ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Fill whatever slot the parent assigns (GridView / Expanded / SizedBox).
+        // Only fall back to a default width when the parent gives us an
+        // unbounded width (e.g. a horizontal ListView).
+        final double cardWidth =
+            constraints.hasBoundedWidth ? double.infinity : 165;
 
-              // DETAILS SECTION
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      food.name ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: getBoldStyle(
-                        fontSize: MyFonts.size13,
-                        color: AppColors.text,
+        return InkWell(
+          onTap: onTap ??
+              () {
+                handleFoodTap(context, food);
+              },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: cardWidth,
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppColors.borderLight.withOpacity(0.6),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.shadow.withOpacity(0.08),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Image Section - Safe Flexible Height (No Overflow Error)
+                Expanded(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          _foodImage(),
+                          Positioned(
+                            right: 6,
+                            bottom: 6,
+                            child: Consumer<CartController>(
+                              builder: (context, cart, _) {
+                                final cartItem = cart.simpleCartItem(food);
+                                if (cartItem == null) {
+                                  return _addButton(context);
+                                }
+                                return _quantityButton(context, cart, cartItem);
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    if ((food.description ?? '').isNotEmpty) ...[
-                      const SizedBox(height: 2),
+                  ),
+                ),
+
+                // Text Details Section
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Text(
-                        food.description!,
+                        food.name ?? '',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: getRegularStyle(
-                          fontSize: MyFonts.size10,
-                          color: AppColors.greyText,
+                        style: getBoldStyle(
+                          fontSize: MyFonts.size13,
+                          color: AppColors.text,
+                        ),
+                      ),
+                      if ((food.description ?? '').isNotEmpty) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          food.description!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: getRegularStyle(
+                            fontSize: MyFonts.size10,
+                            color: AppColors.greyText,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 2),
+                      Text(
+                        'Rs ${displayPrice.toStringAsFixed(0)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: getBoldStyle(
+                          fontSize: MyFonts.size13,
+                          color: AppColors.primary,
                         ),
                       ),
                     ],
-                    const SizedBox(height: 4),
-                    Text(
-                      'Rs ${displayPrice.toStringAsFixed(0)}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: getBoldStyle(
-                        fontSize: MyFonts.size13,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -156,11 +170,14 @@ class FoodItemCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           customBorder: const CircleBorder(),
-          onTap: () {
-            handleAddToCart(
+          onTap: () async {
+            await handleAddToCart(
               context,
               food,
             );
+            if (context.mounted) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
           },
           child: const Icon(
             Icons.add,
@@ -239,28 +256,66 @@ class FoodItemCard extends StatelessWidget {
     );
   }
 
+  // Widget _foodImage() {
+  //   final imageUrl = food.imageUrl ?? '';
+  //
+  //   if (imageUrl.isEmpty) {
+  //     return _placeholder();
+  //   }
+  //
+  //   return Container(
+  //     color: AppColors.containerColor4,
+  //     child: Image.network(
+  //       imageUrl,
+  //       fit: BoxFit.cover,
+  //       errorBuilder: (_, __, ___) {
+  //         return _placeholder();
+  //       },
+  //     ),
+  //   );
+  // }
   Widget _foodImage() {
-    final imageUrl = food.imageUrl ?? '';
+    final ownImageUrl = food.imageUrl ?? '';
 
-    if (imageUrl.isEmpty) {
-      return _placeholder();
+    // Step 1: apni image try karo
+    if (ownImageUrl.isNotEmpty) {
+      return Container(
+        color: AppColors.containerColor4,
+        child: Image.network(
+          ownImageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) {
+            // apni image load nahi hui -> category image try karo
+            return _categoryImageOrPlaceholder();
+          },
+        ),
+      );
     }
 
-    return Image.network(
-      imageUrl,
-      width: double.infinity,
-      height: 110, // Increased image height to perfectly fill container
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) {
-        return _placeholder();
-      },
-    );
+    // Step 2 (agar apni image bilkul nahi thi): category image try karo
+    return _categoryImageOrPlaceholder();
+  }
+  Widget _categoryImageOrPlaceholder() {
+    final catImageUrl = categoryImageUrl ?? '';
+
+    if (catImageUrl.isNotEmpty) {
+      return Container(
+        color: AppColors.containerColor4,
+        child: Image.network(
+          catImageUrl,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) {
+            return _placeholder();
+          },
+        ),
+      );
+    }
+
+    return _placeholder();
   }
 
   Widget _placeholder() {
     return Container(
-      width: double.infinity,
-      height: 110,
       color: AppColors.containerColor4,
       child: Icon(
         Icons.fastfood_rounded,

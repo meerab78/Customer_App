@@ -2,6 +2,7 @@
 import 'package:customer_app/features/home/widget/add_to_cart_handler.dart';
 import 'package:customer_app/features/home/widget/special_deals_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
@@ -25,6 +26,16 @@ class HomeView extends StatefulWidget {
 class _HomeScreenState extends State<HomeView> {
   bool _orderTypeShown = false;
 
+  // ===== ADDED: infinite scroll / auto category switch ke liye =====
+  final ScrollController _itemsScrollController = ScrollController();
+  final ScrollController _categoriesScrollController = ScrollController();
+
+  double _dragDx = 0;
+  bool _switching = false;
+
+  static const double _categoryCardExtent = 91; // 85 card + 6 separator
+  // ====================================================================
+
   @override
   void initState() {
     super.initState();
@@ -34,6 +45,13 @@ class _HomeScreenState extends State<HomeView> {
     });
 
     _showOrderType();
+  }
+
+  @override
+  void dispose() {
+    _itemsScrollController.dispose();
+    _categoriesScrollController.dispose();
+    super.dispose();
   }
 
   void _showOrderType() {
@@ -49,6 +67,81 @@ class _HomeScreenState extends State<HomeView> {
       });
     });
   }
+
+  // ===== ADDED: ek hi unified tareeqa - 0, 1, 2 ya kitne bhi items ho,
+  // sab pe same tareeqe se kaam karta hai. Listener raw pointer events
+  // dekhta hai (ListView ke scroll se compete nahi karta), aur end pe
+  // ye check karta hai ke list apni start/end position pe thi ya nahi.
+  void _onItemsPointerDown(PointerDownEvent e) {
+    _dragDx = 0;
+  }
+
+  void _onItemsPointerMove(PointerMoveEvent e) {
+    _dragDx += e.delta.dx;
+  }
+
+  void _onItemsPointerUp(PointerUpEvent e, int length) {
+    _evaluateSwipe(length);
+  }
+
+  void _evaluateSwipe(int length) {
+    if (_switching || length <= 1) return;
+
+    const threshold = 50.0;
+    final dx = _dragDx;
+    _dragDx = 0;
+
+    if (dx.abs() < threshold) return;
+
+    bool atStart = true;
+    bool atEnd = true;
+
+    if (_itemsScrollController.hasClients) {
+      final pos = _itemsScrollController.position;
+      atStart = pos.pixels <= 0.5;
+      atEnd = pos.pixels >= pos.maxScrollExtent - 0.5;
+    }
+
+    if (dx < 0 && atEnd) {
+      _switchCategory(1, length); // left swipe, list end pe -> next
+    } else if (dx > 0 && atStart) {
+      _switchCategory(-1, length); // right swipe, list start pe -> previous
+    }
+  }
+
+  void _switchCategory(int step, int length) {
+    final provider = context.read<HomeController>();
+    final next = (provider.selectedCategoryIndex + step + length) % length;
+    if (next == provider.selectedCategoryIndex) return;
+
+    _switching = true;
+    provider.changeCategory(next);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (_itemsScrollController.hasClients) {
+        _itemsScrollController.jumpTo(0);
+      }
+      _scrollCategoriesTo(next);
+
+      _switching = false;
+    });
+  }
+
+  void _scrollCategoriesTo(int index) {
+    if (!_categoriesScrollController.hasClients) return;
+
+    final target = (index * _categoryCardExtent)
+        .clamp(0.0, _categoriesScrollController.position.maxScrollExtent);
+
+    _categoriesScrollController.animateTo(
+      target,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+  // =========================================================================
 
   @override
   Widget build(BuildContext context) {
@@ -112,15 +205,17 @@ class _HomeScreenState extends State<HomeView> {
               SizedBox(
                 height: 120,
                 child: ListView.separated(
+                  controller: _categoriesScrollController,
                   scrollDirection: Axis.horizontal,
                   itemCount: categories.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6), // <-- Gaps kam kar diye (10 -> 6)
+                  separatorBuilder: (_, __) => const SizedBox(width: 6),
                   itemBuilder: (context, index) {
                     final category = categories[index];
 
                     return MenuCategoryCard(
                       title: category.name ?? "",
                       selected: provider.selectedCategoryIndex == index,
+                      imageUrl: category.imageUrl,
                       onTap: () {
                         provider.changeCategory(index);
                       },
@@ -154,6 +249,7 @@ class _HomeScreenState extends State<HomeView> {
                         MaterialPageRoute(
                           builder: (_) => CategoryItemsView(
                             category: selectedCategory,
+                            allCategories: categories,
                           ),
                         ),
                       );
@@ -175,18 +271,27 @@ class _HomeScreenState extends State<HomeView> {
               // SELECTED CATEGORY ITEMS
               // =========================
               SizedBox(
-                height: 185,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: selectedCategoryItems.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 6),
-                  itemBuilder: (context, index) {
-                    final food = selectedCategoryItems[index];
+                height: 200,
+                child: Listener(
+                  onPointerDown: _onItemsPointerDown,
+                  onPointerMove: _onItemsPointerMove,
+                  onPointerUp: (e) =>
+                      _onItemsPointerUp(e, categories.length),
+                  child: ListView.separated(
+                    controller: _itemsScrollController,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: selectedCategoryItems.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
+                    itemBuilder: (context, index) {
+                      final food = selectedCategoryItems[index];
 
-                    return FoodItemCard(
-                      food: food,
-                    );
-                  },
+                      return FoodItemCard(
+                        food: food,
+                        categoryImageUrl: selectedCategory.imageUrl,
+                      );
+                    },
+                  ),
                 ),
               ),
 
@@ -232,11 +337,11 @@ class _HomeScreenState extends State<HomeView> {
                 const SizedBox(height: 4),
 
                 SizedBox(
-                  height: 185,
+                  height: 200,
                   child: ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: specialDeals.length,
-                    separatorBuilder: (_, __) => const SizedBox(width: 6), // <-- Gaps kam kar diye (12 -> 6)
+                    separatorBuilder: (_, __) => const SizedBox(width: 6),
                     itemBuilder: (context, index) {
                       final food = specialDeals[index];
 

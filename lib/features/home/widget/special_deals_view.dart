@@ -116,7 +116,7 @@ class SpecialDealsView extends StatelessWidget {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 0.94, // Fixed: Closes unnecessary bottom spacing
+          mainAxisExtent: 200,
         ),
 
         itemBuilder: (context, index) {

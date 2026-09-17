@@ -124,23 +124,11 @@ class FoodImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 165,
-      height: 165,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(19),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: SizedBox(
+        width: double.infinity,
+        height: 220,
         child: hasImage
             ? Image.network(
           imageUrl,

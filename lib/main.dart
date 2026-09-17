@@ -9,7 +9,9 @@ import 'features/auth/address/view.dart';
 import 'features/auth/controller.dart';
 import 'features/auth/splash/view.dart';
 import 'core/db/sqflite/controller.dart';
+import 'features/base/controller.dart';
 import 'features/cart/controller.dart';
+import 'features/cart/order_history_controller.dart';
 import 'features/coupon/controller.dart';
 import 'features/home/controller.dart';
 import 'features/profile/Loyalty_transactions/controller.dart';
@@ -68,6 +70,12 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(
           create: (_) => WalletController(),
         ),
+        ChangeNotifierProvider(
+          create: (_) => BaseTabController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrderController(),
+        ),
       ],
       child: ListenableBuilder(
         listenable: ThemeService.instance,
@@ -92,6 +100,14 @@ class MyApp extends StatelessWidget {
                 elevation: 0,
               ),
             ),
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.noScaling,
+                ),
+                child: child!,
+              );
+            },
             home: const SplashView(),
           );
         },

@@ -196,10 +196,12 @@ void showFoodDetailBottomSheet(
                                 selectedFood,
                                 quantity,
                               );
-
-                              if (sheetContext.mounted) {
-                                Navigator.pop(sheetContext);
+                              if (context.mounted) {
+                                Navigator.of(context).popUntil((route) => route.isFirst);
                               }
+                              // if (sheetContext.mounted) {
+                              //   Navigator.pop(sheetContext);
+                              // }
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

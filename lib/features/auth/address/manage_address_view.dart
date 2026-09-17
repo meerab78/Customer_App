@@ -38,27 +38,14 @@ class _ManageAddressViewState extends State<ManageAddressView> {
       "icon": Icons.work_rounded,
     },
   ];
+  // String? selectedAddressId;
 
-  // Sirf jis address ko user select karega uska ID yahan save hoga
-  String? selectedAddressId;
-
+  @override
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final controller =
-      context.read<AddressManagerController>();
-
-      // NEW: screen khulte hi fresh addresses fetch karo, taake
-      // existing isLoading spinner (neeche build() mein) sahi trigger ho
-      await controller.loadAddresses();
-
-      if (!mounted) return;
-
-      setState(() {
-        selectedAddressId =
-            controller.selectedAddress?.addressId;
-      });
+      await context.read<AddressManagerController>().loadAddresses();
     });
   }
 
@@ -249,7 +236,7 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                   icon: type["icon"],
                   typeName: type["name"],
                   existing: existing,
-
+                  c: c,
                   onEdit: () => _openPicker(
                     typeId: type["id"],
                     existing: existing,
@@ -270,7 +257,7 @@ class _ManageAddressViewState extends State<ManageAddressView> {
                     icon: Icons.location_on_rounded,
                     typeName: a.typeName,
                     existing: a,
-
+                    c: c,
                     onEdit: () => _openPicker(
                       typeId: a.addressTypeId ?? 3,
                       existing: a,
@@ -302,6 +289,7 @@ class _ManageAddressViewState extends State<ManageAddressView> {
     required String typeName,
     required CustomerAddress? existing,
     required VoidCallback onEdit,
+    required AddressManagerController c,
   }) {
     final hasAddress =
         existing != null &&
@@ -310,22 +298,16 @@ class _ManageAddressViewState extends State<ManageAddressView> {
     // Sirf selected address par true hoga
     final isSelected =
         existing != null &&
-            selectedAddressId == existing.addressId;
+            c.selectedAddress?.addressId == existing.addressId;
 
     return InkWell(
       // Sirf tab select ho jab address maujood ho
       onTap: hasAddress
           ? () {
-        setState(() {
-          selectedAddressId =
-              existing!.addressId;
-        });
-
         context
             .read<AddressManagerController>()
             .selectAddress(existing);
 
-        // Checkout ko wapas bhejo
         Navigator.pop(
           context,
           existing,

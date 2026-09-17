@@ -8,12 +8,14 @@ class MenuCategoryCard extends StatelessWidget {
   final String title;
   final bool selected;
   final VoidCallback onTap;
+  final String? imageUrl;
 
   const MenuCategoryCard({
     super.key,
     required this.title,
     required this.selected,
     required this.onTap,
+    this.imageUrl,
   });
 
   IconData _getCategoryIcon(String title) {
@@ -37,6 +39,34 @@ class MenuCategoryCard extends StatelessWidget {
       return Icons.restaurant_menu_rounded;
     }
   }
+  Widget _iconOrImage() {
+    final hasImage = imageUrl != null && imageUrl!.isNotEmpty;
+
+    if (!hasImage) {
+      return Icon(
+        _getCategoryIcon(title),
+        size: 25,
+        color: selected ? AppColors.white : AppColors.primary,
+      );
+    }
+
+    return ClipOval(
+      child: Image.network(
+        imageUrl!,
+        width: 46,
+        height: 46,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) {
+          // Image load nahi hui to icon pe fallback
+          return Icon(
+            _getCategoryIcon(title),
+            size: 25,
+            color: selected ? AppColors.white : AppColors.primary,
+          );
+        },
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +75,7 @@ class MenuCategoryCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
-        width: 105, // Wide, balanced size (smart nahi lagega)
+        width: 105,
         height: 110,
         padding: const EdgeInsets.symmetric(
           horizontal: 8,

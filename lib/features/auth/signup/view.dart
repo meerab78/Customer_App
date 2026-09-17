@@ -1,7 +1,9 @@
 ﻿
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/utils/validators.dart';
 
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -244,15 +246,7 @@ class _SignupScreenState extends State<SignUpView> {
                           hintText: 'Enter your email address',
                           prefixIcon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Enter a valid email';
-                            }
-                            return null;
-                          },
+                          validator: Validators.email,
                         ),
 
                         const SizedBox(height: 9),
@@ -262,10 +256,11 @@ class _SignupScreenState extends State<SignUpView> {
                           hintText: 'Enter your phone number',
                           prefixIcon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
-                          validator: (value) => _required(
-                            value,
-                            'Please enter your phone number',
-                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(11),
+                          ],
+                          validator: Validators.phone,
                         ),
 
                         const SizedBox(height: 9),

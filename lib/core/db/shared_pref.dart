@@ -11,7 +11,9 @@ class SharedPrefService {
   static const String longitudeKey = "longitude";
   static const String isDefaultKey = "isDefault";
   static const String isGuestKey = "is_guest";
-
+  static const String homeAddressCreatedKey = "home_address_created";
+  static const String guestUserIdKey = "guest_user_id";
+  static const String guestCustomerIdKey = "guest_customer_id";
   static const String userIdKey = "user_id";
   static const String customerIdKey = "customer_id";
   static const String nameKey = "name";
@@ -203,11 +205,17 @@ class SharedPrefService {
     await prefs.remove(emailKey);
     await prefs.remove(phoneKey);
     await prefs.remove(restaurantIdKey);
+    await prefs.remove(guestUserIdKey);
+    await prefs.remove(guestCustomerIdKey);
     await prefs.remove(restaurantNameKey);
-
     await prefs.remove(dateOfBirthKey);
     await prefs.remove(genderKey);
     await prefs.remove(isGuestKey);
+    await prefs.remove(homeAddressCreatedKey);
+  }
+  Future<void> saveCustomerIdOnly(String customerId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(customerIdKey, customerId);
   }
 
   Future<void> saveIsGuest(bool isGuest) async {
@@ -218,5 +226,25 @@ class SharedPrefService {
   Future<bool> getIsGuest() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(isGuestKey) ?? false;
+  }
+
+  Future<void> setHomeAddressCreated(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(homeAddressCreatedKey, value);
+  }
+
+  Future<bool> getHomeAddressCreated() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(homeAddressCreatedKey) ?? false;
+  }
+  Future<void> saveGuestUserId(int userId, String customerId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(guestUserIdKey, userId);
+    await prefs.setString(guestCustomerIdKey, customerId);
+  }
+
+  Future<int?> getGuestUserId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(guestUserIdKey);
   }
 }

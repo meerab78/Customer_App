@@ -355,9 +355,9 @@ class _SearchScreenState extends State<SearchView> {
                   ? _noResults(query)
                   : GridView.builder(
                 padding: const EdgeInsets.fromLTRB(
-                  18,
+                  16,
                   4,
-                  18,
+                  16,
                   20,
                 ),
                 keyboardDismissBehavior:
@@ -368,7 +368,7 @@ class _SearchScreenState extends State<SearchView> {
                   crossAxisCount: 2,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 0.94, // Fixed: Extra vertical space under price resolved
+                  mainAxisExtent: 200,
                 ),
                 itemBuilder: (context, index) {
                   final food = items[index];

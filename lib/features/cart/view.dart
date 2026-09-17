@@ -1,4 +1,486 @@
-﻿import 'package:customer_app/features/cart/widget/login_required_sheet.dart';
+﻿// import 'package:customer_app/features/cart/widget/login_required_sheet.dart';
+// import 'package:shared_preferences/shared_preferences.dart';
+// import 'package:skeletonizer/skeletonizer.dart';
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import '../../core/db/sqflite/model.dart' as db;
+// import '../../core/utils/page_transitions.dart';
+// import '../home/model/menu_model.dart';
+// import 'checkout_view.dart';
+// import 'controller.dart';
+// import '../../core/theme/app_colors.dart';
+// import '../../core/theme/fonts_manager.dart';
+// import '../../core/theme/textfont_styles.dart';
+// import 'widget/cart_item_card.dart';
+//
+// class CartView extends StatelessWidget {
+//   const CartView({super.key});
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: AppColors.background,
+//
+//       appBar: AppBar(
+//         backgroundColor: AppColors.background,
+//         elevation: 0,
+//
+//         title: Text(
+//           'My Cart',
+//           style: getExtraBoldStyle(
+//             fontSize: MyFonts.size24,
+//             color: AppColors.text,
+//           ),
+//         ),
+//       ),
+//
+//       body: Consumer<CartController>(
+//         builder: (context, cart, _) {
+//           // 1. Loading ho raha ho -> skeleton
+//           if (cart.isLoading) {
+//             return _skeletonCart();
+//           }
+//
+//           // 2. Cart khaali ho -> empty message
+//           if (cart.cartItems.isEmpty) {
+//             return _emptyCart();
+//           }
+//
+//           // 3. Normal cart
+//           double total = 0;
+//
+//           for (final food in cart.cartItems) {
+//             final price =
+//                 double.tryParse(food.price ?? '0') ?? 0;
+//
+//             total += price * (food.quantity ?? 1);
+//           }
+//
+//           return Column(
+//             children: [
+//               Expanded(
+//                 child: ListView.builder(
+//                   padding: const EdgeInsets.fromLTRB(
+//                     18,
+//                     10,
+//                     18,
+//                     10,
+//                   ),
+//                   itemCount: cart.cartItems.length,
+//                   itemBuilder: (context, index) {
+//                     final food = cart.cartItems[index];
+//                     return Dismissible(
+//                       key: ValueKey(
+//                         food.id ?? '${food.menuId}_$index',
+//                       ),
+//                       direction: DismissDirection.startToEnd,
+//                       background: Container(
+//                         margin: const EdgeInsets.only(bottom: 12),
+//                         padding:
+//                         const EdgeInsets.symmetric(horizontal: 22),
+//                         alignment: Alignment.centerLeft,
+//                         decoration: BoxDecoration(
+//                           color: AppColors.error,
+//                           borderRadius: BorderRadius.circular(18),
+//                         ),
+//                         child: const Icon(
+//                           Icons.delete_outline_rounded,
+//                           color: Colors.white,
+//                         ),
+//                       ),
+//                       onDismissed: (_) {
+//                         cart.removeFromCart(food);
+//                       },
+//                       child: CartItemCard(
+//                         item: food,
+//                         onDelete: () {
+//                           cart.removeFromCart(food);
+//                         },
+//                         onPlus: () {
+//                           cart.increaseQuantity(food);
+//                         },
+//                         onMinus: () {
+//                           cart.decreaseQuantity(food);
+//                         },
+//                         // onTap: () async {
+//                         //   // -----------------------------
+//                         //   // DEAL EDIT
+//                         //   // -----------------------------
+//                         //   if (food.isDeal) {
+//                         //     await Navigator.push(
+//                         //       context,
+//                         //       MaterialPageRoute(
+//                         //         builder: (_) => DealDetailView(
+//                         //           food: _menuFromOrderDetails(food),
+//                         //         ),
+//                         //       ),
+//                         //     );
+//                         //
+//                         //     return;
+//                         //   }
+//                         //
+//                         //   // -----------------------------
+//                         //   // NORMAL CUSTOMIZATION
+//                         //   // -----------------------------
+//                         //   final hasCustomization =
+//                         //       food.menuVariation != null ||
+//                         //           food.orderDetailChoice.isNotEmpty;
+//                         //
+//                         //   if (!hasCustomization) {
+//                         //     return;
+//                         //   }
+//                         //
+//                         //   // ----------------------------------------------------
+//                         //   // ASAL BASE PRICE NIKALEIN
+//                         //   // (food.price abhi total hai: base + variation + choices)
+//                         //   // ----------------------------------------------------
+//                         //   final currentTotal =
+//                         //       double.tryParse(food.price ?? '0') ?? 0;
+//                         //
+//                         //   final variationExtra =
+//                         //       double.tryParse(food.menuVariation?.price ?? '0') ?? 0;
+//                         //
+//                         //   double choicesExtra = 0;
+//                         //   for (final choice in food.orderDetailChoice) {
+//                         //     choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
+//                         //   }
+//                         //
+//                         //   final originalBasePrice =
+//                         //       currentTotal - variationExtra - choicesExtra;
+//                         //
+//                         //   // VariationView ko asal base price ke sath bhejein
+//                         //   final foodForEdit = _menuFromOrderDetails(food).copyWith(
+//                         //     price: originalBasePrice.toString(),
+//                         //   );
+//                         //
+//                         //   final updatedVariation =
+//                         //   await Navigator.push<MenuVariation>(
+//                         //     context,
+//                         //     MaterialPageRoute(
+//                         //       builder: (_) => VariationView(
+//                         //         food: foodForEdit,
+//                         //         isEditMode: true,
+//                         //       ),
+//                         //     ),
+//                         //   );
+//                         //
+//                         //   if (updatedVariation == null) {
+//                         //     return;
+//                         //   }
+//                         //
+//                         //   final updatedItem = food.copyWith(
+//                         //     price: originalBasePrice.toString(),
+//                         //     menuVariation: db.MenuVariation(
+//                         //       id: updatedVariation.id?.toString(),
+//                         //       name: updatedVariation.name,
+//                         //       price: updatedVariation.price,
+//                         //       note: null,
+//                         //     ),
+//                         //     orderDetailChoice: _choicesFromVariation(
+//                         //       updatedVariation,
+//                         //     ),
+//                         //   );
+//                         //
+//                         //   await cart.updateCartItem(updatedItem);
+//                         // },
+//                       ),
+//                     );
+//                   },
+//                 ),
+//               ),
+//               _checkoutSection(context, total),
+//             ],
+//           );
+//         },
+//       ),
+//     );
+//   }
+//   Future<void> _handleCheckoutTap(BuildContext context) async {
+//     final prefs = await SharedPreferences.getInstance();
+//     final token = prefs.getString('token');
+//     final isLoggedIn = token != null && token.isNotEmpty;
+//
+//     if (!context.mounted) return;
+//
+//     if (isLoggedIn) {
+//       Navigator.push(
+//         context,
+//         PageTransitions.slideFromRight(const CheckoutView()),
+//       );
+//     } else {
+//       showLoginRequiredSheet(context);
+//     }
+//   }
+//   Widget _checkoutSection(
+//       BuildContext context,
+//       double total,
+//       ) {
+//     return Container(
+//       padding: const EdgeInsets.fromLTRB(
+//         20,
+//         18,
+//         20,
+//         20,
+//       ),
+//       decoration: BoxDecoration(
+//         color: AppColors.card,
+//         borderRadius: const BorderRadius.vertical(
+//           top: Radius.circular(28),
+//         ),
+//       ),
+//       child: Column(
+//         children: [
+//           Row(
+//             mainAxisAlignment:
+//             MainAxisAlignment.spaceBetween,
+//             children: [
+//               Text(
+//                 'Total',
+//                 style: getRegularStyle(
+//                   fontSize: MyFonts.size15,
+//                   color: AppColors.greyText,
+//                 ),
+//               ),
+//               Text(
+//                 'Rs ${total.toStringAsFixed(0)}',
+//                 style: getBlackStyle(
+//                   fontSize: MyFonts.size22,
+//                   color: AppColors.text,
+//                 ),
+//               ),
+//             ],
+//           ),
+//
+//           const SizedBox(height: 14),
+//
+//           SizedBox(
+//             width: double.infinity,
+//             height: 54,
+//             child: ElevatedButton(
+//               onPressed: () {
+//                 _handleCheckoutTap(context);
+//               },
+//               style: ElevatedButton.styleFrom(
+//                 backgroundColor: AppColors.primary,
+//                 foregroundColor: AppColors.white,
+//                 elevation: 0,
+//                 shape: RoundedRectangleBorder(
+//                   borderRadius: BorderRadius.circular(17),
+//                 ),
+//               ),
+//               child: Text(
+//                 'Proceed to Checkout',
+//                 style: getExtraBoldStyle(
+//                   fontSize: MyFonts.size16,
+//                   color: AppColors.white,
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+//
+//   Widget _emptyCart() {
+//     return Center(
+//       child: Padding(
+//         padding: const EdgeInsets.all(30),
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Container(
+//               width: 100,
+//               height: 100,
+//               decoration: BoxDecoration(
+//                 color: AppColors.primary.withOpacity(.08),
+//                 shape: BoxShape.circle,
+//               ),
+//               child: Icon(
+//                 Icons.shopping_bag_outlined,
+//                 size: 48,
+//                 color: AppColors.primary,
+//               ),
+//             ),
+//
+//             const SizedBox(height: 20),
+//
+//             Text(
+//               'Your cart is empty',
+//               style: getExtraBoldStyle(
+//                 fontSize: MyFonts.size22,
+//                 color: AppColors.text,
+//               ),
+//             ),
+//
+//             const SizedBox(height: 8),
+//
+//             Text(
+//               'Add your favorite food and\nit will appear here.',
+//               textAlign: TextAlign.center,
+//               style: getRegularStyle(
+//                 color: AppColors.greyText,
+//               ).copyWith(height: 1.5),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+//
+// // Skeleton (loading) — fake cards shimmer ke saath
+// Widget _skeletonCart() {
+//   return Skeletonizer(
+//     enabled: true,
+//     child: ListView.builder(
+//       padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+//       itemCount: 6, // 6 fake cards
+//       itemBuilder: (context, index) {
+//         return Container(
+//           margin: const EdgeInsets.only(bottom: 12),
+//           padding: const EdgeInsets.all(14),
+//           decoration: BoxDecoration(
+//             color: AppColors.card,
+//             borderRadius: BorderRadius.circular(18),
+//           ),
+//           child: Row(
+//             children: [
+//               // fake image
+//               Container(
+//                 width: 60,
+//                 height: 60,
+//                 decoration: BoxDecoration(
+//                   color: AppColors.grey200,
+//                   borderRadius: BorderRadius.circular(14),
+//                 ),
+//               ),
+//               const SizedBox(width: 14),
+//               // fake text
+//               Expanded(
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       'Loading food item name',
+//                       style: getBoldStyle(
+//                         fontSize: MyFonts.size15,
+//                         color: AppColors.text,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 8),
+//                     Text(
+//                       'Rs 000',
+//                       style: getRegularStyle(
+//                         fontSize: MyFonts.size13,
+//                         color: AppColors.greyText,
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+//               // fake qty
+//               Container(
+//                 width: 80,
+//                 height: 32,
+//                 decoration: BoxDecoration(
+//                   color: AppColors.grey200,
+//                   borderRadius: BorderRadius.circular(10),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         );
+//       },
+//     ),
+//   );
+// }
+//
+// Menu _menuFromOrderDetails(db.OrderDetails item) {
+//   return Menu(
+//     id: int.tryParse(item.menuId ?? ''),
+//     menuId: item.menuId,
+//     name: item.menuName,
+//     price: item.price,
+//     takeAwayPrice: item.takeawayPrice,
+//     deliveryPrice: item.deliveryPrice,
+//     image: null,
+//     imageUrl: null,
+//     description: null,
+//     ingridient: null,
+//     isDeal: item.isDeal,
+//     menuVariations: [],
+//     choiceGroup: _choiceGroupsFromOrderDetails(item.orderDetailChoice),
+//     dealMenuDetails: item.dealDetails.map(_menuFromOrderDetails).toList(),
+//     quantity: item.quantity,
+//     menuVariation: item.menuVariation == null
+//         ? null
+//         : MenuVariation(
+//       id: int.tryParse(item.menuVariation!.id ?? ''),
+//       name: item.menuVariation!.name,
+//       price: item.menuVariation!.price,
+//       takeAwayPrice: null,
+//       deliveryPrice: null,
+//       choiceGroups: [],
+//     ),
+//   );
+// }
+//
+// List<ChoiceGroup> _choiceGroupsFromOrderDetails(
+//     List<db.OrderDetailChoice> choices,
+//     ) {
+//   final grouped = <String, List<db.OrderDetailChoice>>{};
+//   final groupNames = <String, String?>{};
+//
+//   for (final choice in choices) {
+//     final groupId = choice.choiceGroupId ?? '0';
+//     grouped.putIfAbsent(groupId, () => []);
+//     grouped[groupId]!.add(choice);
+//     groupNames[groupId] = choice.choiceGroupName;
+//   }
+//
+//   return grouped.entries.map((entry) {
+//     return ChoiceGroup(
+//       id: int.tryParse(entry.key),
+//       name: groupNames[entry.key],
+//       minChoices: 0,
+//       maxChoices: 0,
+//       choices: entry.value.map((choice) {
+//         return MenuVariation(
+//           id: choice.choiceId,
+//           name: choice.choiceName,
+//           price: choice.price,
+//           takeAwayPrice: null,
+//           deliveryPrice: null,
+//           choiceGroups: [],
+//         );
+//       }).toList(),
+//     );
+//   }).toList();
+// }
+//
+// List<db.OrderDetailChoice> _choicesFromVariation(
+//     MenuVariation variation,
+//     ) {
+//   final choices = <db.OrderDetailChoice>[];
+//
+//   for (final group in variation.choiceGroups) {
+//     for (final choice in group.choices) {
+//       choices.add(
+//         db.OrderDetailChoice(
+//           choiceId: choice.id,
+//           choiceName: choice.name,
+//           price: choice.price,
+//           choiceGroupId: group.id?.toString(),
+//           choiceGroupName: group.name,
+//         ),
+//       );
+//     }
+//   }
+//
+//   return choices;
+// }
+import 'package:customer_app/features/cart/widget/login_required_sheet.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:flutter/material.dart';
@@ -18,183 +500,162 @@ class CartView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        elevation: 0,
-
-        title: Text(
-          'My Cart',
-          style: getExtraBoldStyle(
-            fontSize: MyFonts.size24,
-            color: AppColors.text,
-          ),
-        ),
-      ),
-
-      body: Consumer<CartController>(
-        builder: (context, cart, _) {
-          // 1. Loading ho raha ho -> skeleton
-          if (cart.isLoading) {
-            return _skeletonCart();
-          }
-
-          // 2. Cart khaali ho -> empty message
-          if (cart.cartItems.isEmpty) {
-            return _emptyCart();
-          }
-
-          // 3. Normal cart
-          double total = 0;
-
-          for (final food in cart.cartItems) {
-            final price =
-                double.tryParse(food.price ?? '0') ?? 0;
-
-            total += price * (food.quantity ?? 1);
-          }
-
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(
-                    18,
-                    10,
-                    18,
-                    10,
-                  ),
-                  itemCount: cart.cartItems.length,
-                  itemBuilder: (context, index) {
-                    final food = cart.cartItems[index];
-                    return Dismissible(
-                      key: ValueKey(
-                        food.id ?? '${food.menuId}_$index',
-                      ),
-                      direction: DismissDirection.startToEnd,
-                      background: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding:
-                        const EdgeInsets.symmetric(horizontal: 22),
-                        alignment: Alignment.centerLeft,
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(18),
+    return Consumer<CartController>(
+      builder: (context, cart, _) {
+        return Scaffold(
+          backgroundColor: AppColors.background,
+          appBar: AppBar(
+            backgroundColor: AppColors.background,
+            elevation: 0,
+            title: Text(
+              'CART',
+              style: getExtraBoldStyle(
+                fontSize: MyFonts.size22,
+                color: AppColors.primary,
+              ),
+            ),
+            // TOP-RIGHT DELETE ICON
+            actions: [
+              if (cart.cartItems.isNotEmpty)
+                IconButton(
+                  onPressed: () {
+                    // Confirmation Dialog pehle dikhane ke liye (Optional Safety)
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        title: Text(
+                          'Clear Cart',
+                          style: getBoldStyle(
+                            fontSize: MyFonts.size16,
+                            color: AppColors.text,
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Colors.white,
+                        content: Text(
+                          'Are you sure you want to remove all items from your cart?',
+                          style: getRegularStyle(
+                            fontSize: MyFonts.size14,
+                            color: AppColors.greyText,
+                          ),
                         ),
-                      ),
-                      onDismissed: (_) {
-                        cart.removeFromCart(food);
-                      },
-                      child: CartItemCard(
-                        item: food,
-                        onDelete: () {
-                          cart.removeFromCart(food);
-                        },
-                        onPlus: () {
-                          cart.increaseQuantity(food);
-                        },
-                        onMinus: () {
-                          cart.decreaseQuantity(food);
-                        },
-                        // onTap: () async {
-                        //   // -----------------------------
-                        //   // DEAL EDIT
-                        //   // -----------------------------
-                        //   if (food.isDeal) {
-                        //     await Navigator.push(
-                        //       context,
-                        //       MaterialPageRoute(
-                        //         builder: (_) => DealDetailView(
-                        //           food: _menuFromOrderDetails(food),
-                        //         ),
-                        //       ),
-                        //     );
-                        //
-                        //     return;
-                        //   }
-                        //
-                        //   // -----------------------------
-                        //   // NORMAL CUSTOMIZATION
-                        //   // -----------------------------
-                        //   final hasCustomization =
-                        //       food.menuVariation != null ||
-                        //           food.orderDetailChoice.isNotEmpty;
-                        //
-                        //   if (!hasCustomization) {
-                        //     return;
-                        //   }
-                        //
-                        //   // ----------------------------------------------------
-                        //   // ASAL BASE PRICE NIKALEIN
-                        //   // (food.price abhi total hai: base + variation + choices)
-                        //   // ----------------------------------------------------
-                        //   final currentTotal =
-                        //       double.tryParse(food.price ?? '0') ?? 0;
-                        //
-                        //   final variationExtra =
-                        //       double.tryParse(food.menuVariation?.price ?? '0') ?? 0;
-                        //
-                        //   double choicesExtra = 0;
-                        //   for (final choice in food.orderDetailChoice) {
-                        //     choicesExtra += double.tryParse(choice.price ?? '0') ?? 0;
-                        //   }
-                        //
-                        //   final originalBasePrice =
-                        //       currentTotal - variationExtra - choicesExtra;
-                        //
-                        //   // VariationView ko asal base price ke sath bhejein
-                        //   final foodForEdit = _menuFromOrderDetails(food).copyWith(
-                        //     price: originalBasePrice.toString(),
-                        //   );
-                        //
-                        //   final updatedVariation =
-                        //   await Navigator.push<MenuVariation>(
-                        //     context,
-                        //     MaterialPageRoute(
-                        //       builder: (_) => VariationView(
-                        //         food: foodForEdit,
-                        //         isEditMode: true,
-                        //       ),
-                        //     ),
-                        //   );
-                        //
-                        //   if (updatedVariation == null) {
-                        //     return;
-                        //   }
-                        //
-                        //   final updatedItem = food.copyWith(
-                        //     price: originalBasePrice.toString(),
-                        //     menuVariation: db.MenuVariation(
-                        //       id: updatedVariation.id?.toString(),
-                        //       name: updatedVariation.name,
-                        //       price: updatedVariation.price,
-                        //       note: null,
-                        //     ),
-                        //     orderDetailChoice: _choicesFromVariation(
-                        //       updatedVariation,
-                        //     ),
-                        //   );
-                        //
-                        //   await cart.updateCartItem(updatedItem);
-                        // },
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: Text(
+                              'Cancel',
+                              style: getMediumStyle(
+                                fontSize: MyFonts.size14,
+                                color: AppColors.greyText,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(ctx);
+                              cart.clearCart(); // Proper Clear Action
+                            },
+                            child: Text(
+                              'Clear',
+                              style: getBoldStyle(
+                                fontSize: MyFonts.size14,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   },
+                  icon: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child:  Icon(
+                      Icons.delete_outline_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                  ),
                 ),
-              ),
-              _checkoutSection(context, total),
+              const SizedBox(width: 8),
             ],
-          );
-        },
-      ),
+          ),
+          body: Builder(
+            builder: (context) {
+              // 1. Loading ho raha ho -> skeleton
+              if (cart.isLoading) {
+                return _skeletonCart();
+              }
+
+              // 2. Cart khaali ho -> empty message
+              if (cart.cartItems.isEmpty) {
+                return _emptyCart();
+              }
+
+              // 3. Normal cart
+              double total = 0;
+
+              for (final food in cart.cartItems) {
+                final price = double.tryParse(food.price ?? '0') ?? 0;
+                total += price * (food.quantity ?? 1);
+              }
+
+              return Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
+                      itemCount: cart.cartItems.length,
+                      itemBuilder: (context, index) {
+                        final food = cart.cartItems[index];
+                        return Dismissible(
+                          key: ValueKey(
+                            food.id ?? '${food.menuId}_$index',
+                          ),
+                          direction: DismissDirection.startToEnd,
+                          background: Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 22),
+                            alignment: Alignment.centerLeft,
+                            decoration: BoxDecoration(
+                              color: AppColors.error,
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                            child: const Icon(
+                              Icons.delete_outline_rounded,
+                              color: Colors.white,
+                            ),
+                          ),
+                          onDismissed: (_) {
+                            cart.removeFromCart(food);
+                          },
+                          child: CartItemCard(
+                            item: food,
+                            onDelete: () {
+                              cart.removeFromCart(food);
+                            },
+                            onPlus: () {
+                              cart.increaseQuantity(food);
+                            },
+                            onMinus: () {
+                              cart.decreaseQuantity(food);
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  _checkoutSection(context, total),
+                ],
+              );
+            },
+          ),
+        );
+      },
     );
   }
+
   Future<void> _handleCheckoutTap(BuildContext context) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -211,52 +672,56 @@ class CartView extends StatelessWidget {
       showLoginRequiredSheet(context);
     }
   }
+
   Widget _checkoutSection(
       BuildContext context,
       double total,
       ) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        20,
-        18,
-        20,
-        20,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(28),
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 6, 16, 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
         ),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment:
-            MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total',
-                style: getRegularStyle(
-                  fontSize: MyFonts.size15,
-                  color: AppColors.greyText,
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.shadow.withOpacity(0.08),
+              blurRadius: 16,
+              spreadRadius: 2,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Total Payment',
+                  style: getBoldStyle(
+                    fontSize: MyFonts.size11,
+                    color: AppColors.text,
+                  ),
                 ),
-              ),
-              Text(
-                'Rs ${total.toStringAsFixed(0)}',
-                style: getBlackStyle(
-                  fontSize: MyFonts.size22,
-                  color: AppColors.text,
+                const SizedBox(height: 2),
+                Text(
+                  'PKR ${total.toStringAsFixed(2)}',
+                  style: getExtraBoldStyle(
+                    fontSize: MyFonts.size16,
+                    color: AppColors.text,
+                  ),
                 ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          SizedBox(
-            width: double.infinity,
-            height: 54,
-            child: ElevatedButton(
+              ],
+            ),
+            ElevatedButton(
               onPressed: () {
                 _handleCheckoutTap(context);
               },
@@ -264,20 +729,35 @@ class CartView extends StatelessWidget {
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.white,
                 elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 12,
+                ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(17),
+                  borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: Text(
-                'Proceed to Checkout',
-                style: getExtraBoldStyle(
-                  fontSize: MyFonts.size16,
-                  color: AppColors.white,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Checkout',
+                    style: getBoldStyle(
+                      fontSize: MyFonts.size14,
+                      color: AppColors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -302,9 +782,7 @@ class CartView extends StatelessWidget {
                 color: AppColors.primary,
               ),
             ),
-
             const SizedBox(height: 20),
-
             Text(
               'Your cart is empty',
               style: getExtraBoldStyle(
@@ -312,9 +790,7 @@ class CartView extends StatelessWidget {
                 color: AppColors.text,
               ),
             ),
-
             const SizedBox(height: 8),
-
             Text(
               'Add your favorite food and\nit will appear here.',
               textAlign: TextAlign.center,
@@ -329,13 +805,13 @@ class CartView extends StatelessWidget {
   }
 }
 
-// Skeleton (loading) — fake cards shimmer ke saath
+// Skeleton (loading)
 Widget _skeletonCart() {
   return Skeletonizer(
     enabled: true,
     child: ListView.builder(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 10),
-      itemCount: 6, // 6 fake cards
+      itemCount: 6,
       itemBuilder: (context, index) {
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -346,7 +822,6 @@ Widget _skeletonCart() {
           ),
           child: Row(
             children: [
-              // fake image
               Container(
                 width: 60,
                 height: 60,
@@ -356,7 +831,6 @@ Widget _skeletonCart() {
                 ),
               ),
               const SizedBox(width: 14),
-              // fake text
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -379,7 +853,6 @@ Widget _skeletonCart() {
                   ],
                 ),
               ),
-              // fake qty
               Container(
                 width: 80,
                 height: 32,

@@ -2,16 +2,18 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../core/db/shared_pref.dart';
 import 'model/address_model.dart';
 import 'repository.dart';
 
 class AddressManagerController extends ChangeNotifier {
   final AddressRepository _repo = AddressRepository();
-
+  final SharedPrefService _prefs = SharedPrefService();
   // Address loading aur saving ke states
   bool isLoading = false;
   bool isSaving = false;
-
+  bool userEditedAddress = false;
+  bool _isPersistingAddress = false;
 
   // Delivery status
   bool deliveryAvailable = true;
@@ -27,6 +29,7 @@ class AddressManagerController extends ChangeNotifier {
   bool isCalculatingFee = false;
   double deliveryFee = 0;
 
+
   // LOAD ADDRESSES
   Future<void> loadAddresses() async {
     isLoading = true;
@@ -38,6 +41,7 @@ class AddressManagerController extends ChangeNotifier {
       if (selectedAddress != null) {
         bool stillExists = false;
 
+        // Pehle addressId se match karo
         for (final address in addresses) {
           if (address.addressId == selectedAddress!.addressId) {
             selectedAddress = address;
@@ -46,10 +50,23 @@ class AddressManagerController extends ChangeNotifier {
           }
         }
 
+        // Agar addressId se match nahi hua (local/unsaved address tha)
+        // to lat/lng se match karo
+        if (!stillExists && selectedAddress!.addressId == null) {
+          for (final address in addresses) {
+            if (address.latitude == selectedAddress!.latitude &&
+                address.longitude == selectedAddress!.longitude) {
+              selectedAddress = address;
+              stillExists = true;
+              break;
+            }
+          }
+        }
+
         if (!stillExists) {
           _preselectDefault();
         }
-      } else {
+      }else {
         _preselectDefault();
       }
     } catch (e) {
@@ -94,40 +111,41 @@ class AddressManagerController extends ChangeNotifier {
   // address, latitude aur longitude use hoti hai.
 
   Future<void> ensureHomeAddress() async {
-    // Agar addresses already loaded hain
-    // to naya Home address nahi banana
-    if (addresses.isNotEmpty) {
-      return;
-    }
+    if (addresses.isNotEmpty) return;
 
-    // SharedPreferences open karo
     final prefs = await SharedPreferences.getInstance();
 
-    // Latitude aur longitude get karo
-    final double? latitude = prefs.getDouble("latitude");
-    final double? longitude = prefs.getDouble("longitude");
+    double? latitude;
+    double? longitude;
 
-    // Address get karo
-    // Pehle full address check hoga
-    // agar nahi mila to address_area use hoga
-    final String address =
-        prefs.getString("address") ??
-            prefs.getString("address_area") ??
-            "Home";
+    try { latitude = prefs.getDouble("latitude"); } catch (_) {}
+    try { longitude = prefs.getDouble("longitude"); } catch (_) {}
 
-    // Agar latitude ya longitude nahi hai
-    // to address create nahi karna
     if (latitude == null || longitude == null) {
-      return;
+      try {
+        final latStr = prefs.getString("latitude");
+        final lngStr = prefs.getString("longitude");
+        if (latStr != null) latitude = double.tryParse(latStr);
+        if (lngStr != null) longitude = double.tryParse(lngStr);
+      } catch (_) {}
     }
 
-    // Agar location 0,0 hai
-    // to bhi address create nahi karna
-    if (latitude == 0 && longitude == 0) {
-      return;
+    if (latitude == null || longitude == null) {
+      try {
+        final latVal = prefs.get("latitude");
+        final lngVal = prefs.get("longitude");
+        if (latVal != null) latitude = double.tryParse(latVal.toString());
+        if (lngVal != null) longitude = double.tryParse(lngVal.toString());
+      } catch (_) {}
     }
 
-    // Home address save karo
+    final String address = prefs.getString("address") ??
+        prefs.getString("address_area") ??
+        "Home";
+
+    if (latitude == null || longitude == null) return;
+    if (latitude == 0 && longitude == 0) return;
+
     await addEditAddress(
       addressTypeId: 3,
       address1: address.isEmpty ? "Home" : address,
@@ -153,6 +171,7 @@ class AddressManagerController extends ChangeNotifier {
     notifyListeners();
 
     bool success = false;
+    final bool isFirstTimeCreate = addressId == null;
 
     try {
       // Address repository.dart ko call karo
@@ -181,23 +200,11 @@ class AddressManagerController extends ChangeNotifier {
               break;
             }
           }
-          selectedAddress = matched ?? saved;   // ✅ ab hamesha overwrite hoga
+          selectedAddress = matched ?? saved;
         }
-        // Agar saved address default hai
-        // to usko selected address bana do
-        // if (isDefault == 1) {
-        //   for (CustomerAddress address in addresses) {
-        //     if (address.addressId == saved.addressId) {
-        //       selectedAddress = address;
-        //       break;
-        //     }
-        //   }
-        //
-        //   // Agar list mein address na mile
-        //   // to saved address select kar do
-        //   if (selectedAddress == null) {
-        //     selectedAddress = saved;
-        //   }
+        if (isFirstTimeCreate && addressTypeId == 3) {
+          await _prefs.setHomeAddressCreated(true); // NEW — safe discard
+        }
       }
     } catch (e) {
       debugPrint("addEditAddress error: $e");
@@ -275,21 +282,49 @@ class AddressManagerController extends ChangeNotifier {
   Future<void> useLocalAddressForGuest() async {
     final prefs = await SharedPreferences.getInstance();
 
-    final double? latitude = prefs.getDouble("latitude");
-    final double? longitude = prefs.getDouble("longitude");
+    double? latitude;
+    double? longitude;
+    String address = "";
 
-    final String address =
-        prefs.getString("address") ??
-            prefs.getString("address_area") ??
-            "";
+    // Try EVERY possible way to read lat/lng
+    // kyunki kahin setDouble se save hua, kahin setString se
+    try { latitude = prefs.getDouble("latitude"); } catch (_) {}
+    try { longitude = prefs.getDouble("longitude"); } catch (_) {}
 
-    if (latitude == null || longitude == null || address.isEmpty) {
-      return; // koi saved address nahi mili
+    if (latitude == null || longitude == null) {
+      try {
+        final latStr = prefs.getString("latitude");
+        final lngStr = prefs.getString("longitude");
+        if (latStr != null) latitude = double.tryParse(latStr);
+        if (lngStr != null) longitude = double.tryParse(lngStr);
+      } catch (_) {}
     }
 
-    if (latitude == 0 && longitude == 0) {
+    // Agar ab bhi null hai to generic get se try karo
+    if (latitude == null || longitude == null) {
+      try {
+        final latVal = prefs.get("latitude");
+        final lngVal = prefs.get("longitude");
+        if (latVal != null) latitude = double.tryParse(latVal.toString());
+        if (lngVal != null) longitude = double.tryParse(lngVal.toString());
+      } catch (_) {}
+    }
+
+    // Address string
+    address = prefs.getString("address") ??
+        prefs.getString("address_area") ??
+        "";
+
+    debugPrint("=== GUEST ADDRESS DEBUG ===");
+    debugPrint("lat: $latitude, lng: $longitude, addr: $address");
+    debugPrint("===========================");
+
+    if (latitude == null || longitude == null) {
+      debugPrint("useLocalAddressForGuest: no lat/lng found");
       return;
     }
+    if (latitude == 0 && longitude == 0) return;
+    if (address.isEmpty) address = "Home";
 
     selectedAddress = CustomerAddress(
       addressTypeId: 3,
@@ -300,6 +335,65 @@ class AddressManagerController extends ChangeNotifier {
       isDefault: 1,
     );
 
+    debugPrint("useLocalAddressForGuest: loaded => $address");
     notifyListeners();
+  }
+
+  Future<bool> persistSelectedAddressIfNeeded() async {
+    final addr = selectedAddress;
+    if (addr == null) return false;
+    if (addr.id != null) return true; // already saved
+
+    if (_isPersistingAddress) return false; // lock
+    _isPersistingAddress = true;
+
+    try {
+      // Hamesha FRESH list se check karo — stale list galat CREATE karati hai
+      await loadAddresses();
+
+      CustomerAddress? existingSameType;
+      for (final a in addresses) {
+        if (a.addressTypeId == (addr.addressTypeId ?? 3)) {
+          existingSameType = a;
+          break;
+        }
+      }
+
+      bool saved = await addEditAddress(
+        addressId: existingSameType?.addressId,
+        addressTypeId: addr.addressTypeId ?? 3,
+        address1: addr.address1,
+        latitude: addr.latitude,
+        longitude: addr.longitude,
+        isDefault: 1,
+      );
+
+      // FALLBACK: agar CREATE ki thi (existingSameType null tha) aur
+      // backend ne "already exist" bola, list refresh karke UPDATE se retry
+      if (!saved && existingSameType == null) {
+        await loadAddresses();
+        CustomerAddress? retryMatch;
+        for (final a in addresses) {
+          if (a.addressTypeId == (addr.addressTypeId ?? 3)) {
+            retryMatch = a;
+            break;
+          }
+        }
+        if (retryMatch != null) {
+          saved = await addEditAddress(
+            addressId: retryMatch.addressId,
+            addressTypeId: addr.addressTypeId ?? 3,
+            address1: addr.address1,
+            latitude: addr.latitude,
+            longitude: addr.longitude,
+            isDefault: 1,
+          );
+        }
+      }
+
+      return saved;
+    } finally {
+      _isPersistingAddress = false;
+    }
   }
 }
