@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-
-import 'order_detail_view.dart';
+import '../cart/model/order_history_model.dart';
+import 'order detail_view.dart';
 import 'order_history_controller.dart';
 import 'order_repository.dart';
-import 'model/order_history_model.dart';
 import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';

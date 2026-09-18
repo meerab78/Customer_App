@@ -1,6 +1,6 @@
 ﻿//
 // import 'package:flutter/material.dart';
-// import 'model/menu_model.dart';
+// import 'model.dart/menu_model.dart';
 // import '../../core/theme/app_colors.dart';
 // import '../../core/theme/fonts_manager.dart';
 // import '../../core/theme/textfont_styles.dart';

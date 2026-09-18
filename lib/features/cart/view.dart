@@ -3,9 +3,9 @@
 // import 'package:skeletonizer/skeletonizer.dart';
 // import 'package:flutter/material.dart';
 // import 'package:provider/provider.dart';
-// import '../../core/db/sqflite/model.dart' as db;
+// import '../../core/db/sqflite/model.dart.dart' as db;
 // import '../../core/utils/page_transitions.dart';
-// import '../home/model/menu_model.dart';
+// import '../home/model.dart/menu_model.dart';
 // import 'checkout_view.dart';
 // import 'controller.dart';
 // import '../../core/theme/app_colors.dart';
@@ -523,41 +523,94 @@ class CartView extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (ctx) => AlertDialog(
-                        title: Text(
-                          'Clear Cart',
-                          style: getBoldStyle(
-                            fontSize: MyFonts.size16,
-                            color: AppColors.text,
-                          ),
+                        backgroundColor: AppColors.card,
+                        elevation: 8,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                        title: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              width: 56,
+                              height: 56,
+                              decoration: BoxDecoration(
+                                color: AppColors.error.withOpacity(0.10),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                Icons.delete_outline_rounded,
+                                size: 28,
+                                color: AppColors.error,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              'Clear Cart?',
+                              textAlign: TextAlign.center,
+                              style: getBoldStyle(
+                                fontSize: MyFonts.size18,
+                                color: AppColors.text,
+                              ),
+                            ),
+                          ],
                         ),
                         content: Text(
                           'Are you sure you want to remove all items from your cart?',
+                          textAlign: TextAlign.center,
                           style: getRegularStyle(
-                            fontSize: MyFonts.size14,
+                            fontSize: MyFonts.size13,
                             color: AppColors.greyText,
                           ),
                         ),
+                        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                        actionsAlignment: MainAxisAlignment.spaceBetween,
                         actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            child: Text(
-                              'Cancel',
-                              style: getMediumStyle(
-                                fontSize: MyFonts.size14,
-                                color: AppColors.greyText,
+                          Expanded(
+                            child: SizedBox(
+                              height: 46,
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(color: AppColors.borderLight),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Cancel',
+                                  style: getSemiBoldStyle(
+                                    fontSize: MyFonts.size14,
+                                    color: AppColors.greyText,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.pop(ctx);
-                              cart.clearCart(); // Proper Clear Action
-                            },
-                            child: Text(
-                              'Clear',
-                              style: getBoldStyle(
-                                fontSize: MyFonts.size14,
-                                color: AppColors.error,
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: SizedBox(
+                              height: 46,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.pop(ctx);
+                                  cart.clearCart(); // Proper Clear Action
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.error,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Clear',
+                                  style: getSemiBoldStyle(
+                                    fontSize: MyFonts.size14,
+                                    color: AppColors.white,
+                                  ),
+                                ),
                               ),
                             ),
                           ),

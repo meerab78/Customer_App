@@ -246,35 +246,35 @@ class _VariationViewState extends State<VariationView> {
       deliveryPrice: widget.food.deliveryPrice,
       choiceGroups: selectedGroups,
     );
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.primary,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        margin: const EdgeInsets.all(16),
-        content: Row(
-          children: [
-            const Icon(
-              Icons.check_circle_outline_rounded,
-              color: AppColors.white,
-              size: 20,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                '${widget.food.name ?? 'Item'} added to cart',
-                style: getMediumStyle(
-                  fontSize: MyFonts.size14,
-                  color: AppColors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(
+    //     behavior: SnackBarBehavior.floating,
+    //     backgroundColor: AppColors.primary,
+    //     shape: RoundedRectangleBorder(
+    //       borderRadius: BorderRadius.circular(14),
+    //     ),
+    //     margin: const EdgeInsets.all(16),
+    //     content: Row(
+    //       children: [
+    //         const Icon(
+    //           Icons.check_circle_outline_rounded,
+    //           color: AppColors.white,
+    //           size: 20,
+    //         ),
+    //         const SizedBox(width: 10),
+    //         Expanded(
+    //           child: Text(
+    //             '${widget.food.name ?? 'Item'} added to cart',
+    //             style: getMediumStyle(
+    //               fontSize: MyFonts.size14,
+    //               color: AppColors.white,
+    //             ),
+    //           ),
+    //         ),
+    //       ],
+    //     ),
+    //   ),
+    // );
     Navigator.pop(context, variation);
   }
 

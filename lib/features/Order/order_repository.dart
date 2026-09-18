@@ -1,8 +1,8 @@
 import '../../api_service/api_constants.dart';
 import '../../api_service/api_service.dart';
 import '../../core/db/shared_pref.dart';
-import 'model/guest_user_response.dart';
-import 'model/order_history_model.dart';
+import '../cart/model/guest_user_response.dart';
+import '../cart/model/order_history_model.dart';
 
 class OrderRepository {
   final ApiService _api = ApiService();

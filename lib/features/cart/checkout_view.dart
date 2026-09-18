@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/constant/app_constants.dart';
+import '../Order/order_playload_builder.dart';
+import '../Order/order_repository.dart';
 import '../auth/address/view.dart' show AddressView;
 import '../coupon/controller.dart';
 import '../coupon/coupon_section.dart';
@@ -18,9 +20,7 @@ import '../auth/address/manager_controller.dart';
 import '../auth/address/manage_address_view.dart';
 import '../auth/address/model/address_model.dart';
 import '../../core/db/shared_pref.dart';
-import 'order_history_view.dart';
-import 'order_playload_builder.dart';
-import 'order_repository.dart';
+
 
 class CheckoutView extends StatefulWidget {
   const CheckoutView({super.key});

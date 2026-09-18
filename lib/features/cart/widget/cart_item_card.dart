@@ -1,5 +1,5 @@
 ﻿// import 'package:flutter/material.dart';
-// import '../../../core/db/sqflite/model.dart';
+// import '../../../core/db/sqflite/model.dart.dart';
 // import '../../../core/theme/app_colors.dart';
 // import '../../../core/theme/fonts_manager.dart';
 // import '../../../core/theme/textfont_styles.dart';

@@ -1,11 +1,13 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
 import 'package:provider/provider.dart';
 
+import '../cart/model/order_history_model.dart';
+import '../track_order/view.dart';
 import 'order_history_controller.dart' show OrderController;
 import 'order_repository.dart';
-import 'model/order_history_model.dart';
 import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/fonts_manager.dart';
@@ -114,7 +116,7 @@ class OrderDetailsView extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _statusCard(currentOrder, isDelivered),
+                  _statusCard(context ,currentOrder, isDelivered),
                   const SizedBox(height: 14),
                   _orderInfoCard(currentOrder),
                   const SizedBox(height: 14),
@@ -131,7 +133,7 @@ class OrderDetailsView extends StatelessWidget {
   }
 
   // ---------------- 1. STATUS CARD ----------------
-  Widget _statusCard(OrderHistory order, bool isDelivered) {
+  Widget _statusCard(BuildContext context,OrderHistory order, bool isDelivered) {
     Color color = _statusColor(order.orderStatus);
     IconData icon = _statusIcon(order.orderStatus);
 
@@ -195,6 +197,39 @@ class OrderDetailsView extends StatelessWidget {
             Container(height: 1, color: AppColors.borderLight),
             const SizedBox(height: 22),
             _progressTracker(order),
+
+            if (order.orderStatus.toLowerCase() == "out for delivery" ||
+                order.orderStatus.toLowerCase() == "dispatched") ...[
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                height: 48,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    print("DEBUG order.orderId = ${order.orderId}");
+                    print("DEBUG order.id = ${order.id}");
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => OrderTrackingScreen(
+                          orderId: order.orderId ?? '',
+                          address: order.deliveryAddress ?? '',
+                          orderStatus: order.orderStatus,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.delivery_dining_rounded),
+                  label: const Text('Track Your Order'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                  ),
+                ),
+              ),
+            ],
           ],
         ],
       ),

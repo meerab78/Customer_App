@@ -1,6 +1,7 @@
 ﻿
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -20,6 +21,26 @@ class HomeHeader extends StatelessWidget {
       ),
     );
   }
+  Future<void> _launchPhoneCall(BuildContext context, String? phoneNumber) async {
+    if (phoneNumber == null || phoneNumber.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Phone number not available')),
+      );
+      return;
+    }
+
+    final telUrl = Uri(scheme: 'tel', path: phoneNumber);
+
+    try {
+      await launchUrl(telUrl);
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Something went wrong')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +53,7 @@ class HomeHeader extends StatelessWidget {
       child: Container(
         height: 70,
         color: AppColors.background,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 7),
 
         child: Stack(
           children: [
@@ -100,6 +121,29 @@ class HomeHeader extends StatelessWidget {
                         ],
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(30),
+                onTap: () {
+                  _launchPhoneCall(context, provider.menuModel?.data?.phoneNumber);
+                },
+                child: Container(
+                  width: 42,
+                  height: 42,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.08),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.call_rounded,
+                    color: AppColors.primary,
+                    size: 30,
                   ),
                 ),
               ),

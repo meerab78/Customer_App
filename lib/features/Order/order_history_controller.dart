@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
-
 import '../../core/db/shared_pref.dart';
+import '../cart/model/order_history_model.dart';
 import 'order_repository.dart';
-import 'model/order_history_model.dart';
 
 class OrderController extends ChangeNotifier {
   final OrderRepository _repo = OrderRepository();

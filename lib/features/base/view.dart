@@ -1,7 +1,7 @@
 ﻿
 import '../../core/db/shared_pref.dart';
 import '../../core/theme/app_theme.dart' show ThemeService;
-import '../cart/order_history_view.dart';
+import '../Order/order_history_view.dart';
 import '../search/view.dart';
 import 'package:flutter/material.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
@@ -153,21 +153,101 @@ class _BaseViewState
               final shouldExit = await showDialog<bool>(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Exit App'),
-                  content: const Text('Are you sure you want to exit?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: const Text('Cancel'),
+                  backgroundColor: AppColors.card,
+                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                  title: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.10),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.exit_to_app_rounded,
+                          size: 26,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Exit App?',
+                        textAlign: TextAlign.center,
+                        style: getBoldStyle(
+                          fontSize: MyFonts.size18,
+                          color: AppColors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                  content: Text(
+                    'Are you sure you want to exit?',
+                    textAlign: TextAlign.center,
+                    style: getRegularStyle(
+                      fontSize: MyFonts.size13,
+                      color: AppColors.greyText,
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: const Text('Exit'),
+                  ),
+                  actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
+                  actionsAlignment: MainAxisAlignment.spaceBetween,
+                  actions: [
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(color: AppColors.borderLight),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: getSemiBoldStyle(
+                              fontSize: MyFonts.size14,
+                              color: AppColors.greyText,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 46,
+                        child: ElevatedButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          child: Text(
+                            'Exit',
+                            style: getSemiBoldStyle(
+                              fontSize: MyFonts.size14,
+                              color: AppColors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               );
 
+              if (shouldExit == true) {
+                exit(0);
+              }
               if (shouldExit == true) {
                 exit(0);
               }

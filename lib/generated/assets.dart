@@ -16,7 +16,17 @@ class Assets {
 class $AssetsImagesGen {
   const $AssetsImagesGen();
 
+  final AssetGenImage destination = const AssetGenImage(
+    'assets/images/destination.png',
+  );
   final AssetGenImage logo = const AssetGenImage('assets/images/logo.png');
+  final AssetGenImage riderLeft = const AssetGenImage(
+    'assets/images/rider_left.png',
+  );
+  final AssetGenImage riderRight = const AssetGenImage(
+    'assets/images/rider_right.png',
+  );
+  final AssetGenImage store = const AssetGenImage('assets/images/store.png');
 }
 
 class $AssetsLottieGen {
