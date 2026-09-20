@@ -2,6 +2,7 @@
 import 'package:customer_app/features/profile/widget/stat_card.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/constant/app_constants.dart';
+import '../../core/shared/widgets/confirmation_dialog.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/page_transitions.dart';
 import '../auth/address/manage_address_view.dart';
@@ -108,208 +109,31 @@ class _ProfileScreenState extends State<ProfileView> {
           (route) => false,
     );
   }
-
   Future<void> _confirmLogout() async {
-    final confirm = await showDialog<bool>(
+    final confirm = await ConfirmationDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.card,
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.10),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.logout_rounded,
-                size: 26,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Logout?',
-              textAlign: TextAlign.center,
-              style: getBoldStyle(
-                fontSize: MyFonts.size18,
-                color: AppColors.text,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to logout?',
-          textAlign: TextAlign.center,
-          style: getRegularStyle(
-            fontSize: MyFonts.size13,
-            color: AppColors.greyText,
-          ),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: AppColors.borderLight),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: Text(
-                      'Cancel',
-                      style: getSemiBoldStyle(
-                        fontSize: MyFonts.size14,
-                        color: AppColors.greyText,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 46,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: Text(
-                      'Logout',
-                      style: getSemiBoldStyle(
-                        fontSize: MyFonts.size14,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+      icon: Icons.logout_rounded,
+      title: 'Logout?',
+      message: 'Are you sure you want to logout?',
+      confirmText: 'Logout',
     );
+
     if (confirm == true) {
       await _performLogout();
     }
   }
 
   Future<void> _deleteAccount() async {
-    final confirm = await showDialog<bool>(
+    final confirm = await ConfirmationDialog.show(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppColors.card,
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
-        ),
-        contentPadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: AppColors.error.withOpacity(0.10),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.delete_outline_rounded,
-                size: 27,
-                color: AppColors.error,
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Delete Account?',
-              textAlign: TextAlign.center,
-              style: getBoldStyle(
-                fontSize: MyFonts.size18,
-                color: AppColors.text,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Are you sure you want to delete your account?',
-          textAlign: TextAlign.center,
-          style: getRegularStyle(
-            fontSize: MyFonts.size13,
-            color: AppColors.greyText,
-          ),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(20, 8, 20, 18),
-        actionsAlignment: MainAxisAlignment.spaceBetween,
-        actions: [
-          Expanded(
-            child: SizedBox(
-              height: 46,
-              child: OutlinedButton(
-                onPressed: () => Navigator.pop(context, false),
-                style: OutlinedButton.styleFrom(
-                  side: BorderSide(color: AppColors.borderLight),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: Text(
-                  'Cancel',
-                  style: getSemiBoldStyle(
-                    fontSize: MyFonts.size14,
-                    color: AppColors.greyText,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: SizedBox(
-              height: 46,
-              child: ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-                child: Text(
-                  'Delete',
-                  style: getSemiBoldStyle(
-                    fontSize: MyFonts.size14,
-                    color: AppColors.white,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
+      icon: Icons.delete_outline_rounded,
+      title: 'Delete Account?',
+      message: 'Are you sure you want to delete your account?',
+      confirmText: 'Delete',
+      iconColor: AppColors.error,
+      confirmColor: AppColors.error,
     );
     if (confirm != true) return;
-
     final userId = await _prefs.getUserId();
 
     if (userId == null) {

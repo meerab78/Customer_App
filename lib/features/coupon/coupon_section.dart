@@ -230,7 +230,7 @@ class _CouponSectionState extends State<CouponSection> {
 
     // Height compact kar di 80px par
     return SizedBox(
-      height: 80,
+      height: 90,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
@@ -244,9 +244,20 @@ class _CouponSectionState extends State<CouponSection> {
       ),
     );
   }
-
-  // ---- Compact Ticket-Style Voucher Card ----
   Widget _voucherCard(CouponController coupon, Coupon c, bool isApplied) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final Color accent = isDark
+        ? Color.lerp(AppColors.primary, Colors.white, 0.45)!
+        : AppColors.primary;
+
+    final Color cardBg = Color.alphaBlend(
+      AppColors.primary.withOpacity(
+        isApplied ? (isDark ? 0.32 : 0.20) : (isDark ? 0.14 : 0.08),
+      ),
+      AppColors.card,
+    );
+
     final discountText = c.isPercentage
         ? '${c.discountValue.toStringAsFixed(0)}%'
         : 'Rs ${c.discountValue.toStringAsFixed(0)}';
@@ -255,7 +266,8 @@ class _CouponSectionState extends State<CouponSection> {
     if (c.validTill != null) {
       try {
         final dt = DateTime.parse(c.validTill!);
-        validDate = 'Valid until ${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
+        validDate =
+        'Valid until ${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
       } catch (_) {
         validDate = 'Valid until ${c.validTill}';
       }
@@ -268,108 +280,134 @@ class _CouponSectionState extends State<CouponSection> {
       child: ClipPath(
         clipper: TicketClipper(),
         child: Container(
-          width: 230, // Reduced width
-          color: isApplied ? AppColors.primary : AppColors.primary, // Clean solid/themed background
-          child: Stack(
+          width: 230,
+          color: cardBg,
+          child: Row(
             children: [
-              Row(
-                children: [
-                  // LEFT SIDE: Discount Rate
-                  SizedBox(
-                    width: 75,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          discountText,
-                          style: getExtraBoldStyle(
-                            fontSize: MyFonts.size15,
-                            color: AppColors.white,
-                          ),
-                        ),
-                        Text(
-                          'OFF',
-                          style: getBoldStyle(
-                            fontSize: MyFonts.size11,
-                            color: AppColors.white.withOpacity(0.9),
-                          ),
-                        ),
-                      ],
+              // LEFT SIDE: Discount Rate
+              SizedBox(
+                width: 75,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      discountText,
+                      style: getExtraBoldStyle(
+                        fontSize: MyFonts.size15,
+                        color: accent,
+                      ),
                     ),
-                  ),
-
-                  // DASHED VERTICAL DIVIDER
-                  CustomPaint(
-                    size: const Size(1, double.infinity),
-                    painter: DashedLinePainter(
-                      color: AppColors.white.withOpacity(0.4),
+                    Text(
+                      'OFF',
+                      style: getBoldStyle(
+                        fontSize: MyFonts.size11,
+                        color: accent.withOpacity(0.8),
+                      ),
                     ),
-                  ),
+                  ],
+                ),
+              ),
 
-                  // RIGHT SIDE: Voucher Info + Button
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
+              // DASHED VERTICAL DIVIDER
+              CustomPaint(
+                size: const Size(1, double.infinity),
+                painter: DashedLinePainter(color: accent.withOpacity(0.45)),
+              ),
+
+              // RIGHT SIDE: Voucher Info + Badge
+              Expanded(
+                child: Padding(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  c.discountName ?? c.couponCode,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: getBoldStyle(
-                                    fontSize: MyFonts.size12,
-                                    color: AppColors.white,
-                                  ),
-                                ),
+                          Expanded(
+                            child: Text(
+                              c.discountName ?? c.couponCode,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: getBoldStyle(
+                                fontSize: MyFonts.size12,
+                                color: AppColors.text,
                               ),
-                              const SizedBox(width: 4),
-                              // Small Compact Apply Badge
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: isApplied ? AppColors.white : AppColors.white.withOpacity(0.25),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          // Apply / Applied badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isApplied
+                                  ? AppColors.primary
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isApplied
+                                    ? AppColors.primary
+                                    : accent.withOpacity(0.6),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isApplied) ...[
+                                  const Icon(Icons.check_rounded,
+                                      size: 10, color: Colors.white),
+                                  const SizedBox(width: 2),
+                                ],
+                                Text(
                                   isApplied ? 'APPLIED' : 'APPLY',
                                   style: getBoldStyle(
                                     fontSize: MyFonts.size9,
-                                    color: isApplied ? AppColors.primary : AppColors.white,
+                                    color: isApplied ? Colors.white : accent,
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                          if (c.minOrderAmount > 0) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              'Min. spend Rs. ${c.minOrderAmount.toStringAsFixed(0)}',
-                              style: getRegularStyle(
-                                fontSize: MyFonts.size9,
-                                color: AppColors.white.withOpacity(0.85),
-                              ),
-                            ),
-                          ],
-                          if (validDate.isNotEmpty) ...[
-                            const SizedBox(height: 2),
-                            Text(
-                              validDate,
-                              style: getRegularStyle(
-                                fontSize: MyFonts.size8,
-                                color: AppColors.white.withOpacity(0.75),
-                              ),
-                            ),
-                          ],
                         ],
                       ),
-                    ),
+
+                      // COUPON CODE (manual entry ke liye)
+                      const SizedBox(height: 3),
+                      Text(
+                        'Code: ${c.couponCode}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: getBoldStyle(
+                          fontSize: MyFonts.size10,
+                          color: accent,
+                        ).copyWith(letterSpacing: 0.6),
+                      ),
+
+                      if (c.minOrderAmount > 0) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          'Min. spend Rs. ${c.minOrderAmount.toStringAsFixed(0)}',
+                          style: getRegularStyle(
+                            fontSize: MyFonts.size9,
+                            color: AppColors.greyText,
+                          ),
+                        ),
+                      ],
+                      if (validDate.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          validDate,
+                          style: getRegularStyle(
+                            fontSize: MyFonts.size8,
+                            color: AppColors.greyText.withOpacity(0.85),
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
               ),
             ],
           ),
@@ -377,8 +415,6 @@ class _CouponSectionState extends State<CouponSection> {
       ),
     );
   }
-
-  // ---- MODE B: TYPE CODE ----
   Widget _codeInput(CouponController coupon) {
     final hasApplied = coupon.hasApplied;
 

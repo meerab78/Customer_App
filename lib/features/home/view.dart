@@ -72,10 +72,6 @@ class _HomeScreenState extends State<HomeView> {
     });
   }
 
-  // ===== ADDED: ek hi unified tareeqa - 0, 1, 2 ya kitne bhi items ho,
-  // sab pe same tareeqe se kaam karta hai. Listener raw pointer events
-  // dekhta hai (ListView ke scroll se compete nahi karta), aur end pe
-  // ye check karta hai ke list apni start/end position pe thi ya nahi.
   void _onItemsPointerDown(PointerDownEvent e) {
     _dragDx = 0;
   }

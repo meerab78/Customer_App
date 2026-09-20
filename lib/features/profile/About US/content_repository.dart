@@ -7,7 +7,7 @@ class ContentRepository {
   Future<RestaurantContentModel> getRestaurantContent() async {
     final url =
         "${ApiConstants.baseUrlV2}${ApiConstants.restaurantContent}"
-        "?restaurant_id=${ApiConstants.restaurantId}";
+        "?restaurant_id=${ApiConstants.aboutUsRestaurantId}";
 
     final response = await _apiService.getRequest(url);
     return RestaurantContentModel.fromJson(response);
