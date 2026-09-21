@@ -10,12 +10,14 @@ class FoodDetailContent extends StatelessWidget {
   final int quantity;
   final double total;
   final ValueChanged<int> onQuantityChanged;
+  final double unitPrice;
   final VoidCallback onAddToCart;
   final bool isAddEnabled;
 
   const FoodDetailContent({
     super.key,
     required this.food,
+    required this.unitPrice,
     required this.quantity,
     required this.total,
     required this.onQuantityChanged,
@@ -62,7 +64,7 @@ class FoodDetailContent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'Rs ${food.price ?? '0'}',
+      'Rs ${unitPrice.toStringAsFixed(0)}',
                 style: getExtraBoldStyle(
                   fontSize: MyFonts.size15,
                   color: AppColors.primary,
@@ -122,23 +124,11 @@ class FoodImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 165,
-      height: 165,
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.softShadow07,
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(19),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: SizedBox(
+        width: double.infinity,
+        height: 220,
         child: hasImage
             ? Image.network(
           imageUrl,
@@ -159,7 +149,7 @@ class FoodPlaceholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: AppColors.grey100,
+      color: AppColors.containerColor4,
       child: Icon(
         Icons.fastfood_rounded,
         size: 55,

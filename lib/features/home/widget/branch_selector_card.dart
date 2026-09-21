@@ -32,16 +32,16 @@ class BranchSelectorCard extends StatelessWidget {
           vertical: 12,
         ),
         decoration: BoxDecoration(
-          color: AppColors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppColors.primary.withOpacity(.15),
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.softShadow04,
+              color: AppColors.shadow,
               blurRadius: 8,
-              offset: const Offset(0,3),
+              offset: const Offset(0, 3),
             ),
           ],
         ),

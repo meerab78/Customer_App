@@ -1,13 +1,23 @@
 import 'dart:io';
-
+import 'package:customer_app/features/profile/profile_entry_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
+import 'core/theme/app_theme.dart';
+import 'features/Order/order_history_controller.dart';
 import 'features/auth/address/controller.dart';
+import 'features/auth/address/manager_controller.dart';
+import 'features/auth/address/view.dart';
 import 'features/auth/controller.dart';
 import 'features/auth/splash/view.dart';
+import 'core/db/sqflite/controller.dart';
+import 'features/base/controller.dart';
 import 'features/cart/controller.dart';
+
+import 'features/coupon/controller.dart';
 import 'features/home/controller.dart';
+import 'features/profile/Loyalty_transactions/controller.dart';
+import 'features/profile/Wallet/controller.dart';
+import 'features/profile/view.dart';
 
 class MyHttpOverrides extends HttpOverrides {
   @override
@@ -17,14 +27,17 @@ class MyHttpOverrides extends HttpOverrides {
           (X509Certificate cert, String host, int port) => true;
   }
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   HttpOverrides.global = MyHttpOverrides();
+  await ThemeService.instance.loadSavedTheme();
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -39,14 +52,67 @@ class MyApp extends StatelessWidget {
           create: (_) => AuthController(),
         ),
         ChangeNotifierProvider(
-          create: (_) => CartController()..loadCart(),
+          create: (_) => DbController(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => CartController(
+            dbController: context.read<DbController>(),
+          )..loadCart(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AddressManagerController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => CouponController(),
+        ),
+        ChangeNotifierProvider(
+
+          create: (_) => LoyaltyController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => WalletController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => BaseTabController(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => OrderController(),
         ),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Customer App',
-        theme: ThemeData(),
-        home: const SplashView(),
+      child: ListenableBuilder(
+        listenable: ThemeService.instance,
+        builder: (context, _) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'Customer App',
+            themeMode: ThemeService.instance.themeMode,
+            theme: ThemeData(
+              brightness: Brightness.light,
+              scaffoldBackgroundColor: Colors.white,
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.white,
+                elevation: 0,
+              ),
+            ),
+            darkTheme: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF121212),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Color(0xFF121212),
+                elevation: 0,
+              ),
+            ),
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: TextScaler.noScaling,
+                ),
+                child: child!,
+              );
+            },
+            home: const SplashView(),
+          );
+        },
       ),
     );
   }

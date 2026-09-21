@@ -69,22 +69,65 @@ class _ForgotPasswordScreenState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Forgot Password'),
+        backgroundColor: AppColors.background,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        iconTheme: IconThemeData(color: AppColors.text),
+        title: Text(
+          'Forgot Password',
+          style: getBoldStyle(
+            fontSize: MyFonts.size18,
+            color: AppColors.text,
+          ),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.fromLTRB(20, 10, 20, 30),
           child: Column(
             children: [
-              const SizedBox(height: 35),
+              const SizedBox(height: 25),
 
-              Icon(
-                Icons.lock_reset_rounded,
-                size: 75,
-                color: AppColors.primary,
+              // Icon badge with soft gradient + glow
+              Container(
+                height: 110,
+                width: 110,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary.withOpacity(0.16),
+                      AppColors.primary.withOpacity(0.04),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+                child: Center(
+                  child: Container(
+                    height: 78,
+                    width: 78,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: AppColors.primary,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primary.withOpacity(0.35),
+                          blurRadius: 18,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.lock_reset_rounded,
+                      size: 38,
+                      color: AppColors.white,
+                    ),
+                  ),
+                ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 26),
 
               Text(
                 'Forgot Password?',
@@ -96,34 +139,61 @@ class _ForgotPasswordScreenState
 
               const SizedBox(height: 10),
 
-              Text(
-                'Enter your email and we will send you an OTP',
-                textAlign: TextAlign.center,
-                style: getRegularStyle(
-                  color: AppColors.greyText,
-                  fontSize: null,
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'Enter your email and we will send you an OTP',
+                  textAlign: TextAlign.center,
+                  style: getRegularStyle(
+                    color: AppColors.greyText,
+                    fontSize: MyFonts.size14,
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 30),
+              const SizedBox(height: 32),
 
-              CustomTextField(
-                controller: _emailController,
-                hintText: 'Enter your email',
-                prefixIcon: Icons.email_outlined,
-                keyboardType: TextInputType.emailAddress,
-              ),
+              // Form card
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18),
+                decoration: BoxDecoration(
+                  color: AppColors.card,
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(
+                    color: AppColors.borderLight,
+                    width: 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.shadow,
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    CustomTextField(
+                      controller: _emailController,
+                      hintText: 'Enter your email',
+                      prefixIcon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ),
 
-              const SizedBox(height: 20),
+                    const SizedBox(height: 20),
 
-              Consumer<AuthController>(
-                builder: (context, provider, child) {
-                  return CustomButton(
-                    text: 'Send OTP',
-                    isLoading: provider.isLoading,
-                    onPressed: _sendOtp,
-                  );
-                },
+                    Consumer<AuthController>(
+                      builder: (context, provider, child) {
+                        return CustomButton(
+                          text: 'Send OTP',
+                          isLoading: provider.isLoading,
+                          onPressed: _sendOtp,
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -132,8 +202,3 @@ class _ForgotPasswordScreenState
     );
   }
 }
-
-
-
-
-

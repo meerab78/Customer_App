@@ -129,12 +129,12 @@ class _VariationTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? AppColors.primary.withOpacity(.08)
-              : AppColors.white,
+              : AppColors.card,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: selected
                 ? AppColors.primary
-                : AppColors.grey200,
+                : AppColors.borderLight,
             width: selected ? 1.5 : 1,
           ),
         ),
@@ -168,7 +168,7 @@ class _VariationTile extends StatelessWidget {
                 border: Border.all(
                   color: selected
                       ? AppColors.primary
-                      : AppColors.grey400,
+                      : AppColors.greyText,
                   width: 2,
                 ),
               ),

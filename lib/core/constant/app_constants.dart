@@ -5,14 +5,15 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 
+import '../../features/home/model/menu_model.dart';
+
 
 class AppConstants {
   static String googleMapBaseUrl =
       'https://maps.googleapis.com/maps/api/place/autocomplete/json';
   static String kPlacesApiKey = 'AIzaSyBUbCbmkNfSvQ8nflO64lgaIowblekfTrc';
   // static String kPlacesApiKey = 'AIzaSyBqgE_Gu8x26dFBZBcZvprKOef-X_aiAX4';
-
-
+static const bool enableLoyaltySystem = true;
   static ThemeMode? currentTheme;
 
   static String branchId = '';
@@ -32,6 +33,7 @@ class AppConstants {
   static String bearerToken = '';
   // static UserResponse? userResponse;
 
+  static ValueNotifier<MenuModel>? menuResponse ;
 
   // static CategoriesResponse? categoriesResponse;
   // static bData? currentBranch;

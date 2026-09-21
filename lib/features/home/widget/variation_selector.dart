@@ -1,7 +1,11 @@
 
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/fonts_manager.dart';
+import '../../../core/theme/textfont_styles.dart';
 import '../model/menu_model.dart';
+import 'choice_group_label.dart';
 
 class VariationSelector extends StatelessWidget {
   final List<MenuVariation> variations;
@@ -34,11 +38,11 @@ class VariationSelector extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (variations.isNotEmpty) ...[
-          const Text(
+          Text(
             'Select Option',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
+            style: getBoldStyle(
+              fontSize: MyFonts.size17,
+              color: AppColors.text,
             ),
           ),
 
@@ -46,8 +50,7 @@ class VariationSelector extends StatelessWidget {
 
           ...variations.map(
                 (variation) {
-              final isSelected =
-                  selectedVariation?.id == variation.id;
+              final isSelected = selectedVariation?.id == variation.id;
 
               return _VariationTile(
                 variation: variation,
@@ -66,8 +69,7 @@ class VariationSelector extends StatelessWidget {
               (group) {
             return _ChoiceGroupWidget(
               group: group,
-              selectedChoices:
-              selectedChoices[group.id] ?? [],
+              selectedChoices: selectedChoices[group.id] ?? [],
               onChoiceSelected: (choice) {
                 onChoiceSelected(
                   group,
@@ -96,6 +98,8 @@ class _VariationTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -106,11 +110,16 @@ class _VariationTile extends StatelessWidget {
           vertical: 11,
         ),
         decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.primary.withOpacity(0.12)
+              : (isDark ? AppColors.card : AppColors.card),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? Theme.of(context).primaryColor
-                : Colors.grey.shade300,
+                ? AppColors.primary
+                : (isDark
+                ? Colors.white.withOpacity(0.12)
+                : (AppColors.borderLight ?? Colors.grey.shade300)),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -121,8 +130,8 @@ class _VariationTile extends StatelessWidget {
                   ? Icons.radio_button_checked
                   : Icons.radio_button_off,
               color: isSelected
-                  ? Theme.of(context).primaryColor
-                  : Colors.grey,
+                  ? AppColors.primary
+                  : (isDark ? Colors.grey.shade400 : AppColors.grey),
             ),
 
             const SizedBox(width: 10),
@@ -130,19 +139,18 @@ class _VariationTile extends StatelessWidget {
             Expanded(
               child: Text(
                 variation.name ?? 'Option',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                style: getSemiBoldStyle(
+                  fontSize: MyFonts.size14,
+                  color: AppColors.text,
                 ),
               ),
             ),
 
             Text(
               'Rs ${variation.price ?? '0'}',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).primaryColor,
+              style: getBoldStyle(
+                fontSize: MyFonts.size14,
+                color: AppColors.primary,
               ),
             ),
           ],
@@ -153,7 +161,6 @@ class _VariationTile extends StatelessWidget {
 }
 
 // CHOICE GROUP
-
 class _ChoiceGroupWidget extends StatelessWidget {
   final ChoiceGroup group;
   final List<MenuVariation> selectedChoices;
@@ -168,31 +175,29 @@ class _ChoiceGroupWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final minChoices = group.minChoices ?? 0;
     final maxChoices = group.maxChoices ?? 0;
+
+    // Title text cleaning (removing stray trailing characters like n1)
+    final cleanTitle = (group.name ?? 'Select Choice')
+        .replaceAll(RegExp(r'[\r\n]+'), ' ')
+        .replaceAll(RegExp(r'n\d+'), '')
+        .trim();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          group.name ?? 'Select Choice',
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
+          cleanTitle,
+          style: getBoldStyle(
+            fontSize: MyFonts.size17,
+            color: AppColors.text,
           ),
         ),
 
         const SizedBox(height: 3),
-
-        Text(
-          maxChoices > 0
-              ? 'Select $minChoices-$maxChoices'
-              : 'Select at least $minChoices',
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
-        ),
+        ChoiceGroupLabel(group: group),
 
         const SizedBox(height: 8),
 
@@ -215,11 +220,17 @@ class _ChoiceGroupWidget extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? Theme.of(context)
-                      .primaryColor
-                      .withOpacity(0.08)
-                      : Colors.grey.shade100,
+                      ? AppColors.primary.withOpacity(0.12)
+                      : (isDark ? AppColors.card : AppColors.card),
                   borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected
+                        ? AppColors.primary
+                        : (isDark
+                        ? Colors.white.withOpacity(0.12)
+                        : Colors.grey.shade300),
+                    width: isSelected ? 1.5 : 1,
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -228,8 +239,8 @@ class _ChoiceGroupWidget extends StatelessWidget {
                           ? Icons.check_box
                           : Icons.check_box_outline_blank,
                       color: isSelected
-                          ? Theme.of(context).primaryColor
-                          : Colors.grey,
+                          ? AppColors.primary
+                          : (isDark ? Colors.grey.shade400 : AppColors.grey),
                     ),
 
                     const SizedBox(width: 10),
@@ -237,18 +248,18 @@ class _ChoiceGroupWidget extends StatelessWidget {
                     Expanded(
                       child: Text(
                         choice.name ?? 'Choice',
-                        style: const TextStyle(
-                          fontSize: 14,
+                        style: getRegularStyle(
+                          fontSize: MyFonts.size14,
+                          color: AppColors.text,
                         ),
                       ),
                     ),
 
                     Text(
                       '+ Rs ${choice.price ?? '0'}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).primaryColor,
+                      style: getSemiBoldStyle(
+                        fontSize: MyFonts.size13,
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -263,4 +274,3 @@ class _ChoiceGroupWidget extends StatelessWidget {
     );
   }
 }
-

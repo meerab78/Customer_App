@@ -46,14 +46,18 @@ class _OtpScreenState extends State<OtpView> {
 
     if (!mounted) return;
 
+    if (success) {
+      provider.resetState();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account verified successfully')),
+      );
+      Navigator.pop(context); // OTP screen
+      Navigator.pop(context); // SignUp screen -> Login par wapas
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          success
-              ? 'Account verified successfully'
-              : provider.errorMessage ?? 'Invalid OTP',
-        ),
-      ),
+      SnackBar(content: Text(provider.errorMessage ?? 'Invalid OTP')),
     );
   }
 

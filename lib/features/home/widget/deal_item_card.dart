@@ -1,19 +1,22 @@
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
 import '../model/menu_model.dart';
-import 'variation_selector.dart';
+import 'choice_group_label.dart';
 
 class DealItemCard extends StatefulWidget {
   final Menu item;
   final ValueChanged<Menu>? onItemUpdated;
+  final ValueChanged<bool>? onCompletionChanged;
 
   const DealItemCard({
     super.key,
     required this.item,
     this.onItemUpdated,
+    this.onCompletionChanged,
   });
 
   @override
@@ -21,431 +24,330 @@ class DealItemCard extends StatefulWidget {
 }
 
 class _DealItemCardState extends State<DealItemCard> {
-  bool isExpanded = false;
   MenuVariation? selectedVariation;
-  double? _originalBasePrice;
   final Map<int, List<MenuVariation>> selectedChoices = {};
+  late Menu _originalItem;
+
   @override
   void initState() {
     super.initState();
+    _originalItem = widget.item;
+    _initializeExistingSelection();
 
-    _originalBasePrice =
-        double.tryParse(
-          widget.item.price ?? '0',
-        ) ??
-            0;
-  }
-  @override
-  void didUpdateWidget(
-      covariant DealItemCard oldWidget,
-      ) {
-    super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.item.id != widget.item.id) {
-      _originalBasePrice =
-          double.tryParse(
-            widget.item.price ?? '0',
-          ) ??
-              0;
-
-      selectedVariation = null;
-      selectedChoices.clear();
-    }
-  }
-  double get basePrice {
-    return _originalBasePrice ?? 0;
-  }
-  double get finalPrice {
-    double total = basePrice;
-
-    // Main variation ki EXTRA price
-    if (selectedVariation != null) {
-      total +=
-          double.tryParse(
-            selectedVariation!.price ?? '0',
-          ) ??
-              0;
-    }
-
-    // Selected choices ki EXTRA prices
-    for (final choices in selectedChoices.values) {
-      for (final choice in choices) {
-        total +=
-            double.tryParse(
-              choice.price ?? '0',
-            ) ??
-                0;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (hasCustomization) {
+        widget.onItemUpdated?.call(_buildUpdatedItem());
       }
-    }
-
-    return total;
-  }
-// CUSTOMIZATION AVAILABLE?
-  bool get hasCustomization {
-    return widget.item.menuVariations.isNotEmpty ||
-        widget.item.choiceGroup.isNotEmpty;
-  }
-// CHOICE GROUPS
-  List<ChoiceGroup> get choiceGroups {
-    final groups = <ChoiceGroup>[];
-    groups.addAll(widget.item.choiceGroup);
-    if (selectedVariation != null) {
-      groups.addAll(
-        selectedVariation!.choiceGroups,
-      );
-    }
-    return groups;
-  }
-// VALIDATION
-  bool get isValid {
-    // CHOICE GROUP VALIDATION
-
-    for (final group in choiceGroups) {
-      final groupId = group.id;
-      if (groupId == null) {
-        continue;
-      }
-      final selectedCount =
-          selectedChoices[groupId]?.length ?? 0;
-      final minChoices =
-          group.minChoices ?? 0;
-      final maxChoices =
-          group.maxChoices ?? 0;
-      if (minChoices == 0) {
-        if (maxChoices > 0 &&
-            selectedCount > maxChoices) {
-          return false;
-        }
-
-        continue;
-      }
-      // REQUIRED
-      if (selectedCount < minChoices) {
-        return false;
-      }
-      // MAXIMUM
-      if (maxChoices > 0 &&
-          selectedCount > maxChoices) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-// SELECT MAIN VARIATION
-
-  void _selectVariation(
-      MenuVariation variation,
-      ) {
-    setState(() {
-      selectedVariation = variation;
-
-// Variation change hone par
-// old choices clear.
-      selectedChoices.clear();
+      widget.onCompletionChanged?.call(!hasCustomization || isValid);
     });
   }
 
+  void _initializeExistingSelection() {
+    if (_originalItem.menuVariations.isNotEmpty) {
+      if (_originalItem.menuVariation != null) {
+        final existingVariation = _originalItem.menuVariation!;
+        for (final variation in _originalItem.menuVariations) {
+          if (variation.id == existingVariation.id) {
+            selectedVariation = variation;
+            break;
+          }
+        }
+      }
+      selectedVariation ??= _originalItem.menuVariations.first;
+    } else if (_originalItem.menuVariation != null) {
+      selectedVariation = _originalItem.menuVariation;
+    }
+  }
 
-// SELECT / UNSELECT CHOICE
+  bool get hasCustomization {
+    return _originalItem.menuVariations.isNotEmpty ||
+        _originalItem.choiceGroup.isNotEmpty ||
+        _originalItem.menuVariation != null;
+  }
 
-  void _toggleChoice(
-      ChoiceGroup group,
-      MenuVariation choice,
-      ) {
+  List<ChoiceGroup> get choiceGroups {
+    final groups = <ChoiceGroup>[];
+    groups.addAll(_originalItem.choiceGroup);
+
+    if (selectedVariation != null) {
+      groups.addAll(selectedVariation!.choiceGroups);
+    } else if (_originalItem.menuVariation != null) {
+      groups.addAll(_originalItem.menuVariation!.choiceGroups);
+    }
+    return groups;
+  }
+
+  bool get isValid {
+    for (final group in choiceGroups) {
+      final groupId = group.id;
+      if (groupId == null) continue;
+      final selectedCount = selectedChoices[groupId]?.length ?? 0;
+      final minChoices = group.minChoices ?? 0;
+      final maxChoices = group.maxChoices ?? 0;
+
+      if (minChoices == 0) {
+        if (maxChoices > 0 && selectedCount > maxChoices) return false;
+        continue;
+      }
+      if (selectedCount < minChoices) return false;
+      if (maxChoices > 0 && selectedCount > maxChoices) return false;
+    }
+    return true;
+  }
+
+  void _selectVariation(MenuVariation variation) {
+    setState(() {
+      selectedVariation = variation;
+      selectedChoices.clear();
+    });
+    widget.onItemUpdated?.call(_buildUpdatedItem());
+    widget.onCompletionChanged?.call(!hasCustomization || isValid);
+  }
+
+  void _toggleChoice(ChoiceGroup group, MenuVariation choice) {
     final groupId = group.id;
-
     if (groupId == null) return;
 
-    final selected = List<MenuVariation>.from(
-      selectedChoices[groupId] ?? [],
-    );
-
-    final alreadySelected = selected.any(
-          (item) => item.id == choice.id,
-    );
+    final selected = List<MenuVariation>.from(selectedChoices[groupId] ?? []);
+    final alreadySelected = selected.any((item) => item.id == choice.id);
 
     if (alreadySelected) {
-      selected.removeWhere(
-            (item) => item.id == choice.id,
-      );
+      selected.removeWhere((item) => item.id == choice.id);
     } else {
-      final maxChoices =
-          group.maxChoices ?? 0;
-
-      if (maxChoices > 0 &&
-          selected.length >= maxChoices) {
-        return;
-      }
-
+      final maxChoices = group.maxChoices ?? 0;
+      if (maxChoices > 0 && selected.length >= maxChoices) return;
       selected.add(choice);
     }
 
     setState(() {
       selectedChoices[groupId] = selected;
     });
+
+    widget.onItemUpdated?.call(_buildUpdatedItem());
+    widget.onCompletionChanged?.call(!hasCustomization || isValid);
   }
 
-// EXPAND / COLLAPSE
-
-  void _toggleExpanded() {
-    if (!hasCustomization) return;
-
-    setState(() {
-      isExpanded = !isExpanded;
-    });
-  }
-
-// BUILD UPDATED ITEM
   Menu _buildUpdatedItem() {
-    final groups = choiceGroups.map((group) {
+    final directGroups = _originalItem.choiceGroup.map((group) {
       final selected = selectedChoices[group.id] ?? [];
-
-      return group.copyWith(
-        choices: selected,
-      );
+      return group.copyWith(choices: selected);
     }).toList();
 
     MenuVariation? finalVariation;
-
     if (selectedVariation != null) {
+      final variationGroups = selectedVariation!.choiceGroups.map((group) {
+        final selected = selectedChoices[group.id] ?? [];
+        return group.copyWith(choices: selected);
+      }).toList();
+
       finalVariation = selectedVariation!.copyWith(
-        price: finalPrice.toString(),
-        takeAwayPrice: selectedVariation!.takeAwayPrice,
-        deliveryPrice: selectedVariation!.deliveryPrice,
-        choiceGroups: groups,
+        choiceGroups: variationGroups,
       );
     }
-    return widget.item.copyWith(
-      price: finalPrice.toString(),
+
+    return _originalItem.copyWith(
       menuVariation: finalVariation,
-      // IMPORTANT:
-      // Deal item ke selected direct choices bhi preserve honge
-      choiceGroup: groups,
+      choiceGroup: directGroups,
     );
   }
-// IMAGE
-  Widget _image() {
-    final url = widget.item.imageUrl ?? '';
 
-    if (url.isEmpty) {
-      return _placeholder();
+  String _getItemSubtitle() {
+    if (selectedVariation != null && selectedVariation!.name != null) {
+      return selectedVariation!.name!;
     }
-
-    return Image.network(
-      url,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) {
-        return _placeholder();
-      },
-    );
+    if (_originalItem.menuVariation != null && _originalItem.menuVariation!.name != null) {
+      return _originalItem.menuVariation!.name!;
+    }
+    if (_originalItem.description != null && _originalItem.description!.isNotEmpty) {
+      return _originalItem.description!;
+    }
+    return '';
   }
-
-  Widget _placeholder() {
-    return Container(
-      color: AppColors.grey100,
-      child: Icon(
-        Icons.fastfood_outlined,
-        color: AppColors.grey600,
-      ),
-    );
-  }
-
-// BUILD
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(
-        bottom: 12,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isExpanded
-              ? AppColors.primary
-              : AppColors.grey200,
-        ),
-      ),
-      child: Column(
-        children: [
-          // ITEM HEADER
-          InkWell(
-            onTap: _toggleExpanded,
-            borderRadius:
-            BorderRadius.circular(18),
-            child: Padding(
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                children: [
-                  ClipRRect(
-                    borderRadius:
-                    BorderRadius.circular(14),
-                    child: SizedBox(
-                      width: 75,
-                      height: 75,
-                      child: _image(),
+    final String subtitle = _getItemSubtitle();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // FIXED UI: Item Name Grey Header Box (Theme-aware)
+        Container(
+          width: double.infinity,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.containerColor4, // Light me soft grey, Dark me dark grey surface
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: AppColors.borderLight,
+              width: 1,
+            ),
+          ),
+          child: IntrinsicHeight(
+            child: Row(
+              children: [
+                // Left Maroon Accent Line
+                Container(
+                  width: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(8),
+                      bottomLeft: Radius.circular(8),
                     ),
                   ),
+                ),
+                const SizedBox(width: 10),
 
-                  const SizedBox(width: 14),
-
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                      CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.item.name ??
-                              'Item',
-                          style: getBoldStyle(
-                            fontSize: MyFonts.size16,
-                            color: AppColors.text,
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-                          'Rs ${finalPrice.toStringAsFixed(0)}',
-                          style: getBoldStyle(
-                            fontSize: MyFonts.size15,
-                            color:
-                            AppColors.primary,
-                          ),
-                        ),
-
-                        if (hasCustomization) ...[
-                          const SizedBox(height: 5),
-
-                          Text(
-                            isExpanded
-                                ? 'Close customization'
-                                : 'Tap to customize',
-                            style: getRegularStyle(
-                              fontSize: MyFonts.size12,
-                              color:
-                              AppColors.primary,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
+                // Quantity Tag
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(4),
                   ),
-
-                  if (hasCustomization)
-                    Icon(
-                      isExpanded
-                          ? Icons
-                          .keyboard_arrow_up
-                          : Icons
-                          .keyboard_arrow_down,
-                      color: AppColors.primary,
-                    ),
-
-                  const SizedBox(width: 4),
-
-                  Text(
-                    'x${widget.item.quantity ?? 1}',
+                  child: Text(
+                    '${widget.item.quantity ?? 1}x',
                     style: getBoldStyle(
-                      fontSize: MyFonts.size16,
+                      fontSize: MyFonts.size12,
                       color: AppColors.text,
                     ),
                   ),
-                ],
-              ),
-            ),
-          ),
-// EXPANDED CUSTOMIZATION
+                ),
+                const SizedBox(width: 12),
 
-          if (isExpanded && hasCustomization)
-            Padding(
-              padding:
-              const EdgeInsets.fromLTRB(
-                14,
-                0,
-                14,
-                14,
-              ),
-              child: Column(
-                children: [
-                  const Divider(),
-
-                  const SizedBox(height: 8),
-
-                  VariationSelector(
-                    variations:
-                    widget.item.menuVariations,
-                    choiceGroups:
-                    choiceGroups,
-                    selectedVariation:
-                    selectedVariation,
-                    selectedChoices:
-                    selectedChoices,
-                    onVariationSelected:
-                    _selectVariation,
-                    onChoiceSelected:
-                    _toggleChoice,
-                  ),
-
-                  const SizedBox(height: 8),
-
-// DONE BUTTON
-                  SizedBox(
-                    width: double.infinity,
-                    height: 45,
-                    child: ElevatedButton(
-                      onPressed: isValid
-                          ? () {
-                        final updatedItem =
-                        _buildUpdatedItem();
-
-                        widget.onItemUpdated
-                            ?.call(
-                          updatedItem,
-                        );
-
-                        setState(() {
-                          isExpanded =
-                          false;
-                        });
-                      }
-                          : null,
-                      style:
-                      ElevatedButton.styleFrom(
-                        backgroundColor:
-                        AppColors.primary,
-                        foregroundColor:
-                        AppColors.white,
-                        elevation: 0,
-                        shape:
-                        RoundedRectangleBorder(
-                          borderRadius:
-                          BorderRadius.circular(
-                            12,
+                // Text Name & Subtitle
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '${widget.item.name ?? 'Item'} ',
+                            style: getBoldStyle(
+                              fontSize: MyFonts.size13,
+                              color: AppColors.text,
+                            ),
                           ),
-                        ),
-                      ),
-                      child: Text(
-                        isValid
-                            ? 'Done - Rs ${finalPrice.toStringAsFixed(0)}'
-                            : 'Complete Selection',
-                        style: getBoldStyle(
-                          fontSize:
-                          MyFonts.size14,
-                          color:
-                          AppColors.white,
-                        ),
+                          if (subtitle.isNotEmpty)
+                            TextSpan(
+                              text: '($subtitle)',
+                              style: getRegularStyle(
+                                fontSize: MyFonts.size13,
+                                color: AppColors.greyText,
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-        ],
-      ),
+          ),
+        ),
+
+        // FIXED UI: Choice groups inside Deal Item Card
+        if (hasCustomization)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: choiceGroups.map((group) {
+                final groupId = group.id ?? 0;
+                final currentChoices = selectedChoices[groupId] ?? [];
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Text(
+                      group.name ?? 'Options',
+                      style: getBoldStyle(
+                        fontSize: MyFonts.size14,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    ChoiceGroupLabel(group: group),
+                    const SizedBox(height: 8),
+
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: group.choices.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, index) {
+                        final choice = group.choices[index];
+                        final isSelected = currentChoices
+                            .any((item) => item.id == choice.id);
+                        final isRadio = group.maxChoices == 1;
+
+                        return InkWell(
+                          onTap: () => _toggleChoice(group, choice),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: AppColors.card, // Pure Dark surface in dark mode
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.borderLight,
+                                width: isSelected ? 1.5 : 1.0,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isRadio
+                                      ? (isSelected
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off)
+                                      : (isSelected
+                                      ? Icons.check_box
+                                      : Icons.check_box_outline_blank),
+                                  size: 20,
+                                  color: isSelected
+                                      ? AppColors.primary
+                                      : AppColors.grey400,
+                                ),
+                                const SizedBox(width: 10),
+
+                                Expanded(
+                                  child: Text(
+                                    choice.name ?? '',
+                                    style: getBoldStyle(
+                                      fontSize: MyFonts.size13,
+                                      color: AppColors.text, // Proper white text in Dark mode
+                                    ),
+                                  ),
+                                ),
+
+                                Text(
+                                  '+ Rs ${(double.tryParse(choice.price ?? '0')?.toStringAsFixed(2) ?? '0.00')}',
+                                  style: getBoldStyle(
+                                    fontSize: MyFonts.size12,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+      ],
     );
   }
 }
-

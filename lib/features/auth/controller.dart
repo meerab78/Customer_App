@@ -37,6 +37,9 @@ class AuthController extends ChangeNotifier {
         password: password,
         name: name,
       );
+      if (response['Success'] != true) {
+        throw Exception(response['Message'] ?? 'Signup failed');
+      }
 
       _signupResponse = response;
 
@@ -99,7 +102,7 @@ class AuthController extends ChangeNotifier {
         restaurantId: data['restaurant_id'],
         restaurantName: data['restaurant_name'],
       );
-
+      await _sharedPrefService.saveIsGuest(false);
       _isLoading = false;
       notifyListeners();
 
@@ -122,11 +125,13 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authRepository.verifySignupOtp(
+      final response = await _authRepository.verifySignupOtp(
         customerId: customerId,
         otp: otp,
       );
-
+      if (response['Success'] != true) {
+        throw Exception(response['Message'] ?? 'Invalid OTP');
+      }
       _isLoading = false;
       notifyListeners();
 
@@ -149,9 +154,13 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _authRepository.resendSignupOtp(
+      final response = await _authRepository.resendSignupOtp(
         customerId: customerId,
       );
+
+      if (response['Success'] != true) {
+        throw Exception(response['Message'] ?? 'Failed to resend OTP');
+      }
 
       _isLoading = false;
       notifyListeners();
@@ -300,6 +309,13 @@ class AuthController extends ChangeNotifier {
   }
   Future<int?> getSavedRestaurantId() async {
     return await _sharedPrefService.getRestaurantId();
+  }
+
+  void resetState() {
+    _isLoading = false;
+    _errorMessage = null;
+    _signupResponse = null;
+    notifyListeners();
   }
 
 // Clear error message

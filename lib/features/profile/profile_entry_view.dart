@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/db/shared_pref.dart' show SharedPrefService;
 import '../base/view.dart';
 import '../auth/signin/view.dart';
 import 'view.dart';
@@ -17,6 +18,7 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
   bool _isCheckingLogin = true;
   bool _isLoggedIn = false;
 
+
   @override
   void initState() {
     super.initState();
@@ -27,11 +29,12 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
     final prefs = await SharedPreferences.getInstance();
 
     final token = prefs.getString('token');
+    final isGuest = await SharedPrefService().getIsGuest();
 
     if (!mounted) return;
 
     setState(() {
-      _isLoggedIn = token != null && token.isNotEmpty;
+      _isLoggedIn = (token != null && token.isNotEmpty) && !isGuest;
       _isCheckingLogin = false;
     });
   }
@@ -46,17 +49,18 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
 
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
+    final isGuest = await SharedPrefService().getIsGuest();
 
     if (!mounted) return;
 
-    if (token != null && token.isNotEmpty) {
+    if (token != null && token.isNotEmpty && !isGuest) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) =>
-          const BaseView(
-            initialIndex: 0,
-          ),
+              BaseView(
+                initialIndex: 0,
+              ),
         ),
       );
     } else {
@@ -67,7 +71,7 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
   @override
   Widget build(BuildContext context) {
     if (_isCheckingLogin) {
-      return const Scaffold(
+      return  Scaffold(
         body: Center(
           child: CircularProgressIndicator(),
         ),
@@ -75,10 +79,10 @@ class _ProfileEntryScreenState extends State<ProfileEntryView> {
     }
 
     if (_isLoggedIn) {
-      return const ProfileView();
+      return  ProfileView();
     }
 
-    return const SignInView();
+    return  SignInView();
   }
 }
 

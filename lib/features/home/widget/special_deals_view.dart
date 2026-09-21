@@ -1,3 +1,5 @@
+
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
@@ -16,11 +18,11 @@ class SpecialDealsView extends StatelessWidget {
     super.key,
     required this.deals,
   });
+
   Future<void> handleFoodTap(
       BuildContext context,
       Menu food,
       ) async {
-
     // DEAL ITEM
     if (food.isDeal == true) {
       await Navigator.push(
@@ -35,8 +37,7 @@ class SpecialDealsView extends StatelessWidget {
     }
 
     final hasCustomization =
-        food.menuVariations.isNotEmpty ||
-            food.choiceGroup.isNotEmpty;
+        food.menuVariations.isNotEmpty || food.choiceGroup.isNotEmpty;
 
     if (hasCustomization) {
       await _openVariationView(
@@ -51,6 +52,7 @@ class SpecialDealsView extends StatelessWidget {
       food,
     );
   }
+
   Future<void> _openVariationView(
       BuildContext context,
       Menu food,
@@ -64,11 +66,11 @@ class SpecialDealsView extends StatelessWidget {
       ),
     );
 
-
     if (variation == null || !context.mounted) {
       return;
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +80,13 @@ class SpecialDealsView extends StatelessWidget {
         backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: false,
+
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
 
         title: Text(
           "Special Deals",
@@ -99,15 +108,15 @@ class SpecialDealsView extends StatelessWidget {
         ),
       )
           : GridView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         itemCount: deals.length,
 
         gridDelegate:
         const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
           crossAxisSpacing: 12,
-          mainAxisSpacing: 14,
-          childAspectRatio: 0.78,
+          mainAxisSpacing: 12,
+          mainAxisExtent: 200,
         ),
 
         itemBuilder: (context, index) {

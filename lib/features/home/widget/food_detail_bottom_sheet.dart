@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/utils/order_type_price.dart' show pickOrderTypePrice;
+import '../../../core/utils/page_transitions.dart' show PageTransitions;
 import '../model/menu_model.dart';
 import '../variation_view.dart';
 import '../../cart/controller.dart';
@@ -28,15 +30,39 @@ void showFoodDetailBottomSheet(
     builder: (sheetContext) {
       return StatefulBuilder(
         builder: (sheetContext, setState) {
-          final double selectedPrice = selectedVariation != null
-              ? double.tryParse(
-            selectedVariation!.price ?? '0',
-          ) ??
-              0
-              : double.tryParse(food.price ?? '0') ?? 0;
+          final orderType = sheetContext.read<CartController>().orderType;
 
+          final double basePrice = pickOrderTypePrice(
+            orderType: orderType,
+            dinePrice: food.price,
+            takeawayPrice: food.takeAwayPrice,
+            deliveryPrice: food.deliveryPrice,
+          );
+
+          final double variationExtra = selectedVariation != null
+              ? pickOrderTypePrice(
+            orderType: orderType,
+            dinePrice: selectedVariation!.price,
+            takeawayPrice: selectedVariation!.takeAwayPrice,
+            deliveryPrice: selectedVariation!.deliveryPrice,
+          )
+              : 0;
+
+          double choicesExtra = 0;
+          if (selectedVariation != null) {
+            for (final group in selectedVariation!.choiceGroups) {
+              for (final choice in group.choices) {
+                choicesExtra += pickOrderTypePrice(
+                  orderType: orderType,
+                  dinePrice: choice.price,
+                  takeawayPrice: choice.takeAwayPrice,
+                  deliveryPrice: choice.deliveryPrice,
+                );
+              }
+            }
+          }
+          final double selectedPrice = basePrice + variationExtra + choicesExtra;
           final double total = selectedPrice * quantity;
-
           return Stack(
             children: [
               BackdropFilter(
@@ -45,7 +71,7 @@ void showFoodDetailBottomSheet(
                   sigmaY: 3,
                 ),
                 child: Container(
-                  color: AppColors.black.withOpacity(.10),
+                  color: AppColors.shadow,
                 ),
               ),
 
@@ -56,9 +82,9 @@ void showFoodDetailBottomSheet(
                     maxHeight:
                     MediaQuery.of(sheetContext).size.height * .72,
                   ),
-                  decoration: const BoxDecoration(
-                    color: AppColors.white,
-                    borderRadius: BorderRadius.vertical(
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(28),
                     ),
                   ),
@@ -71,9 +97,8 @@ void showFoodDetailBottomSheet(
                         width: 42,
                         height: 4,
                         decoration: BoxDecoration(
-                          color: AppColors.grey300,
-                          borderRadius:
-                          BorderRadius.circular(20),
+                          color: AppColors.borderLight,
+                          borderRadius: BorderRadius.circular(20),
                         ),
                       ),
 
@@ -98,12 +123,13 @@ void showFoodDetailBottomSheet(
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: AppColors.grey100,
+                                  color: AppColors.containerColor4,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.close_rounded,
                                   size: 20,
+                                  color: AppColors.iconColor,
                                 ),
                               ),
                             ),
@@ -125,7 +151,6 @@ void showFoodDetailBottomSheet(
                             food: selectedVariation != null
                                 ? food.copyWith(
                               menuVariation: selectedVariation,
-                              price: selectedVariation!.price,
                               takeAwayPrice:
                               selectedVariation!.takeAwayPrice ??
                                   food.takeAwayPrice,
@@ -135,6 +160,7 @@ void showFoodDetailBottomSheet(
                             )
                                 : food,
                             quantity: quantity,
+                            unitPrice: selectedPrice,
                             total: total,
                             isAddEnabled:
                             !hasCustomization ||
@@ -149,8 +175,6 @@ void showFoodDetailBottomSheet(
 
                               if (selectedVariation != null) {
                                 selectedFood = food.copyWith(
-                                  price: selectedVariation!.price,
-
                                   takeAwayPrice:
                                   selectedVariation!.takeAwayPrice ??
                                       food.takeAwayPrice,
@@ -166,24 +190,49 @@ void showFoodDetailBottomSheet(
                                   choiceGroup: selectedVariation!.choiceGroups,
                                 );
                               }
-
-                              debugPrint('========== BOTTOM SHEET FINAL FOOD ==========');
-                              debugPrint('NAME: ${selectedFood.name}');
-                              debugPrint('VARIATION ID: ${selectedFood.menuVariation?.id}');
-                              debugPrint('VARIATION NAME: ${selectedFood.menuVariation?.name}');
-                              debugPrint('VARIATION PRICE: ${selectedFood.menuVariation?.price}');
-                              debugPrint('CHOICES: ${selectedFood.menuVariation?.choiceGroups}');
-                              debugPrint('==============================================');
-
                               await sheetContext
                                   .read<CartController>()
                                   .addToCart(
                                 selectedFood,
                                 quantity,
                               );
-
-                              if (sheetContext.mounted) {
-                                Navigator.pop(sheetContext);
+                              if (context.mounted) {
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                              }
+                              // if (sheetContext.mounted) {
+                              //   Navigator.pop(sheetContext);
+                              // }
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    behavior: SnackBarBehavior.floating,
+                                    backgroundColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    margin: const EdgeInsets.all(16),
+                                    content: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle_outline_rounded,
+                                          color: AppColors.white,
+                                          size: 20,
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(
+                                          child: Text(
+                                            '${food.name ?? 'Item'} added to cart',
+                                            style: TextStyle(
+                                              color: AppColors.white,
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                );
                               }
                             },
                           ),
@@ -203,15 +252,10 @@ void showFoodDetailBottomSheet(
                             height: 46,
                             child: OutlinedButton(
                               onPressed: () async {
-                                final variation =
-                                await Navigator.push<
-                                    MenuVariation>(
+                                final variation = await Navigator.push<MenuVariation>(
                                   sheetContext,
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        VariationView(
-                                          food: food,
-                                        ),
+                                  PageTransitions.slideFromRight<MenuVariation>(
+                                    VariationView(food: food),
                                   ),
                                 );
                                 if (variation != null &&

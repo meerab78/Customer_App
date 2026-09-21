@@ -67,6 +67,8 @@ class _ResetPasswordScreenState
     if (!mounted) return;
 
     if (success) {
+      provider.resetState();
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Password changed successfully'),

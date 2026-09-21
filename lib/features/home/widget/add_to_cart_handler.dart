@@ -1,7 +1,7 @@
 
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/app_colors.dart';
 import '../deal_detail_view.dart';
 import '../model/menu_model.dart';
 import '../variation_view.dart';
@@ -22,7 +22,9 @@ Future<void> handleFoodTap(
         ),
       ),
     );
-
+    if (context.mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
     return;
   }
 // NORMAL ITEM
@@ -77,7 +79,6 @@ Future<void> handleAddToCart(
 
     return;
   }
-
   await context.read<CartController>().addToCart(
     food,
     1,
@@ -87,12 +88,38 @@ Future<void> handleAddToCart(
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(
-        '${food.name ?? 'Item'} added to cart',
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.primary,
+      duration: const Duration(seconds: 2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
       ),
-      duration: const Duration(seconds: 1),
+      margin: const EdgeInsets.all(16),
+      content: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_outline_rounded,
+            color: AppColors.white,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '${food.name ?? 'Item'} added to cart',
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
+  if (context.mounted) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 }
 
 Future<void> _openVariationView(
@@ -114,10 +141,11 @@ Future<void> _openVariationView(
   }
 
   final selectedFood = food.copyWith(
-    price: variation.price,
+    // price: variation.price,
     takeAwayPrice: variation.takeAwayPrice,
     deliveryPrice: variation.deliveryPrice,
     menuVariation: variation,
+    choiceGroup: variation.choiceGroups,
   );
 
   await context.read<CartController>().addToCart(
@@ -125,16 +153,42 @@ Future<void> _openVariationView(
     1,
   );
 
+  // if (!context.mounted) return;
   if (!context.mounted) return;
-
-  ScaffoldMessenger.of(context).hideCurrentSnackBar();
 
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text(
-        '${food.name ?? 'Item'} added to cart ✓',
-      ),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: AppColors.primary,
       duration: const Duration(seconds: 2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+      margin: const EdgeInsets.all(16),
+      content: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_outline_rounded,
+            color: AppColors.white,
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '${food.name ?? 'Item'} added to cart',
+              style: const TextStyle(
+                color: AppColors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
     ),
   );
+
+  if (context.mounted) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 }

@@ -1,7 +1,9 @@
 ﻿
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/utils/validators.dart';
 
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -95,7 +97,6 @@ class _SignupScreenState extends State<SignUpView> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 20),
             child: Column(
               children: [
@@ -204,7 +205,7 @@ class _SignupScreenState extends State<SignUpView> {
                     ),
                     child: Column(
                       children: [
-                         Align(
+                        Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             "Let's get started",
@@ -217,7 +218,7 @@ class _SignupScreenState extends State<SignUpView> {
 
                         const SizedBox(height: 3),
 
-                         Align(
+                        Align(
                           alignment: Alignment.centerLeft,
                           child: Text(
                             'Enter your details to create your account',
@@ -245,15 +246,7 @@ class _SignupScreenState extends State<SignUpView> {
                           hintText: 'Enter your email address',
                           prefixIcon: Icons.email_outlined,
                           keyboardType: TextInputType.emailAddress,
-                          validator: (value) {
-                            if (value == null || value.trim().isEmpty) {
-                              return 'Please enter your email';
-                            }
-                            if (!value.contains('@')) {
-                              return 'Enter a valid email';
-                            }
-                            return null;
-                          },
+                          validator: Validators.email,
                         ),
 
                         const SizedBox(height: 9),
@@ -263,10 +256,11 @@ class _SignupScreenState extends State<SignUpView> {
                           hintText: 'Enter your phone number',
                           prefixIcon: Icons.phone_outlined,
                           keyboardType: TextInputType.phone,
-                          validator: (value) => _required(
-                            value,
-                            'Please enter your phone number',
-                          ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                            LengthLimitingTextInputFormatter(11),
+                          ],
+                          validator: Validators.phone,
                         ),
 
                         const SizedBox(height: 9),
@@ -320,16 +314,16 @@ class _SignupScreenState extends State<SignUpView> {
                         const SizedBox(height: 16),
 
                         SizedBox(
-                          width: double.infinity,
-                          child: Consumer<AuthController>(
-                            builder: (context, provider, child) {
-                              return CustomButton(
-                                text: 'Create Account',
-                                isLoading: provider.isLoading,
-                                onPressed: _createAccount,
-                              );
-                            },
-                          )
+                            width: double.infinity,
+                            child: Consumer<AuthController>(
+                              builder: (context, provider, child) {
+                                return CustomButton(
+                                  text: 'Create Account',
+                                  isLoading: provider.isLoading,
+                                  onPressed: _createAccount,
+                                );
+                              },
+                            )
                         ),
 
                         const SizedBox(height: 10),
@@ -359,7 +353,7 @@ class _SignupScreenState extends State<SignUpView> {
 
                         const SizedBox(height: 4),
 
-                         Text(
+                        Text(
                           'By creating an account, you agree to our Terms & Conditions',
                           textAlign: TextAlign.center,
                           style: getRegularStyle(
@@ -379,8 +373,3 @@ class _SignupScreenState extends State<SignUpView> {
     );
   }
 }
-
-
-
-
-

@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,13 +7,12 @@ import 'app_theme.dart';
 class AppColors {
   AppColors._(); // Private constructor to prevent instantiation
 
-  // ===========================================================================
-  // 1. BRAND & PALETTE BASE (Source of Truth)
-  // ===========================================================================
-  static const Color logoColor1 = Color(0xFF2B396B); // Primary Dark Blue
-  static const Color logoColor2 = Color(0xFF090D2B); // Secondary Deep Navy
-  static const Color logoColor3 = Color(0xFF9C793F); // Gold / Accent
-  static const Color logoColor4 = Color(0xFFF7EBC2); // Cream / Warm White
+  // 1. BRAND & PALETTE BASE (Source of Truth) — "Bite" red-orange theme
+
+  static const Color logoColor1 = Color(0xFFA6192E); // Primary Deep Red
+  static const Color logoColor2 = Color(0xFF6B0F1A); // Secondary Dark Maroon
+  static const Color logoColor3 = Color(0xFFF5A623); // Mustard Orange / Accent
+  static const Color logoColor4 = Color(0xFFFFF3E0); // Cream / Warm White
   static const Color logoColor5 = Color(0xFF000000); // Pure Black
 
   // Direct Brand Accessors
@@ -27,22 +27,26 @@ class AppColors {
       ThemeService.instance.isDarkMode ? const Color(0xFFFFFFFF) : logoColor3;
   static Color get primaryColor1 => logoColor3;
 
-  // ===========================================================================
   // 2. BACKGROUNDS & SURFACES
-  // ===========================================================================
+
   static Color get background =>
       ThemeService.instance.isDarkMode ? const Color(0xFF121212) : Colors.white;
   static Color get bgColor => background; // Alias for backward compatibility
-  static Color get bgColor1 =>
-      ThemeService.instance.isDarkMode ? Colors.white : logoColor4;
 
+  // FIXED: dark mode ab proper dark surface deta hai, cream/white nahi
+  static Color get bgColor1 =>
+      ThemeService.instance.isDarkMode ? const Color(0xFF1A1A1A) : logoColor4;
+
+  // FIXED: dark mode ab dark elevated surface deta hai, cream nahi
   static Color get card =>
-      ThemeService.instance.isDarkMode ? logoColor4 : Colors.white;
+      ThemeService.instance.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
   static Color get cardColor => card; // Alias
 
   // Container Surface Variants
+
+  // FIXED: pure black ki jagah soft dark surface
   static Color get containerColor => ThemeService.instance.isDarkMode
-      ? logoColor5
+      ? const Color(0xFF1E1E1E)
       : Colors.grey.withOpacity(.6);
 
   static Color get containerColor1 => ThemeService.instance.isDarkMode
@@ -57,8 +61,9 @@ class AppColors {
       ? Colors.grey.shade700
       : Colors.grey.shade300;
 
+  // FIXED: pure black ki jagah soft dark surface
   static Color get containerColor4 =>
-      ThemeService.instance.isDarkMode ? logoColor5 : Colors.grey.shade200;
+      ThemeService.instance.isDarkMode ? const Color(0xFF252525) : Colors.grey.shade200;
 
   static Color get containerColor5 => ThemeService.instance.isDarkMode
       ? const Color(0xFF252525)
@@ -86,7 +91,7 @@ class AppColors {
   static Color get textColor => text; // Alias
 
   static Color get greyText => ThemeService.instance.isDarkMode
-      ? const Color(0xFF7E7E7E)
+      ? const Color(0xFF9E9E9E)
       : const Color(0xFF7C7D7E);
   static Color get textColor2 => greyText; // Alias
 
@@ -133,29 +138,27 @@ class AppColors {
   static Color get softShadow07 => black.withOpacity(0.07);
   static Color get softShadow08 => black.withOpacity(0.08);
 
-  // ===========================================================================
   // 4. BORDERS, DIVIDERS & SHADOWS
-  // ===========================================================================
+
+  // FIXED: dark mode mein pure white border bahut harsh tha — ab soft grey
   static Color get border =>
-      ThemeService.instance.isDarkMode ? Colors.white : Colors.grey.shade900;
+      ThemeService.instance.isDarkMode ? Colors.grey.shade700 : Colors.grey.shade900;
   static Color get borderColor => border; // Alias
 
   static Color get divider => ThemeService.instance.isDarkMode
-      ? Colors.grey.shade900
+      ? Colors.grey.shade800
       : Colors.grey.shade300;
   static Color get borderColor1 => divider; // Alias
 
   static Color get borderColorGrey => ThemeService.instance.isDarkMode
-      ? Colors.transparent
+      ? Colors.grey.shade800
       : Colors.grey.shade300;
 
   static Color get shadow => ThemeService.instance.isDarkMode
       ? Colors.black.withOpacity(0.4)
       : Colors.black12;
 
-  // ===========================================================================
   // 5. INPUTS & CONTROLS (TextFields, Checkboxes, Radios)
-  // ===========================================================================
   static Color get textFieldBorderColor => ThemeService.instance.isDarkMode
       ? borderColorGrey
       : const Color(0xFFA1A1A1);
@@ -168,13 +171,15 @@ class AppColors {
       ? const Color(0xFFF2F2F2)
       : const Color(0xFFB6B7B7);
 
+  // FIXED: dark mode mein input text ab white hai (pehle tertiary/orange dono mein confusing tha)
   static Color get textFieldTextColor =>
-      ThemeService.instance.isDarkMode ? Colors.white : logoColor3;
+      ThemeService.instance.isDarkMode ? Colors.white : Colors.black;
 
   static Color get textFieldCursorColor => primary;
 
+  // FIXED: dark mode mein field fill ab surface jaisa dark hai, pure grey800 flat nahi
   static Color get textFieldFillColor => ThemeService.instance.isDarkMode
-      ? Colors.grey.shade800
+      ? const Color(0xFF1E1E1E)
       : const Color(0xFFFFFFFF);
 
   static Color get textFieldBgColor => background;
@@ -184,9 +189,8 @@ class AppColors {
   static Color get checkboxTickColor => tertiary;
   static Color get radioSelectedColor => secondary;
 
-  // ===========================================================================
   // 6. BUTTONS & INTERACTIVES
-  // ===========================================================================
+
   static Color get btnColor => primary;
 
   static Color get btnTextColor =>
@@ -198,17 +202,20 @@ class AppColors {
   static Color get splashColor => primary.withOpacity(0.3);
   static Color get splashColor1 => primary.withOpacity(0.3);
 
-  // ===========================================================================
   // 7. COMPONENT SPECIFICS (Search, Nav, AppBar, Shimmer, Status)
-  // ===========================================================================
+
   // Status Colors
   static const Color success = Color(0xFF2E7D32);
   static const Color error = Color(0xFFD32F2F);
   static const Color red = Colors.red; // Material red (pins / alerts)
   static Color get openStatus => Colors.green;
-  static Color get openStatusBg => Colors.green.shade50;
+  static Color get openStatusBg => ThemeService.instance.isDarkMode
+      ? Colors.green.withOpacity(0.15)
+      : Colors.green.shade50;
   static Color get closedStatus => Colors.orange;
-  static Color get closedStatusBg => Colors.orange.shade50;
+  static Color get closedStatusBg => ThemeService.instance.isDarkMode
+      ? Colors.orange.withOpacity(0.15)
+      : Colors.orange.shade50;
   static Color get warning => Colors.orange;
 
   // System UI Overlay
@@ -233,7 +240,7 @@ class AppColors {
       ThemeService.instance.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
 
   static Color get searchBarBorder =>
-      ThemeService.instance.isDarkMode ? primary : const Color(0xFFE0E0E0);
+      ThemeService.instance.isDarkMode ? Colors.grey.shade700 : const Color(0xFFE0E0E0);
 
   static Color get searchBarIconColor =>
       ThemeService.instance.isDarkMode ? Colors.white70 : Colors.grey;
@@ -241,7 +248,7 @@ class AppColors {
   // Category Menu
   static Color get categoryMenuSelectedBg => primary;
   static Color get categoryMenuUnselectedBg =>
-      ThemeService.instance.isDarkMode ? Colors.transparent : Colors.white;
+      ThemeService.instance.isDarkMode ? const Color(0xFF1E1E1E) : Colors.white;
   static Color get categoryMenuBorderSelected => primary;
   static Color get categoryMenuBorderUnselected => primary;
   static Color get categoryMenuSelectedText => Colors.white;
@@ -250,11 +257,11 @@ class AppColors {
 
   // Navigation & App Bar
   static Color get appBarColor => primary;
-  static Color get appBarIconColor => logoColor1;
+  static Color get appBarIconColor => Colors.white;
   static Color get horizontalCardActiveBgColor => appBarColor;
 
   static Color get navBarColor =>
-      ThemeService.instance.isDarkMode ? Colors.grey.shade900 : Colors.white;
+      ThemeService.instance.isDarkMode ? const Color(0xFF1A1A1A) : Colors.white;
 
   static Color get activeNavBarIconColor => primary;
   static Color get inActiveNavBarIconColor =>
@@ -262,18 +269,26 @@ class AppColors {
   static Color get navBarCartBadgeTextColor => const Color(0xFFFFFFFF);
 
   // Miscellaneous
-  static Color get splashScreenBgColor => tertiary;
+  static Color get splashScreenBgColor => primary;
 
-  // Splash / onboarding atmosphere (matches existing splash look)
-  static const Color splashGradientStart = Color(0xFFFFF8EE);
-  static const Color splashGradientEnd = Color(0xFFF3E5D3);
-  static Color get splashTitleColor => Colors.brown.shade800;
-  static Color get splashSubtitleColor => Colors.brown.shade600;
-  static Color get splashAccentColor => Colors.brown;
+  // Splash / onboarding atmosphere (deep red bg, matches "Bite" reference)
+  static const Color splashGradientStart = Color(0xFFA6192E);
+  static const Color splashGradientEnd = Color(0xFF6B0F1A);
+  static Color get splashTitleColor => Colors.white;
+  static Color get splashSubtitleColor => Colors.white70;
+  static Color get splashAccentColor => logoColor3;
 
   static Color get shimmerBaseColor =>
       ThemeService.instance.isDarkMode ? Colors.grey[800]! : Colors.grey[300]!;
 
   static Color get shimmerHighlightColor =>
       ThemeService.instance.isDarkMode ? Colors.grey[600]! : Colors.grey[100]!;
+
+  // Theme-aware card/surface color (dark me dark, light me white)
+  static Color get surface =>
+      ThemeService.instance.isDarkMode ? const Color(0xFF1E1E1E) : const Color(0xFFFFFFFF);
+
+  // Theme-aware border (dark me darker, light me grey200)
+  static Color get borderLight =>
+      ThemeService.instance.isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200;
 }

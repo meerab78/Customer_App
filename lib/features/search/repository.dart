@@ -1,2 +1,2 @@
-﻿/// Placeholder repository for search module.
+﻿/// Placeholder repository.dart for search module.
 class SearchRepository {}

@@ -13,6 +13,7 @@ class HomeController extends ChangeNotifier {
   final MenuRepository _menuRepository = MenuRepository();
   final LocationService _locationService = LocationService();
   bool isLoading = false;
+  bool orderTypeAsked = false;
   BranchModel? branchModel;
   MenuModel? menuModel;
   Branch? selectedBranch;
@@ -116,10 +117,18 @@ class HomeController extends ChangeNotifier {
     );
     return distance / 1000; // kilometer
   }
+  // Future<void> selectBranch(Branch branch) async {
+  //   selectedBranch = branch;
+  //   notifyListeners();
+  //   await getMenu(selectedBranch!.id.toString());
+  // }
   Future<void> selectBranch(Branch branch) async {
     selectedBranch = branch;
+    selectedCategoryIndex = 0;
+
     notifyListeners();
-    await getMenu(selectedBranch!.id.toString());
+
+    await getMenu(branch.id.toString());
   }
   void onMenuItemTap(
       BuildContext context,
