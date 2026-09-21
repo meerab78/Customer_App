@@ -8,7 +8,6 @@ import 'package:lottie/src/composition.dart';
 class Assets {
   Assets._();
 
-  static const $AssetsIconGen icon = $AssetsIconGen();
   static const $AssetsImagesGen images = $AssetsImagesGen();
   static const $AssetsLottieGen lottie = $AssetsLottieGen();
 }
@@ -17,15 +16,12 @@ class $AssetsImagesGen {
   const $AssetsImagesGen();
 
   final AssetGenImage destination = const AssetGenImage(
-    'assets/images/destination.png',
-  );
+      'assets/images/destination.png');
   final AssetGenImage logo = const AssetGenImage('assets/images/logo.png');
   final AssetGenImage riderLeft = const AssetGenImage(
-    'assets/images/rider_left.png',
-  );
+      'assets/images/rider_left.png');
   final AssetGenImage riderRight = const AssetGenImage(
-    'assets/images/rider_right.png',
-  );
+      'assets/images/rider_right.png');
   final AssetGenImage store = const AssetGenImage('assets/images/store.png');
 }
 
@@ -33,25 +29,17 @@ class $AssetsLottieGen {
   const $AssetsLottieGen();
 
   final LottieGenImage foodLoadingAnimation = const LottieGenImage(
-    'assets/lottie/Food Loading Animation.json',
-  );
+      'assets/lottie/Food Loading Animation.json');
   final LottieGenImage blueloading = const LottieGenImage(
-    'assets/lottie/blueloading.json',
-  );
+      'assets/lottie/blueloading.json');
   final String loading = 'assets/lottie/loading.json';
-}
-
-class $AssetsIconGen {
-  const $AssetsIconGen();
-
-  final AssetGenImage logo = const AssetGenImage('assets/icon/logo.png');
-  final AssetGenImage logoIos = const AssetGenImage('assets/icon/logo_ios.png');
 }
 
 class AssetGenImage {
   const AssetGenImage(this._assetName, {this.size, this.flavors = const {}});
 
   final String _assetName;
+
 
   final Size? size;
   final Set<String> flavors;
@@ -109,8 +97,15 @@ class AssetGenImage {
     );
   }
 
-  ImageProvider provider({AssetBundle? bundle, String? package}) {
-    return AssetImage(_assetName, bundle: bundle, package: package);
+  ImageProvider provider({
+    AssetBundle? bundle,
+    String? package,
+  }) {
+    return AssetImage(
+      _assetName,
+      bundle: bundle,
+      package: package,
+    );
   }
 
   Widget custom({
@@ -196,3 +191,4 @@ class LottieGenImage {
 
   String get keyName => _assetName;
 }
+
