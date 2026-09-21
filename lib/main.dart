@@ -66,6 +66,7 @@ class MyApp extends StatelessWidget {
           create: (_) => CouponController(),
         ),
         ChangeNotifierProvider(
+
           create: (_) => LoyaltyController(),
         ),
         ChangeNotifierProvider(

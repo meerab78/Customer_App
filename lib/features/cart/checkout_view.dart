@@ -1,4 +1,5 @@
 import 'package:customer_app/core/utils/page_transitions.dart';
+import 'package:customer_app/features/cart/widget/checkout_branch_selector.dart';
 import 'package:customer_app/features/cart/widget/guest_details_card.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -9,6 +10,7 @@ import '../Order/order_repository.dart';
 import '../auth/address/view.dart' show AddressView;
 import '../coupon/controller.dart';
 import '../coupon/coupon_section.dart';
+import '../home/widget/branch_selector_card.dart';
 import '../profile/Wallet/controller.dart' show WalletController;
 import 'controller.dart';
 import '../../core/theme/app_colors.dart';
@@ -859,6 +861,8 @@ class _CheckoutViewState extends State<CheckoutView> {
                   onManageAddress: _openManageAddress,        // NEW — logged-in: manage screen
                   onShowAddressList: _showAddressDropdown,    // NEW — logged-in: dropdown
                 ),
+                SizedBox(height: 10,),
+                const CheckoutBranchSelector(),
                 SizedBox(height: 10,),
                 // ORDER SUMMARY
                 Text(
