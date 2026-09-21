@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
 import '../model/menu_model.dart';
+import 'choice_group_label.dart';
 
 class DealItemCard extends StatefulWidget {
   final Menu item;
@@ -270,15 +271,7 @@ class _DealItemCardState extends State<DealItemCard> {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      group.maxChoices != null && group.maxChoices! > 1
-                          ? 'Select 0-${group.maxChoices}'
-                          : 'Select 0-1',
-                      style: getRegularStyle(
-                        fontSize: MyFonts.size11,
-                        color: AppColors.greyText,
-                      ),
-                    ),
+                    ChoiceGroupLabel(group: group),
                     const SizedBox(height: 8),
 
                     ListView.separated(

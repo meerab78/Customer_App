@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
 import '../model/menu_model.dart';
+import 'choice_group_label.dart';
 
 class VariationSelector extends StatelessWidget {
   final List<MenuVariation> variations;
@@ -196,16 +197,7 @@ class _ChoiceGroupWidget extends StatelessWidget {
         ),
 
         const SizedBox(height: 3),
-
-        Text(
-          maxChoices > 0
-              ? 'Select $minChoices-$maxChoices'
-              : 'Select at least $minChoices',
-          style: getRegularStyle(
-            fontSize: MyFonts.size12,
-            color: isDark ? Colors.grey.shade400 : AppColors.greyText,
-          ),
-        ),
+        ChoiceGroupLabel(group: group),
 
         const SizedBox(height: 8),
 

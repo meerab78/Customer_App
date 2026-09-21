@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../base/controller.dart' show BaseTabController;
 import '../../cart/controller.dart';
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
@@ -29,9 +30,36 @@ class _LoginScreenState extends State<SignInView> {
   final _passwordController = TextEditingController();
 
   bool _obscurePassword = true;
+  late final BaseTabController _tabController;
+  int _lastTabIndex = 0;
 
   @override
+  void initState() {
+    super.initState();
+    _tabController = context.read<BaseTabController>();
+    _lastTabIndex = _tabController.selectedIndex;
+    _tabController.addListener(_onTabChanged);
+  }
+
+  void _onTabChanged() {
+    final index = _tabController.selectedIndex;
+    if (index != _lastTabIndex) {
+      _lastTabIndex = index;
+      if (mounted) _clearForm();
+    }
+  }
+
+  void _clearForm() {
+    _emailController.clear();
+    _passwordController.clear();
+    _formKey.currentState?.reset();
+    if (_obscurePassword != true) {
+      setState(() => _obscurePassword = true);
+    }
+  }
+  @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
