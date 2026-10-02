@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constant/app_constants.dart';
 import '../../base/controller.dart' show BaseTabController;
 import '../../cart/controller.dart';
 import '../controller.dart';
@@ -75,7 +76,7 @@ class _LoginScreenState extends State<SignInView> {
     );
 
     final success = await provider.login(
-      restaurantId: '1248',
+      restaurantId: AppConstants.restaurantId,
       email: _emailController.text.trim(),
       orderResourceId: '3',
       password: _passwordController.text,

@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constant/app_constants.dart';
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
@@ -41,7 +42,7 @@ class _ForgotOtpScreenState extends State<ForgotOtpView> {
     );
 
     final success = await provider.verifyForgotPasswordOtp(
-      restaurantId: '1248',
+      restaurantId: AppConstants.restaurantId,
       email: widget.email,
       otp: _otpController.text.trim(),
     );

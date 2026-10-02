@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constant/app_constants.dart';
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
@@ -38,7 +39,7 @@ class _ForgotPasswordScreenState
     );
 
     final success = await provider.sendForgotPasswordOtp(
-      restaurantId: 1248,
+      restaurantId: AppConstants.restaurantId,
       email: _emailController.text.trim(),
     );
 

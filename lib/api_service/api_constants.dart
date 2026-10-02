@@ -1,11 +1,13 @@
 class ApiConstants {
-  static const String baseUrlV1=  "https://dev-admin.cherryberrycloud.com/api/";
-  static const String baseUrlV2=   "https://dev-admin.cherryberrycloud.com/v2/api/onlineapp/";
-  static const String  branches =   "GetRestaurantBranchesNameAndId/1248";
+  // static const baseUrlV2 = 'https://dev-admin.cherryberrycloud.com/v2/api/onlineapp/';
+  static const baseUrlV2 = 'https://admin.cherryberryrms.com/v2/api/onlineapp/';
+  // static const baseUrlV1 = 'https://dev-admin.cherryberrycloud.com/api/';
+  static const baseUrlV1 = 'https://admin.cherryberryrms.com/api/';
+
+  static const String  branches =   "GetRestaurantBranchesNameAndId";
   static const String menu =   "get_main_data";
   static const String restaurantContent = "get_restaurant_content";
   static const int aboutUsRestaurantId = 1178;
-  static const int restaurantId = 1248;
   static const String getAddresses      = "${baseUrlV2}get_customer_addresses";
   static const String addEditAddress    = "${baseUrlV2}add_edit_customer_address";
   static const String getDeliveryCharges = "${baseUrlV1}GetDeliveryCharges";

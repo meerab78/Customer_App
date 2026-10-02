@@ -23,7 +23,7 @@ static const bool enableLoyaltySystem = true;
   static String deviceId = '';
   static String deviceToken = '';
 
-  static String restaurantId = '1248';
+  static String restaurantId = '1413';
 
 
   static String orderResourceId = '3';

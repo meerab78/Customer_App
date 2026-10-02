@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constant/app_constants.dart';
 import '../controller.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
@@ -58,7 +59,7 @@ class _ResetPasswordScreenState
     );
 
     final success = await provider.changePassword(
-      restaurantId: '1248',
+      restaurantId: AppConstants.restaurantId,
       email: widget.email,
       newPassword: _passwordController.text,
       confirmPassword: _confirmPasswordController.text,

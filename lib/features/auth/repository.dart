@@ -6,7 +6,7 @@ class AuthRepository {
 
   Future<dynamic> signup({
     required String email,
-    required int restaurantId,
+    required String restaurantId,
     required String cellNum,
     required String password,
     required String name,
@@ -76,7 +76,7 @@ class AuthRepository {
   }
 
   Future<dynamic> sendForgotPasswordOtp({
-    required int restaurantId,
+    required String restaurantId,
     required String email,
   }) async {
     final url =

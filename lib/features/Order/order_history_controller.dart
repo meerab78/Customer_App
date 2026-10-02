@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
+import '../../core/constant/app_constants.dart';
 import '../../core/db/shared_pref.dart';
 import '../cart/model/order_history_model.dart';
 import 'order_repository.dart';
@@ -34,7 +35,7 @@ class OrderController extends ChangeNotifier {
     }
 
     try {
-      String restaurantId = "1248";
+      String restaurantId = AppConstants.restaurantId;
       int? savedId = await _prefs.getRestaurantId();
       if (savedId != null) {
         restaurantId = savedId.toString();
@@ -83,7 +84,7 @@ class OrderController extends ChangeNotifier {
     if (selectedOrder == null) return;
 
     try {
-      String restaurantId = "1248";
+      String restaurantId = AppConstants.restaurantId;
       int? savedId = await _prefs.getRestaurantId();
       if (savedId != null) {
         restaurantId = savedId.toString();
