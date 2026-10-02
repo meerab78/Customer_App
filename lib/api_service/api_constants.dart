@@ -1,8 +1,8 @@
 class ApiConstants {
-  // static const baseUrlV2 = 'https://dev-admin.cherryberrycloud.com/v2/api/onlineapp/';
-  static const baseUrlV2 = 'https://admin.cherryberryrms.com/v2/api/onlineapp/';
-  // static const baseUrlV1 = 'https://dev-admin.cherryberrycloud.com/api/';
-  static const baseUrlV1 = 'https://admin.cherryberryrms.com/api/';
+  static const baseUrlV2 = 'https://dev-admin.cherryberrycloud.com/v2/api/onlineapp/';
+  // static const baseUrlV2 = 'https://admin.cherryberryrms.com/v2/api/onlineapp/';
+  static const baseUrlV1 = 'https://dev-admin.cherryberrycloud.com/api/';
+  // static const baseUrlV1 = 'https://admin.cherryberryrms.com/api/';
 
   static const String  branches =   "GetRestaurantBranchesNameAndId";
   static const String menu =   "get_main_data";
