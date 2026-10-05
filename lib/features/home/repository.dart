@@ -1,4 +1,5 @@
-﻿import 'model/branch_model.dart';
+﻿import '../../core/constant/app_constants.dart';
+import 'model/branch_model.dart';
 import 'model/menu_model.dart';
 import '../../api_service/api_constants.dart';
 import '../../api_service/api_service.dart';
@@ -8,7 +9,7 @@ class BranchRepository {
 
   Future<BranchModel> getBranches() async {
     final url =
-        '${ApiConstants.baseUrlV1}${ApiConstants.branches}';
+        '${ApiConstants.baseUrlV1}${ApiConstants.branches}/${AppConstants.restaurantId}';
 
     final response = await _apiService.getRequest(url);
     return BranchModel.fromJson(response);

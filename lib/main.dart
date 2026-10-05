@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:customer_app/features/profile/profile_entry_view.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/session/session_manager.dart';
 import 'core/theme/app_theme.dart';
 import 'features/Order/order_history_controller.dart';
 import 'features/auth/address/controller.dart';
@@ -83,6 +84,7 @@ class MyApp extends StatelessWidget {
         listenable: ThemeService.instance,
         builder: (context, _) {
           return MaterialApp(
+            navigatorKey: navigatorKey,
             debugShowCheckedModeBanner: false,
             title: 'Customer App',
             themeMode: ThemeService.instance.themeMode,

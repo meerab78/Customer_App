@@ -1,10 +1,10 @@
-
 import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:http/io_client.dart';
 
+import '../core/session/session_manager.dart';
 class ApiService {
 
   void _printPrettyJson(dynamic data, {required String title}) {
@@ -15,6 +15,14 @@ class ApiService {
       developer.log('\n$prettyString', name: title);
     } catch (e) {
       developer.log('Raw output: $data', name: title);
+    }
+  }
+
+  // Token ke sath request gayi aur 401 aaya = session expire
+  Future<void> _checkUnauthorized(int statusCode, String? token) async {
+    if (statusCode == 401 && token != null) {
+      await SessionManager.handleUnauthorized();
+      throw Exception('Session expired. Please login again.');
     }
   }
 
@@ -34,6 +42,9 @@ class ApiService {
         },
       );
       client.close();
+
+      await _checkUnauthorized(response.statusCode, token);
+
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         _printPrettyJson(decoded, title: 'GET Response');
@@ -76,6 +87,9 @@ class ApiService {
       );
 
       client.close();
+
+      await _checkUnauthorized(response.statusCode, token);
+
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
         _printPrettyJson(decoded, title: 'POST Response');

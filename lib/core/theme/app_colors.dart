@@ -9,9 +9,9 @@ class AppColors {
 
   // 1. BRAND & PALETTE BASE (Source of Truth) — "Bite" red-orange theme
 
-  static const Color logoColor1 = Color(0xFFA6192E); // Primary Deep Red
+  static const Color logoColor3 = Color(0xFF285206); // Primary Deep Red
   static const Color logoColor2 = Color(0xFF6B0F1A); // Secondary Dark Maroon
-  static const Color logoColor3 = Color(0xFFF5A623); // Mustard Orange / Accent
+  static const Color logoColor1 = Color(0xFF285206); // Mustard Orange / Accent
   static const Color logoColor4 = Color(0xFFFFF3E0); // Cream / Warm White
   static const Color logoColor5 = Color(0xFF000000); // Pure Black
 

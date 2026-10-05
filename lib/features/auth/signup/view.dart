@@ -3,6 +3,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constant/app_constants.dart';
 import '../../../core/utils/validators.dart';
 
 import '../controller.dart';
@@ -54,7 +55,7 @@ class _SignupScreenState extends State<SignUpView> {
 
     final success = await provider.signup(
       email: _emailController.text.trim(),
-      restaurantId: 1248,
+      restaurantId:AppConstants.restaurantId,
       cellNum: _phoneController.text.trim(),
       password: _passwordController.text,
       name: _nameController.text.trim(),
