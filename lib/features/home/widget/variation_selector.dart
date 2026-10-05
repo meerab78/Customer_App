@@ -1,26 +1,22 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
+import '../../../core/utils/order_type_price.dart';
+import '../../cart/controller.dart';
 import '../model/menu_model.dart';
 import 'choice_group_label.dart';
 
 class VariationSelector extends StatelessWidget {
   final List<MenuVariation> variations;
   final List<ChoiceGroup> choiceGroups;
-
   final MenuVariation? selectedVariation;
-
   final Map<int, List<MenuVariation>> selectedChoices;
-
   final ValueChanged<MenuVariation> onVariationSelected;
-
-  final void Function(
-      ChoiceGroup group,
-      MenuVariation choice,
-      ) onChoiceSelected;
+  final void Function(ChoiceGroup group, MenuVariation choice) onChoiceSelected;
 
   const VariationSelector({
     super.key,
@@ -34,6 +30,7 @@ class VariationSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final orderType = context.watch<CartController>().orderType;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -55,6 +52,7 @@ class VariationSelector extends StatelessWidget {
               return _VariationTile(
                 variation: variation,
                 isSelected: isSelected,
+                orderType: orderType,
                 onTap: () {
                   onVariationSelected(variation);
                 },
@@ -70,6 +68,7 @@ class VariationSelector extends StatelessWidget {
             return _ChoiceGroupWidget(
               group: group,
               selectedChoices: selectedChoices[group.id] ?? [],
+              orderType: orderType,
               onChoiceSelected: (choice) {
                 onChoiceSelected(
                   group,
@@ -89,11 +88,13 @@ class _VariationTile extends StatelessWidget {
   final MenuVariation variation;
   final bool isSelected;
   final VoidCallback onTap;
+  final String orderType;
 
   const _VariationTile({
     required this.variation,
     required this.isSelected,
     required this.onTap,
+    required this.orderType,
   });
 
   @override
@@ -147,7 +148,7 @@ class _VariationTile extends StatelessWidget {
             ),
 
             Text(
-              'Rs ${variation.price ?? '0'}',
+              'Rs ${pickOrderTypePrice(orderType: orderType, dinePrice: variation.price, takeawayPrice: variation.takeAwayPrice, deliveryPrice: variation.deliveryPrice).toStringAsFixed(0)}',
               style: getBoldStyle(
                 fontSize: MyFonts.size14,
                 color: AppColors.primary,
@@ -166,11 +167,13 @@ class _ChoiceGroupWidget extends StatelessWidget {
   final List<MenuVariation> selectedChoices;
 
   final ValueChanged<MenuVariation> onChoiceSelected;
+  final String orderType;
 
   const _ChoiceGroupWidget({
     required this.group,
     required this.selectedChoices,
     required this.onChoiceSelected,
+    required this.orderType,
   });
 
   @override
@@ -256,7 +259,7 @@ class _ChoiceGroupWidget extends StatelessWidget {
                     ),
 
                     Text(
-                      '+ Rs ${choice.price ?? '0'}',
+                      '+ Rs ${pickOrderTypePrice(orderType: orderType, dinePrice: choice.price, takeawayPrice: choice.takeAwayPrice, deliveryPrice: choice.deliveryPrice).toStringAsFixed(0)}',
                       style: getSemiBoldStyle(
                         fontSize: MyFonts.size13,
                         color: AppColors.primary,

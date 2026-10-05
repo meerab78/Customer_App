@@ -1,9 +1,12 @@
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/fonts_manager.dart';
 import '../../../core/theme/textfont_styles.dart';
+import '../../../core/utils/order_type_price.dart';
+import '../../cart/controller.dart';
 import '../model/menu_model.dart';
 import 'choice_group_label.dart';
 
@@ -167,6 +170,7 @@ class _DealItemCardState extends State<DealItemCard> {
 
   @override
   Widget build(BuildContext context) {
+    final orderType = context.watch<CartController>().orderType;
     final String subtitle = _getItemSubtitle();
 
     return Column(
@@ -327,9 +331,8 @@ class _DealItemCardState extends State<DealItemCard> {
                                     ),
                                   ),
                                 ),
-
                                 Text(
-                                  '+ Rs ${(double.tryParse(choice.price ?? '0')?.toStringAsFixed(2) ?? '0.00')}',
+                                  '+ Rs ${pickOrderTypePrice(orderType: orderType, dinePrice: choice.price, takeawayPrice: choice.takeAwayPrice, deliveryPrice: choice.deliveryPrice).toStringAsFixed(2)}',
                                   style: getBoldStyle(
                                     fontSize: MyFonts.size12,
                                     color: AppColors.primary,
