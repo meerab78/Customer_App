@@ -49,20 +49,59 @@ class _DealDetailViewState extends State<DealDetailView> {
     return itemCompletion.every((completed) => completed);
   }
 
+  // double get totalDealPrice {
+  //   final basePrice = double.tryParse(widget.food.price ?? '0') ?? 0;
+  //   double extra = 0;
+  //
+  //   for (final item in dealItems) {
+  //     for (final group in item.choiceGroup) {
+  //       for (final choice in group.choices) {
+  //         extra += double.tryParse(choice.price ?? '0') ?? 0;
+  //       }
+  //     }
+  //     if (item.menuVariation != null) {
+  //       for (final group in item.menuVariation!.choiceGroups) {
+  //         for (final choice in group.choices) {
+  //           extra += double.tryParse(choice.price ?? '0') ?? 0;
+  //         }
+  //       }
+  //     }
+  //   }
+  //
+  //   return basePrice + extra;
+  // }
   double get totalDealPrice {
-    final basePrice = double.tryParse(widget.food.price ?? '0') ?? 0;
+    final orderType = context.read<CartController>().orderType;
+
+    final basePrice = pickOrderTypePrice(
+      orderType: orderType,
+      dinePrice: widget.food.price,
+      takeawayPrice: widget.food.takeAwayPrice,
+      deliveryPrice: widget.food.deliveryPrice,
+    );
+
     double extra = 0;
 
     for (final item in dealItems) {
       for (final group in item.choiceGroup) {
         for (final choice in group.choices) {
-          extra += double.tryParse(choice.price ?? '0') ?? 0;
+          extra += pickOrderTypePrice(
+            orderType: orderType,
+            dinePrice: choice.price,
+            takeawayPrice: choice.takeAwayPrice,
+            deliveryPrice: choice.deliveryPrice,
+          );
         }
       }
       if (item.menuVariation != null) {
         for (final group in item.menuVariation!.choiceGroups) {
           for (final choice in group.choices) {
-            extra += double.tryParse(choice.price ?? '0') ?? 0;
+            extra += pickOrderTypePrice(
+              orderType: orderType,
+              dinePrice: choice.price,
+              takeawayPrice: choice.takeAwayPrice,
+              deliveryPrice: choice.deliveryPrice,
+            );
           }
         }
       }
